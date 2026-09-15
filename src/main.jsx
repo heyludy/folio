@@ -10,6 +10,7 @@ import {addEntry,removeEntry,entryIds} from './entries';
 import {resolveTemplate} from './templates';
 import {insertSection,moveSection,sectionSnapshot,deleteSection,restoreSection} from './sections';
 import {scrollCanvasTo} from './scroll';
+import {beginSectionDrag} from './sectionDrag';
 import {addKoreanPage,removeKoreanPage,restoreKoreanPage,koreanSnapshot} from './languages';
 import {themes,fonts,catalog,newSite,newSection,reorder,siteLanguages,siteTitle} from './model';
 import {loadSites} from './storage';
@@ -32,7 +33,7 @@ function App(){
  const [home,setHome]=useState(true),[basicsModal,setBasicsModal]=useState(null);
  const [preview,setPreview]=useState(false),[selected,setSelected]=useState(null),[paletteOpen,setPaletteOpen]=useState(false),[insertAfter,setInsertAfter]=useState(null),[saveMessage,setSaveMessage]=useState('이 브라우저에 저장됨');
  const pendingAssets=useRef(new Map());
- const canvas=useRef(null),positions=useRef(null),drag=useRef(null),photoInput=useRef(null),themePanel=useRef(null),addButton=useRef(null),catalogClose=useRef(null),editorScroll=useRef(0);
+ const canvas=useRef(null),sidebar=useRef(null),positions=useRef(null),drag=useRef(null),photoInput=useRef(null),themePanel=useRef(null),addButton=useRef(null),catalogClose=useRef(null),editorScroll=useRef(0);
  const update=fn=>setSites(all=>all.map(s=>s.id===site.id?fn(s):s));
  const edit=(id,language,key,value)=>update(s=>editSiteField(s,id,language,key,value));
  const [selectedElement,setSelectedElement]=useState(null);
@@ -103,17 +104,21 @@ function App(){
  const scrollToSection=id=>scrollCanvasTo(canvas.current,sectionNode(id),{reduced:window.matchMedia('(prefers-reduced-motion: reduce)').matches});
  useLayoutEffect(()=>{
   if(!pendingNavigation||home||preview||pendingNavigation.siteId!==site.id||pendingNavigation.lang!==lang)return;
-  // React has committed the new section and its editable content at this point.
-  const frame=requestAnimationFrame(()=>{
+  let cancelled=false,frame;
+  const navigate=()=>{if(cancelled)return;frame=requestAnimationFrame(()=>{
    const section=sectionNode(pendingNavigation.sectionId);
    const field=pendingNavigation.entryAction==='remove'?section?.querySelector('.entry-add'):pendingNavigation.entryId?[...section?.querySelectorAll('[data-field]')||[]].find(node=>node.dataset.field==='topic'+pendingNavigation.entryId):section?.querySelector('[data-field="title"]');
-   field?.focus({preventScroll:true});
+   if(pendingNavigation.focus!==false)field?.focus({preventScroll:true});
    scrollCanvasTo(canvas.current,pendingNavigation.entryAction?field:section,{nearest:!!pendingNavigation.entryAction,reduced:window.matchMedia('(prefers-reduced-motion: reduce)').matches});
    setPendingNavigation(null);
-  });
-  return()=>cancelAnimationFrame(frame);
+  });};
+  const animations=pendingNavigation.afterMove?sectionNode(pendingNavigation.sectionId)?.getAnimations()||[]:[];
+  if(animations.length)Promise.allSettled(animations.map(animation=>animation.finished)).then(navigate);else navigate();
+  return()=>{cancelled=true;cancelAnimationFrame(frame)};
  },[pendingNavigation,home,preview,site.id,lang,site.sections]);
- const move=(id,direction)=>{capture();update(s=>moveSection(s,id,direction));};
+ const followMovedSection=id=>{selectSection(id);setPendingNavigation({siteId:site.id,lang,sectionId:id,focus:false,afterMove:true});};
+ const move=(id,direction)=>{capture();update(s=>moveSection(s,id,direction));followMovedSection(id);};
+ const moveKey=(e,id)=>{if(['ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();e.stopPropagation();move(id,e.key==='ArrowUp'?-1:1);}};
  const hide=id=>{
   const showing=site.sections.find(s=>s.id===id)?.hidden;
   update(s=>({...s,sections:s.sections.map(item=>item.id===id?{...item,hidden:!item.hidden}:item)}));
@@ -137,8 +142,8 @@ function App(){
   if(site.id===removedSection.siteId){selectSection(removedSection.snapshot.section.id);setPendingNavigation({siteId:site.id,lang,sectionId:removedSection.snapshot.section.id});}
   setRemovedSection(null);
  };
- const togglePreview=()=>{if(!preview){editorScroll.current=canvas.current.scrollTop;if(!languageAvailable)setLang('en')}setPreview(v=>!v);setSelected(null);setPaletteOpen(false);requestAnimationFrame(()=>canvas.current.scrollTo({top:preview?editorScroll.current:0,behavior:'instant'}))};
- const changeLanguage=code=>{setPendingNavigation(null);if(!['en','ko'].includes(code)||(preview&&!siteLanguages(site).includes(code)))return;setLang(code);setSelected(null);canvas.current.scrollTo({top:0,behavior:'instant'})};
+ const togglePreview=()=>{endDrag();if(!preview){editorScroll.current=canvas.current.scrollTop;if(!languageAvailable)setLang('en')}setPreview(v=>!v);setSelected(null);setPaletteOpen(false);requestAnimationFrame(()=>canvas.current.scrollTo({top:preview?editorScroll.current:0,behavior:'instant'}))};
+ const changeLanguage=code=>{endDrag();setPendingNavigation(null);if(!['en','ko'].includes(code)||(preview&&!siteLanguages(site).includes(code)))return;setLang(code);setSelected(null);canvas.current.scrollTo({top:0,behavior:'instant'})};
  const changeSite=id=>{setPendingNavigation(null);endDrag(false);setSiteId(id);setLang('en');setHome(false);setPreview(false);setSelected(null);setInsertAfter(null);setPaletteOpen(false);canvas.current?.scrollTo({top:0,behavior:'instant'})};
  const goHome=()=>{setPendingNavigation(null);endDrag(false);setHome(true);setPreview(false);setPaletteOpen(false);setSelected(null);setInsertAfter(null);history.replaceState(null,'',location.pathname+location.search)};
  const openBasics=()=>{setPaletteOpen(false);setBasicsModal({site,initialLanguage:lang})};
@@ -169,25 +174,22 @@ function App(){
   }catch(error){setSaveMessage(error.message);}
  };
 
- function clearDrag(){canvas.current?.querySelectorAll('.is-dragging,.drop-before,.drop-after').forEach(el=>el.classList.remove('is-dragging','drop-before','drop-after'));}
- function markDrop(y){
-  if(!drag.current?.active)return;drag.current.y=y;
-  const items=[...canvas.current.querySelectorAll('[data-section]')].filter(el=>el.dataset.section!==drag.current.id);
-  const target=items.find(el=>y<el.getBoundingClientRect().top+el.getBoundingClientRect().height/2);
-  canvas.current.querySelectorAll('.drop-before,.drop-after').forEach(el=>el.classList.remove('drop-before','drop-after'));
-  if(target)target.classList.add('drop-before');else items.at(-1)?.classList.add('drop-after');
-  drag.current.before=items.length?(target?.dataset.section??null):undefined;
- }
- function startDrag(){const d=drag.current;if(!d)return;d.active=true;d.el.classList.add('is-dragging');window.getSelection()?.removeAllRanges();document.activeElement?.blur();try{d.el.setPointerCapture(d.pointer)}catch{}markDrop(d.y)}
- function endDrag(commit){const d=drag.current;if(!d)return;clearTimeout(d.timer);drag.current=null;try{if(d.el.hasPointerCapture(d.pointer))d.el.releasePointerCapture(d.pointer)}catch{}clearDrag();if(commit&&d.active&&d.before!==undefined){capture();setSites(all=>all.map(s=>s.id===d.siteId?{...s,sections:reorder(s.sections,d.id,d.before)}:s))}}
+ function endDrag(){drag.current?.cancel();drag.current=null;}
+ const beginDrag=(event,section,mode='canvas',handle=false)=>{
+  if(event.button!==0)return;
+  endDrag();setPendingNavigation(null);
+  const targetSiteId=site.id;
+  const gesture=beginSectionDrag({event,id:section.id,mode,handle,canvas:canvas.current,sidebar:sidebar.current,
+   onCommit:(id,before)=>{capture();setSites(all=>all.map(s=>s.id===targetSiteId?{...s,sections:reorder(s.sections,id,before)}:s));followMovedSection(id);},
+   onEnd:()=>{if(drag.current===gesture)drag.current=null;}
+  });
+  drag.current=gesture;
+ };
+ useEffect(()=>()=>endDrag(),[]);
  const dragProps=s=>({
-  onPointerDown:e=>{if(e.button!==0||e.target.closest('input,a,[contenteditable]')||e.target.closest('button:not([data-grip])'))return;drag.current={id:s.id,siteId:site.id,el:e.currentTarget,pointer:e.pointerId,x:e.clientX,y:e.clientY,startY:e.clientY,handle:!!e.target.closest('[data-grip]')};drag.current.timer=setTimeout(startDrag,400)},
-  onPointerMove:e=>{const d=drag.current;if(!d)return;d.y=e.clientY;if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.startY)>7){if(d.handle)startDrag();else{endDrag(false);return}}if(drag.current?.active){e.preventDefault();markDrop(e.clientY)}},
-  onPointerUp:()=>endDrag(true),onPointerCancel:()=>{if(!drag.current?.native)endDrag(false)},
-  onPointerLeave:()=>{if(drag.current&&!drag.current.active)endDrag(false)},
-  onContextMenu:e=>{if(drag.current?.active)e.preventDefault()},
-  onDragStart:e=>{if(!e.target.closest('[data-grip]')){e.preventDefault();return}if(drag.current)clearTimeout(drag.current.timer);drag.current={id:s.id,siteId:site.id,el:e.currentTarget,pointer:-1,active:true,native:true};e.currentTarget.classList.add('is-dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',s.id)},
-  onDragEnd:()=>endDrag(false)
+  onPointerDown:e=>{if(e.target.closest('input,a,[contenteditable],summary')||e.target.closest('button:not([data-grip])'))return;beginDrag(e,s,'canvas',!!e.target.closest('[data-grip]'));},
+  onDragStart:e=>e.preventDefault(),
+  onKeyDown:e=>{if(e.target.closest('[data-grip]'))moveKey(e,s.id);}
  });
 
  if(!ready)return <div className="studio-loading" role="status">{loadError||'프로젝트를 불러오는 중…'}</div>;
@@ -195,9 +197,9 @@ function App(){
   <header className="studio-top"><div className="studio-brand"><button className="folio-brand" onClick={goHome} aria-label="Folio 홈"><strong>Folio</strong></button>{!home&&<button className="home-link" onClick={goHome}><ArrowLeft size={13}/>프로젝트</button>}</div><div className="studio-actions"><span className="studio-save" role="status">{saveMessage}</span>{!home&&<><button className="studio-button" onClick={()=>{downloadSite(site);setSaveMessage('HTML 파일을 내려받았어요')}}><Download size={15}/><span>HTML 내보내기</span></button><button className="studio-button primary" onClick={togglePreview}>{preview?<ArrowLeft size={15}/>:<Eye size={15}/>}<span>{preview?'편집으로 돌아가기':'미리보기'}</span></button></>}</div></header>
   {saveProblem&&<div className="studio-save-problem" role="alert"><div><strong>{saveProblem==='conflict'?'다른 탭에서 같은 내용을 수정했어요.':'브라우저에 저장하지 못했어요.'}</strong><p>이 탭의 수정은 아직 저장되지 않았어요. 필요한 페이지를 HTML로 보관할 수 있어요.</p></div><button type="button" onClick={()=>downloadSite(site)}>현재 페이지 HTML 보관</button>{saveProblem==='storage'&&<button type="button" onClick={retrySave}>다시 저장</button>}<button type="button" onClick={loadLatest}>이 탭 변경 버리고 최신 내용 열기</button></div>}
   {home?<ProjectHome sites={sites} onOpen={changeSite} onCreate={createSite}/>:<div className="studio-workspace" data-preview={preview}>
-   {!preview&&<aside className="studio-sidebar"><div className="site-picker"><label htmlFor="site-picker">사이트</label><div><select id="site-picker" value={site.id} onChange={e=>changeSite(e.target.value)}>{sites.map(s=><option value={s.id} key={s.id}>{siteTitle(s)}</option>)}</select><button onClick={createSite} aria-label="새 사이트 만들기"><Plus size={17}/></button></div></div>{languageAvailable&&<><div className="studio-sideheading"><span>페이지 구성</span><button ref={addButton} onClick={()=>setInsertAfter(selected||site.sections.at(-1)?.id||'')} aria-label="섹션 추가"><Plus size={16}/></button></div><ol className="studio-sectionlist">{site.sections.map(s=><li key={s.id} data-active={selected===s.id} data-hidden={s.hidden}><button onClick={()=>{selectSection(s.id);scrollToSection(s.id)}}><GripVertical size={13}/>{s.name}</button>{s.hidden&&<button className="restore" onClick={()=>hide(s.id)}>표시</button>}<button type="button" className="section-remove" aria-label={`${s.name} 섹션 삭제`} title="섹션 삭제" onClick={()=>remove(s.id)}><X size={13}/></button></li>)}</ol><div className="studio-sidefoot">{site.sections.length}개 섹션</div></>}</aside>}
+   {!preview&&<aside className="studio-sidebar" ref={sidebar}><div className="site-picker"><label htmlFor="site-picker">사이트</label><div><select id="site-picker" value={site.id} onChange={e=>changeSite(e.target.value)}>{sites.map(s=><option value={s.id} key={s.id}>{siteTitle(s)}</option>)}</select><button onClick={createSite} aria-label="새 사이트 만들기"><Plus size={17}/></button></div></div>{languageAvailable&&<><div className="studio-sideheading"><span>페이지 구성</span><button ref={addButton} onClick={()=>setInsertAfter(selected||site.sections.at(-1)?.id||'')} aria-label="섹션 추가"><Plus size={16}/></button></div><ol className="studio-sectionlist">{site.sections.map(s=><li key={s.id} data-sort-id={s.id} data-active={selected===s.id} data-hidden={s.hidden}><button onPointerDown={e=>beginDrag(e,s,'sidebar',true)} onClick={()=>{selectSection(s.id);scrollToSection(s.id)}}>{s.name}</button><button type="button" className="section-sort" aria-label={`${s.name} 순서 이동`} title="끌어서 이동 · ↑↓" onPointerDown={e=>beginDrag(e,s,'sidebar',true)} onKeyDown={e=>moveKey(e,s.id)}><GripVertical size={13}/></button>{s.hidden&&<button className="restore" onClick={()=>hide(s.id)}>표시</button>}<button type="button" className="section-remove" aria-label={`${s.name} 섹션 삭제`} title="섹션 삭제" onClick={()=>remove(s.id)}><X size={13}/></button></li>)}</ol><div className="studio-sidefoot">{site.sections.length}개 섹션</div></>}</aside>}
    <main className="studio-main"><div className="studio-designbar">{preview&&<div className="viewport-control" role="group" aria-label="미리보기 화면 크기">{[['auto','전체 너비',Monitor],['768','태블릿 768px',Tablet],['390','모바일 390px',Smartphone]].map(([value,label,Icon])=><button key={value} type="button" aria-label={label} title={label} aria-pressed={previewWidth===value} onClick={()=>setPreviewWidth(value)}><Icon size={16}/><span>{value==='auto'?'전체':value+'px'}</span></button>)}</div>}{!preview&&<button className="studio-button basics-trigger" onClick={openBasics}><ContactRound size={14}/>기본 정보</button>}<label className="font-control"><span>Font</span><select aria-label="Font" value={site.font} onChange={e=>update(s=>({...s,font:e.target.value}))}>{Object.entries(fonts).map(([id,font])=><option key={id} value={id}>{font.name}</option>)}</select></label><div className="theme-control" ref={themePanel}><button className="theme-trigger" aria-expanded={paletteOpen} onClick={()=>setPaletteOpen(v=>!v)}><Palette size={15}/><span>Theme</span><span className="theme-dots"><i style={{background:themes[site.theme].paper}}/><i style={{background:themes[site.theme].accent}}/></span></button>{paletteOpen&&<div className="theme-popover" aria-label="배경색과 포인트색"><div className="theme-heading">배경색 + 포인트색</div>{Object.entries(themes).map(([id,theme])=><button key={id} aria-pressed={site.theme===id} onClick={()=>update(s=>({...s,theme:id}))}><span className="theme-swatch" style={{background:theme.paper}}><i style={{background:theme.accent}}/></span><span>{theme.name}</span>{id===site.theme&&<Check size={15}/>}</button>)}</div>}</div></div>
-    <div className="studio-canvas" ref={canvas} onScroll={()=>{if(drag.current&&!drag.current.active)endDrag(false)}} onDragOver={e=>{if(drag.current?.native){e.preventDefault();e.dataTransfer.dropEffect='move';markDrop(e.clientY)}}} onDrop={e=>{if(drag.current?.native){e.preventDefault();markDrop(e.clientY);endDrag(true)}}}><div className="studio-page" style={{width:preview&&previewWidth!=='auto'?`min(100%, ${previewWidth}px)`:undefined}} key={`${site.id}-${lang}-${preview}`}><SitePage site={site} lang={lang} editing={!preview} selected={selected} selectedElement={selectedElement} onSelectElement={selectElement} onElementResize={resizeElement} onEdit={edit} onEntry={changeEntry} onSelect={selectSection} onLanguage={changeLanguage} onAddLanguage={addLanguage} onRemoveLanguage={removeLanguage} onAdd={setInsertAfter} onMove={move} onHide={hide} onDelete={remove} onMenu={menu} onPhoto={photo} onAsset={uploadAsset} onBasics={openBasics} dragProps={dragProps}/></div></div>
+    <div className="studio-canvas" ref={canvas}><div className="studio-page" style={{width:preview&&previewWidth!=='auto'?`min(100%, ${previewWidth}px)`:undefined}} key={`${site.id}-${lang}-${preview}`}><SitePage site={site} lang={lang} editing={!preview} selected={selected} selectedElement={selectedElement} onSelectElement={selectElement} onElementResize={resizeElement} onEdit={edit} onEntry={changeEntry} onSelect={selectSection} onLanguage={changeLanguage} onAddLanguage={addLanguage} onRemoveLanguage={removeLanguage} onAdd={setInsertAfter} onMove={move} onHide={hide} onDelete={remove} onMenu={menu} onPhoto={photo} onAsset={uploadAsset} onBasics={openBasics} dragProps={dragProps}/></div></div>
    </main>
   </div>}
   <input hidden ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPhoto}/>
