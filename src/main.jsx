@@ -22,7 +22,8 @@ import './studio.css';
 
 function App(){
  const [ready,setReady]=useState(false),[loadError,setLoadError]=useState('');
- const lastSaved=useRef(null),saveQueue=useRef(Promise.resolve()),saveVersion=useRef(0);
+ const lastSaved=useRef(null),queuedBase=useRef(null),saveStopped=useRef(false),saveQueue=useRef(Promise.resolve()),saveVersion=useRef(0);
+ const [saveProblem,setSaveProblem]=useState(null),[saveAttempt,setSaveAttempt]=useState(0);
  const [sites,setSites]=useState(loadSites),[siteId,setSiteId]=useState(()=>sites[0].id),[lang,setLang]=useState('en');
  const site=sites.find(s=>s.id===siteId)||sites[0];
  const languageAvailable=siteLanguages(site).includes(lang);
@@ -50,19 +51,38 @@ function App(){
   (async()=>{try{
    const saved=await readDrafts();
    if(saved!==undefined&&(!Array.isArray(saved)||!saved.length||saved.some(s=>!s.id||!Array.isArray(s.sections))))throw new Error('invalid drafts');
-   const initial=saved||loadSites();
-   if(!saved)await writeDrafts(initial);
-   if(active){lastSaved.current=initial;setSites(initial);setSiteId(initial[0].id);setReady(true);}
+   const initial=saved||await writeDrafts(loadSites());
+   if(active){lastSaved.current=initial;queuedBase.current=initial;setSites(initial);setSiteId(initial[0].id);setReady(true);}
   }catch{if(active)setLoadError('저장된 프로젝트를 열지 못했어요. 브라우저의 사이트 저장 권한을 확인하고 다시 열어 주세요.')}})();
   return()=>{active=false};
  },[]);
  useEffect(()=>{
-  if(!ready||sites===lastSaved.current)return;
+  if(!ready||sites===lastSaved.current||saveStopped.current)return;
+  const base=queuedBase.current;queuedBase.current=sites;
   const version=++saveVersion.current;setSaveMessage('저장 중…');
-  saveQueue.current=saveQueue.current.catch(()=>{}).then(()=>writeDrafts(sites)).then(()=>{
-   if(version===saveVersion.current){lastSaved.current=sites;setSaveMessage('이 브라우저에 저장됨');}
-  }).catch(()=>{if(version===saveVersion.current)setSaveMessage('저장하지 못했어요. 저장 공간을 확보하고 다시 수정해 주세요.');});
- },[sites,ready]);
+  saveQueue.current=saveQueue.current.catch(()=>{}).then(async()=>{
+   if(saveStopped.current)return;
+   const merged=await writeDrafts(sites,base);lastSaved.current=sites;
+   if(version===saveVersion.current){
+    setSites(current=>{if(current!==sites)return current;lastSaved.current=merged;queuedBase.current=merged;return merged;});
+    setSaveMessage('이 브라우저에 저장됨');
+   }
+  }).catch(error=>{saveStopped.current=true;setSaveProblem(error.name==='DraftConflictError'?'conflict':'storage');setSaveMessage('저장 확인이 필요해요');});
+ },[sites,ready,saveAttempt]);
+ useEffect(()=>{
+  const warn=e=>{if(sites!==lastSaved.current){e.preventDefault();e.returnValue='';}};
+  window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
+ },[sites]);
+ const retrySave=async()=>{await saveQueue.current;queuedBase.current=lastSaved.current;saveStopped.current=false;setSaveProblem(null);setSaveAttempt(value=>value+1)};
+ const loadLatest=async()=>{
+  saveStopped.current=true;await saveQueue.current;
+  try{
+   const latest=await readDrafts();if(!latest?.length)throw new Error();
+   lastSaved.current=latest;queuedBase.current=latest;setSites(latest);setSiteId(id=>latest.some(s=>s.id===id)?id:latest[0].id);
+   setSelected(null);setSelectedElement(null);setPendingNavigation(null);setRemovedSection(null);setRemovedLanguage(null);setBasicsModal(null);setInsertAfter(null);
+   saveStopped.current=false;setSaveProblem(null);setSaveMessage('최신 저장 내용을 불러왔어요');
+  }catch{setSaveMessage('최신 내용을 열지 못했어요. 다시 시도해 주세요.');}
+ };
  useEffect(()=>{if(!preview)return;return revealSections(canvas.current,canvas.current)},[preview,lang,site.id]);
  useEffect(()=>{if(insertAfter!==null)catalogClose.current?.focus();},[insertAfter]);
  useEffect(()=>{
@@ -173,6 +193,7 @@ function App(){
  if(!ready)return <div className="studio-loading" role="status">{loadError||'프로젝트를 불러오는 중…'}</div>;
  return <div className="studio">
   <header className="studio-top"><div className="studio-brand"><button className="folio-brand" onClick={goHome} aria-label="Folio 홈"><strong>Folio</strong></button>{!home&&<button className="home-link" onClick={goHome}><ArrowLeft size={13}/>프로젝트</button>}</div><div className="studio-actions"><span className="studio-save" role="status">{saveMessage}</span>{!home&&<><button className="studio-button" onClick={()=>{downloadSite(site);setSaveMessage('HTML 파일을 내려받았어요')}}><Download size={15}/><span>HTML 내보내기</span></button><button className="studio-button primary" onClick={togglePreview}>{preview?<ArrowLeft size={15}/>:<Eye size={15}/>}<span>{preview?'편집으로 돌아가기':'미리보기'}</span></button></>}</div></header>
+  {saveProblem&&<div className="studio-save-problem" role="alert"><div><strong>{saveProblem==='conflict'?'다른 탭에서 같은 내용을 수정했어요.':'브라우저에 저장하지 못했어요.'}</strong><p>이 탭의 수정은 아직 저장되지 않았어요. 필요한 페이지를 HTML로 보관할 수 있어요.</p></div><button type="button" onClick={()=>downloadSite(site)}>현재 페이지 HTML 보관</button>{saveProblem==='storage'&&<button type="button" onClick={retrySave}>다시 저장</button>}<button type="button" onClick={loadLatest}>이 탭 변경 버리고 최신 내용 열기</button></div>}
   {home?<ProjectHome sites={sites} onOpen={changeSite} onCreate={createSite}/>:<div className="studio-workspace" data-preview={preview}>
    {!preview&&<aside className="studio-sidebar"><div className="site-picker"><label htmlFor="site-picker">사이트</label><div><select id="site-picker" value={site.id} onChange={e=>changeSite(e.target.value)}>{sites.map(s=><option value={s.id} key={s.id}>{siteTitle(s)}</option>)}</select><button onClick={createSite} aria-label="새 사이트 만들기"><Plus size={17}/></button></div></div>{languageAvailable&&<><div className="studio-sideheading"><span>페이지 구성</span><button ref={addButton} onClick={()=>setInsertAfter(selected||site.sections.at(-1)?.id||'')} aria-label="섹션 추가"><Plus size={16}/></button></div><ol className="studio-sectionlist">{site.sections.map(s=><li key={s.id} data-active={selected===s.id} data-hidden={s.hidden}><button onClick={()=>{selectSection(s.id);scrollToSection(s.id)}}><GripVertical size={13}/>{s.name}</button>{s.hidden&&<button className="restore" onClick={()=>hide(s.id)}>표시</button>}<button type="button" className="section-remove" aria-label={`${s.name} 섹션 삭제`} title="섹션 삭제" onClick={()=>remove(s.id)}><X size={13}/></button></li>)}</ol><div className="studio-sidefoot">{site.sections.length}개 섹션</div></>}</aside>}
    <main className="studio-main"><div className="studio-designbar">{preview&&<div className="viewport-control" role="group" aria-label="미리보기 화면 크기">{[['auto','전체 너비',Monitor],['768','태블릿 768px',Tablet],['390','모바일 390px',Smartphone]].map(([value,label,Icon])=><button key={value} type="button" aria-label={label} title={label} aria-pressed={previewWidth===value} onClick={()=>setPreviewWidth(value)}><Icon size={16}/><span>{value==='auto'?'전체':value+'px'}</span></button>)}</div>}{!preview&&<button className="studio-button basics-trigger" onClick={openBasics}><ContactRound size={14}/>기본 정보</button>}<label className="font-control"><span>Font</span><select aria-label="Font" value={site.font} onChange={e=>update(s=>({...s,font:e.target.value}))}>{Object.entries(fonts).map(([id,font])=><option key={id} value={id}>{font.name}</option>)}</select></label><div className="theme-control" ref={themePanel}><button className="theme-trigger" aria-expanded={paletteOpen} onClick={()=>setPaletteOpen(v=>!v)}><Palette size={15}/><span>Theme</span><span className="theme-dots"><i style={{background:themes[site.theme].paper}}/><i style={{background:themes[site.theme].accent}}/></span></button>{paletteOpen&&<div className="theme-popover" aria-label="배경색과 포인트색"><div className="theme-heading">배경색 + 포인트색</div>{Object.entries(themes).map(([id,theme])=><button key={id} aria-pressed={site.theme===id} onClick={()=>update(s=>({...s,theme:id}))}><span className="theme-swatch" style={{background:theme.paper}}><i style={{background:theme.accent}}/></span><span>{theme.name}</span>{id===site.theme&&<Check size={15}/>}</button>)}</div>}</div></div>

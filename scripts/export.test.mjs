@@ -59,3 +59,12 @@ test('English-only HTML omits Korean content and the language controls entirely'
 test('saved projects without language settings continue exporting both languages',()=>{
  const site=example();delete site.languages;const html=exportSite(site);assert.match(html,/data-language-page="ko" hidden/);assert.match(html,/허은녕/);
 });
+test('navigation follows edited section titles in each language and retains the About label for the profile',()=>{
+ const site=example(),research=site.sections.find(s=>s.kind==='research');
+ research.text.en.title='Climate & energy';research.text.ko.title='기후와 에너지';
+ const html=exportSite(site);
+ assert.match(html,/<a href="#en-section-research">Climate &amp; energy<\/a>/);
+ assert.match(html,/<a href="#ko-section-research">기후와 에너지<\/a>/);
+ assert.match(html,/<a href="#en-section-profile">About<\/a>/);
+ research.text.en.title='';assert.match(exportSite(site),/<a href="#en-section-research">Research<\/a>/);
+});

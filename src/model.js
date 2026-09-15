@@ -20,6 +20,10 @@ const defaultSections=[['profile','소개','About'],['research','연구 분야',
 const defaultFields={profile:{college:'',department:'',position:'',body:''},research:{topic1:'',text1:'',topic2:'',text2:''},publications:{year1:'',topic1:'',text1:'',year2:'',topic2:'',text2:''},cv:{body:''},contact:{email:'',organization:'',office:''}};
 export const catalog=[...defaultSections,['curriculum','CV · 이력서 PDF','CV'],['news','새 소식','News'],['allworks','전체 논문','Publications'],['books','저서','Books'],['projects','연구 프로젝트','Projects'],['teaching','강의','Teaching'],['people','연구실·지도학생','People'],['openings','모집 안내','Opportunities'],['talks','발표·강연','Talks'],['press','언론·인터뷰','In the press'],['awards','수상','Awards'],['service','학회·사회 활동','Service'],['career','학력·경력','Background'],['resources','자료·도구','Resources'],['gallery','작품·전시','Works'],['custom','자유 소개','A little more']];
 export const filled=v=>typeof v==='string'&&v.trim().length>0;
+export function navigationLabel(section,lang){
+ const fallback=lang==='en'?section.enName:section.name;
+ return section.kind==='profile'?fallback:section.text[lang].title?.trim()||fallback;
+}
 // Existing projects predate language settings and keep both language versions.
 export function siteLanguages(site){return !Array.isArray(site.languages)||site.languages.includes('ko')?['en','ko']:['en'];}
 export function siteTitle(site){

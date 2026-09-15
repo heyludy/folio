@@ -18,12 +18,23 @@ export function revealSections(root=document,scrollRoot=null){
 
 export function publicRuntime(reveal){
  const pages=[...document.querySelectorAll('[data-language-page]')];
- let cleanup=()=>{};
+ let cleanup=()=>{},activeLanguage,frame;
  const activate=lang=>{
   if(!pages.some(p=>p.dataset.languagePage===lang))return;
   cleanup();pages.forEach(p=>p.hidden=p.dataset.languagePage!==lang);
-  document.documentElement.lang=lang;
+  document.documentElement.lang=lang;activeLanguage=lang;
   const active=pages.find(p=>!p.hidden);cleanup=reveal(active);
+ };
+ const followAddress=(initial=false)=>{
+  let hash;try{hash=decodeURIComponent(window.location.hash.slice(1))}catch{hash='';}
+  const target=document.getElementById(hash),page=target?.closest('[data-language-page]');
+  const language=page?.dataset.languagePage||(pages.some(p=>p.dataset.languagePage===hash)?hash:'en');
+  if(language!==activeLanguage)activate(language);
+  cancelAnimationFrame(frame);
+  if(language)frame=requestAnimationFrame(()=>{
+   const behavior=initial||window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+   if(page)target.scrollIntoView({block:'start',behavior});else window.scrollTo({top:0,behavior});
+  });
  };
  const closeMenu=nav=>{
   nav.querySelector('.site-menu-toggle')?.setAttribute('aria-expanded','false');
@@ -35,8 +46,15 @@ export function publicRuntime(reveal){
   const link=e.target.closest('.site-navlinks a');
   if(link){const nav=link.closest('.site-nav');closeMenu(nav);const toggle=nav.querySelector('.site-menu-toggle');if(toggle?.getClientRects().length)toggle.focus({preventScroll:true});}
   const button=e.target.closest('[data-language]');
-  if(button){pages.forEach(page=>page.querySelectorAll('.site-nav').forEach(closeMenu));activate(button.dataset.language);window.scrollTo({top:0,behavior:'instant'})}
+  if(button){
+   const language=button.dataset.language;
+   if(!pages.some(page=>page.dataset.languagePage===language))return;
+   pages.forEach(page=>page.querySelectorAll('.site-nav').forEach(closeMenu));
+   window.history.pushState(null,'','#'+language);followAddress(true);
+  }
  });
  document.addEventListener('keydown',e=>{const nav=e.target.closest('.site-nav');if(e.key==='Escape'&&nav){closeMenu(nav);nav.querySelector('.site-menu-toggle')?.focus()}});
- activate(document.documentElement.lang||'en');
+ window.addEventListener('hashchange',()=>followAddress());
+ window.addEventListener('popstate',()=>followAddress());
+ followAddress(true);
 }

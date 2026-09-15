@@ -1,5 +1,5 @@
 import React,{useRef,useLayoutEffect,useState} from 'react';
-import {filled,visibleSections,themeStyle,siteLanguages} from './model';
+import {filled,visibleSections,themeStyle,siteLanguages,navigationLabel} from './model';
 import {footerInfo} from './basics';
 import {ElementEditor,ElementFrame} from './ElementFrame';
 import {entryTypes,visibleEntries,entryGroup} from './entries';
@@ -76,7 +76,7 @@ export function SitePage({site,lang='en',editing=false,selected,selectedElement,
  return <ElementEditor.Provider value={{editing,selected:selectedElement?.section===selected?selectedElement:null,onSelect:onSelectElement,onResize:onElementResize}}><div className="faculty-site" lang={lang} style={themeStyle(site,lang)} data-template={resolveTemplate(site.template).id} data-editing={editing}>
   <nav className="site-nav" aria-label="홈페이지 메뉴" onKeyDown={e=>{if(e.key==='Escape'&&menuOpen){setMenuOpen(false);menuButton.current?.focus()}}}>
    <button type="button" ref={menuButton} className="site-menu-toggle" aria-label={lang==='en'?'Toggle navigation':'메뉴 열기·닫기'} aria-expanded={menuOpen} aria-controls={`${lang}-site-navlinks`} onClick={()=>setMenuOpen(v=>!v)}><span aria-hidden="true">☰</span>{lang==='en'?'Menu':'메뉴'}</button>
-   <div className="site-navlinks" id={`${lang}-site-navlinks`} data-open={menuOpen}>{sections.filter(s=>s.nav).map(s=><a key={s.id} href={`#${lang}-section-${s.id}`} onClick={()=>{setMenuOpen(false);if(menuButton.current?.getClientRects().length)menuButton.current.focus({preventScroll:true})}}>{lang==='en'?s.enName:s.name}</a>)}</div>
+   <div className="site-navlinks" id={`${lang}-site-navlinks`} data-open={menuOpen}>{sections.filter(s=>s.nav).map(s=><a key={s.id} href={`#${lang}-section-${s.id}`} onClick={()=>{setMenuOpen(false);if(menuButton.current?.getClientRects().length)menuButton.current.focus({preventScroll:true})}}>{navigationLabel(s,lang)}</a>)}</div>
    {(editing||languages.length>1)&&<div className="site-languages" aria-label="홈페이지 언어">{[['en','EN','English'],['ko','KOR','한국어']].map(([code,text,label])=><div className="site-language-item" data-uncreated={!languages.includes(code)} key={code}><button type="button" data-language={code} aria-label={label} aria-pressed={code===lang} onClick={()=>{setMenuOpen(false);onLanguage?.(code)}}>{text}</button>{editing&&code==='ko'&&languages.includes('ko')&&<button type="button" className="site-language-remove" aria-label="한글 페이지 삭제" title="한글 페이지 삭제" onClick={()=>onRemoveLanguage?.('ko')}>×</button>}</div>)}</div>}
   </nav>
   {editing&&!available&&<div className="site-language-empty"><button type="button" className="site-language-add" aria-label="한글 페이지 추가" onClick={()=>onAddLanguage?.('ko')}><span aria-hidden="true">+</span></button><h2>한글 페이지</h2><p>+ 버튼을 눌러 한글 버전을 추가하세요.</p></div>}
