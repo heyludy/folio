@@ -2,6 +2,7 @@ import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {SitePage} from './SitePage';
 import {themes,siteLanguages} from './model';
+import {getBasicInfo} from './basics';
 import siteCss from './site.css?raw';
 import {revealSections,publicRuntime} from './motion';
 import {activatePdfLinks,pdfBlobUrl} from './assets';
@@ -10,7 +11,8 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 export function exportSite(site){
  const profile=site.sections.find(s=>s.kind==='profile');
  const languages=siteLanguages(site);
- const title=profile?.text.en.title||(languages.includes('ko')&&profile?.text.ko.title)||'Professor website';
+ const basics=getBasicInfo(site);
+ const title=basics.en.name||(languages.includes('ko')&&basics.ko.name)||'Professor website';
  const content=languages.map(lang=>renderToStaticMarkup(<div className="public-shell" data-language-page={lang} hidden={lang!=='en'}><SitePage site={site} lang={lang}/></div>)).join('');
  const script=`(${activatePdfLinks.toString()})(document,${pdfBlobUrl.toString()});\n(${publicRuntime.toString()})(${revealSections.toString()});`;
  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="${esc(profile?.text.en.body||'')}"><title>${esc(title)}</title><style>${siteCss}</style><noscript><style>.site-navlinks{display:flex!important}.site-menu-toggle,[data-pdf=download]{display:none!important}</style></noscript></head><body class="public-body" style="--public-paper:${(themes[site.theme]||themes.forest).paper}">${content}<script>${script}</script></body></html>`;

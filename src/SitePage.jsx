@@ -69,7 +69,7 @@ function Content({section:s,lang,editing,onEdit,onEntry,onAsset,photo,onPhoto,ph
  return <>{f('title','h2','site-heading')}{f('body')}</>;
 }
 
-export function SitePage({site,lang='en',editing=false,selected,selectedElement,onSelectElement,onElementResize,onEdit,onEntry,onSelect,onLanguage,onAddLanguage,onRemoveLanguage,onAdd,onMove,onHide,onMenu,onPhoto,onAsset,onBasics,dragProps=()=>({})}){
+export function SitePage({site,lang='en',editing=false,selected,selectedElement,onSelectElement,onElementResize,onEdit,onEntry,onSelect,onLanguage,onAddLanguage,onRemoveLanguage,onAdd,onMove,onHide,onDelete,onMenu,onPhoto,onAsset,onBasics,dragProps=()=>({})}){
  const [menuOpen,setMenuOpen]=useState(false),menuButton=useRef(null);
  const languages=siteLanguages(site),available=languages.includes(lang),sections=available?visibleSections(site,lang,editing):[];
  const footer=footerInfo(site,lang),affiliation=[footer.department,footer.college].filter(filled),showFooter=filled(footer.name)||affiliation.length>0;
@@ -81,10 +81,10 @@ export function SitePage({site,lang='en',editing=false,selected,selectedElement,
   </nav>
   {editing&&!available&&<div className="site-language-empty"><button type="button" className="site-language-add" aria-label="한글 페이지 추가" onClick={()=>onAddLanguage?.('ko')}><span aria-hidden="true">+</span></button><h2>한글 페이지</h2><p>+ 버튼을 눌러 한글 버전을 추가하세요.</p></div>}
   <div className="site-sections">{sections.map((s,index)=><React.Fragment key={s.id}><section id={`${lang}-section-${s.id}`} className="site-section" data-section={s.id} data-kind={s.kind} data-active={editing&&s.id===selected&&selectedElement?.section!==s.id} data-reveal={!editing?'':undefined} {...(editing?dragProps(s):{})} onFocus={e=>{if(editing&&!e.target.closest('[data-element-edit]'))onSelect(s.id)}} onClick={e=>{if(editing&&!e.target.closest('[data-element-edit]'))onSelect(s.id)}}>
-    {editing&&<div className="site-tools"><label><input type="checkbox" checked={s.nav} onChange={e=>onMenu(s.id,e.target.checked)}/>메뉴</label>{!s.fixed&&<><button type="button" aria-label={`${s.name} 위로 이동`} disabled={index<=1} onClick={()=>onMove(s.id,-1)}>↑</button><button type="button" aria-label={`${s.name} 아래로 이동`} disabled={index>=sections.length-2} onClick={()=>onMove(s.id,1)}>↓</button><button type="button" onClick={()=>onHide(s.id)}>숨기기</button></>}</div>}
-    {editing&&!s.fixed&&<button className="site-grip" type="button" draggable aria-label={`${s.name} 끌어서 이동`} data-grip={s.id}>⠿</button>}
+    {editing&&<div className="site-tools"><label><input type="checkbox" checked={s.nav} onChange={e=>onMenu(s.id,e.target.checked)}/>메뉴</label><button type="button" aria-label={`${s.name} 위로 이동`} disabled={index===0} onClick={()=>onMove(s.id,-1)}>↑</button><button type="button" aria-label={`${s.name} 아래로 이동`} disabled={index===sections.length-1} onClick={()=>onMove(s.id,1)}>↓</button><button type="button" onClick={()=>onHide(s.id)}>숨기기</button><button type="button" aria-label={`${s.name} 삭제`} onClick={()=>onDelete?.(s.id)}>삭제</button></div>}
+    {editing&&<button className="site-grip" type="button" draggable aria-label={`${s.name} 끌어서 이동`} data-grip={s.id}>⠿</button>}
     <Content section={s} lang={lang} editing={editing} onEdit={onEdit} onEntry={onEntry} onAsset={onAsset} photo={site.photo} onPhoto={onPhoto} photoLayout={site.photoLayout}/>
-   </section>{index<sections.length-1&&(editing?<div className="site-between"><button type="button" onClick={()=>onAdd(s.id)} aria-label={`${s.name} 다음에 섹션 추가`}>+</button></div>:<div className="site-rule"/>)}</React.Fragment>)}</div>
+   </section>{index<sections.length-1&&(editing?<div className="site-between"><button type="button" onClick={()=>onAdd(s.id)} aria-label={`${s.name} 다음에 섹션 추가`}>+</button></div>:<div className="site-rule"/>)}</React.Fragment>)}{editing&&available&&<div className="site-add-section" data-empty={!sections.length}><button type="button" onClick={()=>onAdd(sections.at(-1)?.id||'')} aria-label={!sections.length?'첫 섹션 추가':'맨 아래에 섹션 추가'}><span aria-hidden="true">+</span>섹션 추가</button></div>}</div>
   {available&&(showFooter||editing)&&<footer className="site-footer" aria-label={lang==='en'?'Website footer':'홈페이지 푸터'}>
    {filled(footer.name)&&<p className="site-copyright">© {new Date().getFullYear()} {footer.name}. All rights reserved.</p>}
    {affiliation.length>0&&<p className="site-footer-affiliation">{affiliation.map((part,index)=><React.Fragment key={index}>{index>0&&<span aria-hidden="true"> · </span>}<span>{part}</span></React.Fragment>)}</p>}

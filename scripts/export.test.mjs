@@ -28,10 +28,10 @@ test('entered text cannot break out into markup or script',()=>{
  site.sections[0].text.en.body='</script><script>alert("bad")</script>';
  const html=exportSite(site);assert.match(html,/&lt;img/);assert.doesNotMatch(html,/<img src=x|<script>alert/);
 });
-test('reordering keeps profile first and contact last; sites do not share mutable content',()=>{
+test('all sections can move, including the initial profile and contact; sites do not share mutable content',()=>{
  const a=example(),b=newSite();
- assert.equal(reorder(a.sections,'profile','contact'),a.sections);
- assert.equal(reorder(a.sections,'research','profile'),a.sections);
+ assert.equal(reorder(a.sections,'profile',null).at(-1).id,'profile');
+ assert.equal(reorder(a.sections,'contact','profile')[0].id,'contact');
  const moved=reorder(a.sections,'research','contact');assert.equal(moved.at(-2).id,'research');assert.equal(moved.at(-1).id,'contact');assert.equal(moved[0].id,'profile');
  a.sections[0].text.en.title='Changed';assert.equal(b.sections[0].text.en.title,'');
 });

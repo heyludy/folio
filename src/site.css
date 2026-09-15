@@ -171,3 +171,10 @@
 }
 .site-cv-document .attachment-upload{padding:12px 18px;border:1px dashed var(--site-line);border-radius:3px;background:var(--site-wash);font-size:13px}
 .site-cv-document .attachment-upload:hover{border-color:var(--site-accent)}
+.faculty-site[data-editing=true] .site-section:hover>.site-tools,.faculty-site[data-editing=true] .site-section:focus-within>.site-tools{display:flex;max-width:100%;flex-wrap:wrap}
+.site-section.drop-after::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--site-accent)}
+.site-add-section{display:flex;justify-content:center;padding:30px 0 8px}
+.site-add-section[data-empty=true]{min-height:320px;align-items:center}
+.faculty-site .site-add-section button{display:flex;align-items:center;gap:8px;padding:10px 20px;border:1px dashed var(--site-line);border-radius:4px;background:transparent;color:var(--site-muted)}
+.faculty-site .site-add-section button:hover{background:var(--site-wash);border-color:var(--site-accent);color:var(--site-accent)}
+.site-add-section button>span{font-size:20px;line-height:1}

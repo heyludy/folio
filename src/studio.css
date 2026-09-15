@@ -49,3 +49,6 @@
 .basic-site-template button:hover{text-decoration:underline}
 @media(max-width:480px){.template-options{grid-template-columns:minmax(0,1fr)}.template-option{padding:14px}.template-coming,.template-miniature{height:86px}.template-option-title{margin-top:11px}}
 .studio-loading{min-height:100vh;display:grid;place-items:center;padding:40px;text-align:center;font:14px/1.7 Pretendard,sans-serif;color:#62686e;background:#fcfcfc}
+.studio-sectionlist li>button:first-child{min-width:0;overflow-wrap:anywhere}
+.studio-sectionlist .section-remove{flex-shrink:0;display:grid;place-items:center;width:26px;height:28px;padding:0;margin-right:3px;background:transparent;border:0;border-radius:3px;opacity:.6}
+.studio-sectionlist .section-remove:hover,.studio-sectionlist .section-remove:focus-visible{opacity:1;background:#e3e3e3}
