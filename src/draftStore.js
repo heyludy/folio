@@ -65,3 +65,13 @@ export async function writePreparationDraft(siteId,draft){
  const db=await openDatabase();
  try{return await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(draft,'preparation:'+siteId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})}finally{db.close()}
 }
+
+// Account-scoped recovery records never replace the original local workspace.
+export async function cloudDraftRecord(account,change){
+ const db=await openDatabase();
+ try{return await new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE,change?'readwrite':'readonly'),store=tx.objectStore(STORE),req=store.get('cloud:'+account);let value,error;
+  req.onsuccess=()=>{try{value=change?change(req.result):req.result;if(change)store.put(value,'cloud:'+account);}catch(cause){error=cause;tx.abort();}};
+  tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(error||tx.error);tx.onabort=()=>reject(error||tx.error);
+ })}finally{db.close();}
+}

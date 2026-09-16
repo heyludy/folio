@@ -5,6 +5,7 @@ import {publishBundle} from '../src/publishing.js';
 import {setupNetwork} from '@msw/cloudflare';
 import {http,HttpResponse} from 'msw';
 import {Publication} from './publication.js';
+import {CloudStore} from './cloud.js';
 const origin='https://heyludy.github.io',headers={Origin:origin,Authorization:'Bearer test-key-only-not-a-real-secret-123456789','Content-Type':'application/json'};
 const network=setupNetwork(),pending=[];
 let publicHtml='',publicStatus=200;
@@ -22,6 +23,21 @@ beforeEach(()=>{publicStatus=200;publicHtml='';network.use(http.get(/^https:\/\/
 afterEach(()=>{expect(pending).toHaveLength(0);network.resetHandlers()});
 afterAll(()=>network.disable());
 describe('publisher in the Workers runtime',()=>{
+ it('uses native Worker fetch to verify Google identity and load the shared workspace',async()=>{
+  const member={id:crypto.randomUUID(),email:'editor@apub.kr',email_confirmed_at:'2026-09-16',identities:[{provider:'google',identity_data:{email:'editor@apub.kr',email_verified:true}}]};
+  network.use(http.get('https://folio-qa.supabase.co/auth/v1/user',({request})=>{
+   expect(request.headers.get('Authorization')).toBe('Bearer qa-google-session');
+   return HttpResponse.json(member);
+  }),http.get('https://folio-qa.supabase.co/rest/v1/:table',({request,params})=>{
+   expect(request.headers.get('apikey')).toBe('qa-service-only');
+   expect(new URL(request.url).searchParams.get('workspace_id')).toBe('eq.apub');
+   return HttpResponse.json(params.table==='folio_workspaces'?[{data:[],revision:3}]:[]);
+  }));
+  const cloud=new CloudStore({SUPABASE_URL:'https://folio-qa.supabase.co',SUPABASE_SERVICE_KEY:'qa-service-only'});
+  const account=await cloud.account(new Request('https://publisher.test/v1/cloud/account',{headers:{Authorization:'Bearer qa-google-session'}}));
+  expect(account.role).toBe('member');
+  expect(await cloud.workspace(account)).toEqual({sites:[],revision:3,publications:{}});
+ });
  it('unlocks with a shared password, then protects private operations with the issued session',async()=>{
   const login=await exports.default.fetch('https://publisher.test/v1/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.16'},body:JSON.stringify({password:'qa-publish-passphrase'})});
   expect(login.status).toBe(200);const session=await login.json();expect(session.token).toMatch(/^folio\.v1\./);

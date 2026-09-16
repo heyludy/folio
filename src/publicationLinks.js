@@ -1,5 +1,6 @@
 import {safeLink} from './links.js';
 import {domainName} from './publishing.js';
+import {cloudRuntime,cloudPublicationId} from './cloudRuntime.js';
 
 const idKey=(endpoint,siteId)=>`folio-publication:${endpoint}:${siteId}`;
 const stateKey=(endpoint,id)=>`folio-publication-state:${endpoint}:${id}`;
@@ -11,6 +12,7 @@ export function projectWebsite(site,publication){
  return websiteUrl(publication?.url)||websiteUrl(site.linkedWebsite);
 }
 export function existingPublicationId(endpoint,siteId,storage=localStorage){
+ if(cloudRuntime())return cloudPublicationId(siteId);
  try{return storage.getItem(idKey(endpoint,siteId))||null}catch{return null}
 }
 export function publishedUrl(state){
