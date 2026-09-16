@@ -28,6 +28,7 @@ export function navigationLabel(section,lang){
 // Existing projects predate language settings and keep both language versions.
 export function siteLanguages(site){return !Array.isArray(site.languages)||site.languages.includes('ko')?['en','ko']:['en'];}
 export function siteTitle(site){
+ if(site.projectLabel)return site.projectLabel;
  const profile=site.sections.find(s=>s.kind==='profile');
  const ko=profile?profile.text.ko.title:site.basics?.ko?.name,en=profile?profile.text.en.title:site.basics?.en?.name;
  return (siteLanguages(site).includes('ko')&&ko)||en||site.name;

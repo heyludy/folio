@@ -49,6 +49,14 @@ test('provider failure leaves previous published content and can recover an unce
  const changed=await publishBundle('<h1>Changed</h1>');await assert.rejects(f.publication.run('publish',changed,state.revision));assert.equal((await f.publication.load()).liveHash,b.hash);
  state=await new Publication(f.storage,f.provider).run('get');assert.equal(state.liveHash,changed.hash);assert.equal(state.pending,null);
 });
+test('draft fingerprints describe only the verified live deployment, including after a restart',async()=>{
+ const f=fixture(),before={...await bundle(),sourceHash:'a'.repeat(64)};
+ let state=await f.publication.run('publish',before,0);assert.equal(state.liveSourceHash,before.sourceHash);
+ const after={...await publishBundle('<h1>Next</h1>'),sourceHash:'b'.repeat(64)};f.provider.ready=async()=>false;
+ state=await f.publication.run('publish',after,state.revision);assert.equal(state.liveSourceHash,before.sourceHash);
+ f.provider.ready=async()=>true;state=await new Publication(f.storage,f.provider).run('get');assert.equal(state.liveSourceHash,after.sourceHash);
+ await assert.rejects(validateBundle({...after,sourceHash:'not-a-hash'}));
+});
 test('deployment success waits for the public page, survives restart, and preserves the previous version',async()=>{
  const f=fixture(),b=await bundle();f.provider.ready=async()=>false;
  let state=await f.publication.run('publish',b,0);

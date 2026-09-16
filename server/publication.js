@@ -32,7 +32,7 @@ export class Publication{
    }else{
     const deployment=state.pending.deploymentId?await this.provider.deployment(state.projectName,state.pending.deploymentId):(await this.provider.project(state.projectName)?(await this.provider.deployments(state.projectName)).find(d=>d.deployment_trigger?.metadata?.commit_message===`Folio ${state.pending.operation}`):null);
     if(deployment?.latest_stage?.name==='deploy'&&deployment.latest_stage.status==='success'){
-     if(await this.provider.ready(state.projectName,state.pending.htmlHash))return this.save({...state,status:'published',liveHash:state.pending.hash,publishedAt:deployment.modified_on||new Date(this.now()).toISOString(),pending:null,error:null});
+     if(await this.provider.ready(state.projectName,state.pending.htmlHash))return this.save({...state,status:'published',liveHash:state.pending.hash,liveSourceHash:state.pending.sourceHash||null,publishedAt:deployment.modified_on||new Date(this.now()).toISOString(),pending:null,error:null});
      if(state.pending.phase!=='verifying')return this.save({...state,pending:{...state.pending,deploymentId:deployment.id,phase:'verifying'},error:null});
      return state;
     }
@@ -55,11 +55,11 @@ export class Publication{
    if(state.pending)fail('게시 결과를 확인 중이에요. 상태를 새로고침해 주세요.',409);
    if(action==='publish'){
     const bundle=await validateBundle(body);
-    if(state.liveHash===bundle.hash)return state;
+    if(state.liveHash===bundle.hash)return bundle.sourceHash&&bundle.sourceHash!==state.liveSourceHash?this.save({...state,liveSourceHash:bundle.sourceHash}):state;
     const operation=crypto.randomUUID(),name=state.projectName||`folio-${crypto.randomUUID().replaceAll('-','').slice(0,20)}`;
     const published=await publishedBundle(bundle,`https://${name}.pages.dev`);
     const htmlHash=await sha256(fromBase64(published.files.find(file=>file.path==='index.html').content));
-    state=await this.save({...state,projectName:name,url:`https://${name}.pages.dev`,error:null,pending:{kind:'publish',operation,hash:bundle.hash,htmlHash,at:this.now()}});
+    state=await this.save({...state,projectName:name,url:`https://${name}.pages.dev`,error:null,pending:{kind:'publish',operation,hash:bundle.hash,sourceHash:bundle.sourceHash||null,htmlHash,at:this.now()}});
     try{
      if(!await this.provider.project(name))await this.provider.create(name);
      const deployment=await this.provider.deploy(name,published,operation);

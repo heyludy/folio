@@ -38,6 +38,7 @@ export async function publishBundle(html){
  return validateBundle({files});
 }
 export async function validateBundle(input){
+ if(input?.sourceHash!==undefined&&(typeof input.sourceHash!=='string'||!/^[a-f0-9]{64}$/.test(input.sourceHash)))fail('게시 원본 정보를 확인해 주세요.');
  const files=input?.files;
  if(!Array.isArray(files)||!files.length||files.length>100)fail('게시할 파일은 1~100개여야 해요.');
  let total=0;const paths=new Set(),fingerprints=[];
@@ -52,7 +53,7 @@ export async function validateBundle(input){
   fingerprints.push(file.path+':'+hash);
  }
  if(!paths.has('index.html'))fail('홈페이지 파일이 없어요.');
- return {files:files.map(file=>({path:file.path,content:file.content})),hash:await sha256(fingerprints.sort().join('\n')),bytes:total};
+ return {files:files.map(file=>({path:file.path,content:file.content})),hash:await sha256(fingerprints.sort().join('\n')),bytes:total,...(input.sourceHash?{sourceHash:input.sourceHash}:{})};
 }
 export function fileType(path){return types[path.split('.').at(-1)]}
 export function publicationLabel(state,hash){

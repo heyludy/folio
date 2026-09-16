@@ -8,3 +8,12 @@ export function deleteProject(sites,id,now=Date.now()){
 export function restoreProject(sites,id){
  return sites.map(site=>{if(site.id!==id||!site.deletedAt)return site;const {deletedAt,...restored}=site;return restored;});
 }
+
+export function duplicateProject(site,id=crypto.randomUUID()){
+ const copy=structuredClone(site);
+ copy.id=id;
+ copy.name=(site.projectLabel||site.name||'새 프로젝트')+' 복사본';
+ copy.projectLabel=copy.name;
+ for(const key of ['deletedAt','linkedWebsite','example','publication','publicationId','publishedAt'])delete copy[key];
+ return copy;
+}

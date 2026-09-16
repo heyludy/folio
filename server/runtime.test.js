@@ -67,7 +67,7 @@ describe('publisher in the Workers runtime',()=>{
   const cloud=new CloudStore({SUPABASE_URL:'https://folio-qa.supabase.co',SUPABASE_SERVICE_KEY:'qa-service-only'});
   const account=await cloud.account(new Request('https://publisher.test/v1/cloud/account',{headers:{Authorization:'Bearer qa-google-session'}}));
   expect(account.role).toBe('member');
-  expect(await cloud.workspace(account)).toEqual({sites:[],revision:3,publications:{}});
+  expect(await cloud.workspace(account)).toEqual({sites:[],revision:3,publications:{},activity:{}});
  });
  it('unlocks with a shared password, then protects private operations with the issued session',async()=>{
   const login=await exports.default.fetch('https://publisher.test/v1/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.16'},body:JSON.stringify({password:'qa-publish-passphrase'})});

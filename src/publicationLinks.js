@@ -21,7 +21,7 @@ export function publishedUrl(state){
  return websiteUrl(state.url);
 }
 export function publicationSummary(state){
- return {revision:state.revision,status:state.status,url:publishedUrl(state),liveHash:state.liveHash||null,pending:!!state.pending,publishedAt:state.publishedAt||null};
+ return {revision:state.revision,status:state.status,url:publishedUrl(state),liveHash:state.liveHash||null,...(state.liveSourceHash?{liveSourceHash:state.liveSourceHash}:{}),pending:!!state.pending,publishedAt:state.publishedAt||null};
 }
 export function readPublicationLink(endpoint,siteId,storage=localStorage){
  const id=existingPublicationId(endpoint,siteId,storage);if(!id)return null;

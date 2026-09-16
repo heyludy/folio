@@ -33,6 +33,11 @@ export async function handleRequest(request,env){
    if(path==='/v1/cloud/workspace'&&method==='GET')return Response.json(await cloud.workspace(account),{headers});
    if(path==='/v1/cloud/workspace'&&method==='PUT')return Response.json(await cloud.save(account,await readJson(request,2*1024*1024),Number(request.headers.get('If-Match')??-1)),{headers});
    if(path==='/v1/cloud/claim'&&method==='POST')return Response.json(await cloud.claim(account,await readJson(request,2048)),{headers});
+   if(path==='/v1/cloud/history'&&method==='GET'){
+    const query=new URL(request.url).searchParams;
+    return Response.json(await cloud.history(account,query.get('siteId'),query.get('id')),{headers});
+   }
+   if(['/v1/cloud/checkpoint','/v1/cloud/restore'].includes(path)&&method==='POST')return Response.json(await cloud.checkpoint(account,await readJson(request,2*1024*1024),path.endsWith('/restore')),{headers});
    const asset=path.match(/^\/v1\/cloud\/assets\/([a-f0-9]{64})$/);
    if(asset&&['GET','PUT'].includes(method)){
     const result=await cloud.asset(account,asset[1],request);

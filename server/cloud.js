@@ -39,17 +39,36 @@ export class CloudStore{
   return {id:user.id,email:user.email.toLowerCase(),role};
  }
  async workspace(account){
-  const [rows,mappings]=await Promise.all([
+  const [rows,mappings,activity]=await Promise.all([
    this.call(`/rest/v1/folio_workspaces?workspace_id=eq.apub&select=data,revision`),
-   this.call(`/rest/v1/folio_publications?workspace_id=eq.apub&select=site_id,publication_id`)
+   this.call(`/rest/v1/folio_publications?workspace_id=eq.apub&select=site_id,publication_id`),
+   this.call('/rest/v1/folio_activity?workspace_id=eq.apub&select=site_id,updated_email,updated_at')
   ]);
-  return {sites:rows[0]?.data??[],revision:rows[0]?.revision??0,publications:Object.fromEntries(mappings.map(row=>[row.site_id,row.publication_id]))};
+  return {sites:rows[0]?.data??[],revision:rows[0]?.revision??0,publications:Object.fromEntries(mappings.map(row=>[row.site_id,row.publication_id])),activity:Object.fromEntries(activity.map(row=>[row.site_id,{email:row.updated_email,at:row.updated_at}]))};
  }
  async save(account,payload,revision){
   if(!Number.isSafeInteger(revision)||revision<0)fail('저장 버전을 확인해 주세요.',400);
   validateWorkspace(payload?.sites);
-  const result=await this.call('/rest/v1/rpc/folio_save_workspace',{method:'POST',body:{p_actor:account.id,p_revision:revision,p_data:payload.sites}});
+  const result=await this.call('/rest/v1/rpc/folio_save_workspace_v2',{method:'POST',body:{p_actor:account.id,p_email:account.email,p_revision:revision,p_data:payload.sites}});
   if(result.conflict)fail('다른 기기에서 내용이 바뀌었어요. 최신 내용을 확인해 주세요.',409);
+  return result;
+ }
+ async history(account,siteId,historyId){
+  if(typeof siteId!=='string'||!siteId||siteId.length>128)fail('프로젝트를 확인해 주세요.');
+  const filter=`site_id=eq.${encodeURIComponent(siteId)}`;
+  if(historyId&&!uuid.test(historyId))fail('버전을 확인해 주세요.');
+  const rows=await this.call(`/rest/v1/folio_history?${filter}&select=id,reason,actor_email,created_at${historyId?',snapshot':''}&order=created_at.desc,id.desc&limit=30${historyId?'&id=eq.'+historyId:''}`);
+  if(historyId&&!rows.length)fail('이 버전은 더 이상 보관되어 있지 않아요. 목록을 다시 열어 주세요.',404);
+  return historyId?rows[0]:rows;
+ }
+ async checkpoint(account,payload,restore=false){
+  if(!payload?.siteId||payload.expected?.id!==payload.siteId)fail('프로젝트를 확인해 주세요.');
+  validateWorkspace([payload.expected]);
+  if(restore&&!uuid.test(payload.historyId||''))fail('버전을 확인해 주세요.');
+  if(!restore&&!['manual','import','publish'].includes(payload.reason))fail('보관할 작업을 확인해 주세요.');
+  const result=await this.call('/rest/v1/rpc/'+(restore?'folio_restore_history':'folio_checkpoint'),{method:'POST',body:{p_actor:account.id,p_email:account.email,p_site:payload.siteId,p_expected:payload.expected,...(restore?{p_history:payload.historyId}:{p_reason:payload.reason})}});
+  if(result.missing)fail('프로젝트 또는 보관된 버전을 찾지 못했어요.',404);
+  if(result.conflict)fail('다른 사람이 내용을 수정했어요. 최신 내용을 불러온 뒤 다시 시도해 주세요.',409);
   return result;
  }
  async owns(account,id){

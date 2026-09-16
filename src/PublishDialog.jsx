@@ -9,8 +9,9 @@ import {DomainSettings} from './DomainSettings';
 import {PUBLICATION_CHANGED} from './usePublicationLinks';
 import {publisherSettings,rememberPublisher,disconnectPublisher,connectPublication,publishRequest,unlockPublisher} from './publishClient';
 import './publish.css';
+import {siteFingerprint} from './projectHistory';
 
-export function PublishDialog({site,onClose,initialView='publish'}){
+export function PublishDialog({site,onClose,initialView='publish',onCheckpoint}){
  const [view,setView]=useState(initialView),[password,setPassword]=useState('');
  const [config,setConfig]=useState(publisherSettings),[connected,setConnected]=useState(false),[state,setState]=useState(null),[bundle,setBundle]=useState(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(''),[domain,setDomain]=useState(''),[confirm,setConfirm]=useState(null);
  const dialog=useRef(null),close=useRef(null),previousFocus=useRef(document.activeElement),alive=useRef(true),busyRef=useRef(false),path=useRef(null),polls=useRef(0);
@@ -21,7 +22,7 @@ export function PublishDialog({site,onClose,initialView='publish'}){
  };
  const restoreFocus=()=>{if(previousFocus.current?.isConnected)previousFocus.current.focus({preventScroll:true})};
  useEffect(()=>{alive.current=true;close.current?.focus();const escape=e=>{if(e.key==='Escape'){e.stopImmediatePropagation();if(!busyRef.current)onClose()}};document.addEventListener('keydown',escape,true);return()=>{alive.current=false;document.removeEventListener('keydown',escape,true);restoreFocus()}},[]);
- useEffect(()=>{if(view!=='publish')return;let active=true;setBundle(null);setShareImage('');createShareCard(site).then(async image=>({image,bundle:await publishBundle(exportSite(site,{shareImage:image}))})).then(value=>{if(active){setShareImage(value.image);setBundle(value.bundle)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[site,view]);
+ useEffect(()=>{if(view!=='publish')return;let active=true;setBundle(null);setShareImage('');createShareCard(site).then(async image=>({image,bundle:{...await publishBundle(exportSite(site,{shareImage:image})),sourceHash:await siteFingerprint(site)}})).then(value=>{if(active){setShareImage(value.image);setBundle(value.bundle)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[site,view]);
  const perform=async(label,work)=>{
   if(busyRef.current)return;busyRef.current=true;setBusy(label);setError('');setNotice('');
   try{await work()}catch(e){if(alive.current){setError(e.message);if(e.status===401)setConnected(false)}}finally{busyRef.current=false;if(alive.current)setBusy('')}
@@ -44,7 +45,8 @@ export function PublishDialog({site,onClose,initialView='publish'}){
  },[connected,state,busy]);
  const publish=()=>perform('게시 중',async()=>{
   if(!bundle)return;
-  const next=await publishRequest(config,path.current,{method:'PUT',body:{files:bundle.files},revision:state.revision});
+  if(onCheckpoint)await onCheckpoint(site,'publish');
+  const next=await publishRequest(config,path.current,{method:'PUT',body:{files:bundle.files,sourceHash:bundle.sourceHash},revision:state.revision});
   if(alive.current){setNotice(next.pending?'완료되면 공개 주소가 표시돼요. 창을 다시 열어도 확인할 수 있어요.':'페이지가 게시됐어요.');receive(next)}
  });
  const mutate=async(suffix,method,body)=>{const next=await publishRequest(config,path.current+suffix,{method,body,revision:state.revision});if(alive.current){receive(next);setConfirm(null);dialog.current?.scrollTo({top:0,behavior:'smooth'})}};
@@ -68,8 +70,8 @@ export function PublishDialog({site,onClose,initialView='publish'}){
    <section className="publish-share"><h3>링크 미리보기</h3>{shareImage?<img src={shareImage} width="1200" height="630" alt="이름과 소속, 테마 색을 담은 공유 이미지"/>:<p className="publish-note" role="status">미리보기를 준비하고 있어요.</p>}<p className="publish-note">현재 편집 내용의 미리보기예요. 변경사항을 게시하면 공유 이미지도 바뀌어요.</p>{sharingUrl&&<><button className="studio-button" disabled={!!busy||!!state.pending} onClick={()=>copy(sharingUrl)}><Copy size={14}/>공유 링크 복사</button><p className="publish-note">마지막 게시 버전의 주소를 복사해요. 카카오톡에서 이전 카드가 보이면 이 링크를 새로 보내주세요. 이미 보낸 메시지는 그대로 남을 수 있어요.</p></>}</section>
    </>}
    {view==='domain'&&<DomainSettings state={state} busy={busy} domain={domain} setDomain={setDomain} onAdd={value=>perform('도메인 연결 중',async()=>mutate('/domain','POST',{name:domainName(value)}))} onRefresh={()=>perform('도메인 확인 중',refresh)} onCopy={copy} onRemove={()=>setConfirm('domain')} onPublish={()=>setView('publish')}/>}
-   {confirm&&<div className="publish-confirm" role="alert"><strong>{confirm==='domain'?'도메인 연결을 해제할까요?':'홈페이지 게시를 중단할까요?'}</strong><p>{confirm==='domain'?'이 사이트를 가리키는 DNS 레코드는 DNS 관리 화면에서 정리해 주세요. 도메인·네임서버·이메일 설정은 유지되고, 기본 주소는 계속 열려요.':'공개 사이트와 이전 배포 주소가 삭제돼요. 다시 게시하면 새 기본 주소가 발급돼요. 이 브라우저의 편집 내용은 남아요.'}</p><div><button className="studio-button" disabled={!!busy} onClick={()=>setConfirm(null)}>취소</button><button className="studio-button danger" disabled={disabled} onClick={()=>perform('처리 중',async()=>{await mutate(confirm==='domain'?'/domain':'/unpublish',confirm==='domain'?'DELETE':'POST',{confirm:confirm==='domain'?'disconnect':'unpublish'});setNotice(confirm==='domain'?'연결을 해제했어요. 도메인 관리 화면에서도 DNS 레코드를 삭제해 주세요.':'게시를 중단했어요.')} )}>{confirm==='domain'?'연결 해제':'게시 중단'}</button></div></div>}
-   <footer className="publish-footer">{!config.cloud&&<button className="publish-text-button" disabled={!!busy||!!state.pending} onClick={()=>{disconnectPublisher();setConfig({...config,key:''});setConnected(false);setState(null)}}>게시 잠금</button>}{view==='publish'&&state.projectName&&!confirm&&<button className="publish-text-button danger" disabled={disabled||!!state.domain} title={state.domain?'도메인을 먼저 해제해 주세요.':undefined} onClick={()=>setConfirm('unpublish')}>게시 중단</button>}</footer>
+   {confirm&&<div className="publish-confirm" role="alert"><strong>{confirm==='domain'?'도메인 연결을 해제할까요?':'사이트 공개를 중단할까요?'}</strong><p>{confirm==='domain'?'이 사이트를 가리키는 DNS 레코드는 DNS 관리 화면에서 정리해 주세요. 도메인·네임서버·이메일 설정은 유지되고, 기본 주소는 계속 열려요.':'공개 사이트와 이전 배포 주소가 삭제돼요. 다시 게시하면 새 기본 주소가 발급돼요. Folio의 프로젝트와 편집 내용은 남아요.'}</p><div><button className="studio-button" disabled={!!busy} onClick={()=>setConfirm(null)}>취소</button><button className="studio-button danger" disabled={disabled} onClick={()=>perform('처리 중',async()=>{await mutate(confirm==='domain'?'/domain':'/unpublish',confirm==='domain'?'DELETE':'POST',{confirm:confirm==='domain'?'disconnect':'unpublish'});setNotice(confirm==='domain'?'연결을 해제했어요. 도메인 관리 화면에서도 DNS 레코드를 삭제해 주세요.':'게시를 중단했어요.')} )}>{confirm==='domain'?'연결 해제':'사이트 공개 중단하기'}</button></div></div>}
+   <footer className="publish-footer">{!config.cloud&&<button className="publish-text-button" disabled={!!busy||!!state.pending} onClick={()=>{disconnectPublisher();setConfig({...config,key:''});setConnected(false);setState(null)}}>게시 잠금</button>}{view==='publish'&&state.projectName&&!confirm&&<details><summary>공개 관리</summary><div className="publish-stop"><p>현재 게시된 홈페이지를 내릴 때 사용해요.<br/>Folio의 편집 내용은 남아요.</p><button className="publish-text-button danger" disabled={disabled||!!state.domain} title={state.domain?'도메인을 먼저 해제해 주세요.':undefined} onClick={()=>setConfirm('unpublish')}>사이트 공개 중단하기</button></div></details>}</footer>
   </>}
   {(error||state?.error)&&<div className="publish-error" role="alert">{error||state.error}{connected&&<button className="publish-text-button" disabled={!!busy} onClick={()=>perform('상태 확인 중',refresh)}>상태 다시 확인</button>}</div>}
   {(notice||busy)&&<p className="publish-notice" role="status">{busy?`${busy}…`:notice}</p>}

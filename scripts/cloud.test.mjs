@@ -33,8 +33,8 @@ test('cloud API verifies server user, reads one shared workspace, and rejects un
   return Response.json([]);
  });
  const account=await store.account(new Request('https://test',{headers:{Authorization:'Bearer actual-login'}}));
- assert.equal(account.role,'member');assert.deepEqual(await store.workspace(account),{sites:[],revision:0,publications:{}});
- assert.ok(calls.slice(1).every(([url])=>url.includes('workspace_id=eq.apub')&&!url.includes(account.id)));
+ assert.equal(account.role,'member');assert.deepEqual(await store.workspace(account),{sites:[],revision:0,publications:{},activity:{}});
+ assert.ok(calls.slice(1).every(([url])=>(url.includes('workspace_id=eq.apub')||url.includes('/folio_activity?'))&&!url.includes(account.id)));
  await assert.rejects(store.owns(account,crypto.randomUUID()),error=>error.status===403);
  await assert.rejects(store.claim(account,{}),error=>error.status===403);
 });
@@ -64,7 +64,7 @@ test('modern secret keys authorize shared data and private assets without replac
   seen.add('workspace');return Response.json([]);
  });
  const account=await store.account(new Request('https://test',{headers:{Authorization:'Bearer actual-login'}}));
- assert.deepEqual(await store.workspace(account),{sites:[],revision:0,publications:{}});
+ assert.deepEqual(await store.workspace(account),{sites:[],revision:0,publications:{},activity:{}});
  await store.asset(account,hash,new Request('https://test',{method:'PUT',headers:{'Content-Type':'application/pdf'},body:bytes}));
  const download=await store.asset(account,hash,new Request('https://test'));
  assert.deepEqual(new Uint8Array(await download.arrayBuffer()),bytes);

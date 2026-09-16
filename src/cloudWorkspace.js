@@ -6,8 +6,9 @@ import {validateDrafts} from './exampleMigration.js';
 
 export function createCloudWorkspace(account,api,{record=cloudDraftRecord}={}){
  const known=new Set(),assets=new Map();
- const hydrate=data=>unpackAssets(data,async hash=>new Uint8Array(await (await api('/assets/'+hash,{binary:true})).arrayBuffer()),assets);
- const mappings=data=>{const runtime=cloudRuntime();if(runtime?.account.id===account.id)runtime.publications=data.publications;};
+ const hydrate=data=>unpackAssets(data,async hash=>{const bytes=new Uint8Array(await (await api('/assets/'+hash,{binary:true})).arrayBuffer());known.add(hash);return bytes;},assets);
+ const pack=data=>packAssets(data,(hash,bytes,type)=>api('/assets/'+hash,{method:'PUT',body:bytes,type}),known);
+ const mappings=data=>{const runtime=cloudRuntime();if(runtime?.account.id===account.id){runtime.publications=data.publications;runtime.activity=data.activity||{};}};
  const remote=async()=>{const data=await api('/workspace');mappings(data);return {...data,sites:validateDrafts(await hydrate(data.sites))};};
  const flush=async()=>{
   for(let attempt=0;attempt<4;attempt++){
@@ -18,7 +19,7 @@ export function createCloudWorkspace(account,api,{record=cloudDraftRecord}={}){
     if(JSON.stringify(saved.base)===JSON.stringify(saved.sites))return saved.sites;
     continue;
    }
-   const packed=await packAssets(merged,(hash,bytes,type)=>api('/assets/'+hash,{method:'PUT',body:bytes,type}),known);
+   const packed=await pack(merged);
    let result;
    try{result=await api('/workspace',{method:'PUT',body:{sites:packed},revision:latest.revision});}catch(error){if(error.status===409)continue;throw error;}
    mappings(result);
@@ -46,6 +47,18 @@ export function createCloudWorkspace(account,api,{record=cloudDraftRecord}={}){
    });
    return changed?latest.sites:null;
   },
-  async claim(siteId,publicationId){return api('/claim',{method:'POST',body:{siteId,publicationId}});}
+  async claim(siteId,publicationId){return api('/claim',{method:'POST',body:{siteId,publicationId}});},
+  async history(siteId){return api('/history?siteId='+encodeURIComponent(siteId));},
+  async version(siteId,id){const row=await api('/history?siteId='+encodeURIComponent(siteId)+'&id='+encodeURIComponent(id));return {...row,snapshot:await hydrate(row.snapshot)};},
+  async checkpoint(site,reason='manual'){return api('/checkpoint',{method:'POST',body:{siteId:site.id,reason,expected:await pack(site)}});},
+  async restore(site,id){
+   const before=await record(account.id);
+   if(!before||JSON.stringify(before.base)!==JSON.stringify(before.sites))throw new DraftConflictError();
+   const result=await api('/restore',{method:'POST',body:{siteId:site.id,historyId:id,expected:await pack(site)}});
+   mappings(result);const restored=await hydrate(result.sites);
+   const saved=await record(account.id,current=>({base:restored,sites:mergeDrafts(before.sites,current.sites,restored)}));
+   // Edits made in another tab while restoring stay queued for synchronization.
+   return JSON.stringify(saved.base)===JSON.stringify(saved.sites)?saved.sites:flush();
+  }
  };
 }

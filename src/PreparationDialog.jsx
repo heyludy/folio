@@ -73,7 +73,7 @@ export function PreparationDialog({site,onApply,onClose}){
  const apply=async()=>{
   if(applying)return;setApplying(true);
   try{await saveQueue.current;await writePreparationDraft(site.id,{...draft,step:'welcome'});}catch{ /* Project saving reports storage failures separately. */ }
-  if(alive.current&&onApply(candidate)===false){setApplying(false);setError('다른 탭에서 내용이 바뀌었어요. 변경 내용을 다시 확인한 뒤 반영해 주세요.');}
+  try{if(alive.current&&await onApply(candidate)===false){setApplying(false);setError('다른 탭에서 내용이 바뀌었어요. 변경 내용을 다시 확인한 뒤 반영해 주세요.');}}catch(cause){if(alive.current){setApplying(false);setError(cause.message);}}
  };
  const copy=async(text,next)=>{
   try{await navigator.clipboard.writeText(text);if(next)update({step:next});setMessage('복사했어요. 사용하는 AI에 붙여넣어 주세요.');}
