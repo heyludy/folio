@@ -6,10 +6,39 @@ import {readPreparationDraft,writePreparationDraft} from './draftStore';
 import {initialPreparation,preparationKinds,markdownTemplate,buildPreparationPrompt,readPreparationFile,parsePreparation,buildImportPlan,chosenChange,applyImportPlan,sourceLinks} from './preparation';
 import './preparation.css';
 
-function Sources({meta}){
+function ReviewNotice({children}){return children?<p className="prepare-review-notice"><strong>확인 필요</strong>{children}</p>:null;}
+function Sources({meta,showReview=true,showMissing=true}){
  if(!meta||!Object.keys(meta).length)return <small className="prepare-unverified">출처 미기재 · 내용을 확인해 주세요.</small>;
  const links=sourceLinks(meta.source);
- return <div className="prepare-sources">{links.map((url,i)=><a key={url} href={url} target="_blank" rel="noopener noreferrer">출처 {i+1}<ExternalLink size={11}/></a>)}{!links.length&&<small>출처 미기재</small>}{meta.checked&&<small>자료에 기재된 확인일: {meta.checked}</small>}{meta.notes&&<p>{meta.notes}</p>}{(meta.image||meta.pdf)&&<p>파일은 적용 후 직접 올려 주세요. {[meta.image,meta.pdf].filter(Boolean).join(' · ')}</p>}</div>;
+ return <div className="prepare-sources">{links.map((url,i)=><a key={url} href={url} target="_blank" rel="noopener noreferrer">출처 {i+1}<ExternalLink size={11}/></a>)}{!links.length&&showMissing&&<small>출처 미기재</small>}{meta.checked&&<small>자료에 기재된 확인일: {meta.checked}</small>}{meta.notes&&<p className="prepare-memo"><strong>메모</strong>{meta.notes}</p>}{showReview&&<ReviewNotice>{meta.review}</ReviewNotice>}{(meta.image||meta.pdf)&&<p>파일은 적용 후 직접 올려 주세요. {[meta.image,meta.pdf].filter(Boolean).join(' · ')}</p>}</div>;
+}
+
+function ImportChange({change:c,group:g,enabled,choices,onChoose}){
+ const ownMeta=Object.fromEntries(Object.entries(c.itemMeta||{}).filter(([key,value])=>value!==g.meta[key]));
+ const detail=[c.fields?.year,g.kind==='awards'?c.fields?.text:''].filter(Boolean).join(' · ');
+ return <div className="prepare-change" data-status={c.status}>
+  <label><input type="checkbox" aria-label={`${g.lang.toUpperCase()} ${g.name} ${c.label}${detail?' · '+detail:''} 반영`} disabled={!enabled||c.status==='same'} checked={enabled&&chosenChange(c,choices)} onChange={e=>onChoose(c.key,e.target.checked)}/><span><small>{c.status==='same'?'이미 있는 항목':c.status==='change'?'기존 내용 교체':'새 내용'}</small><strong>{c.label}</strong>{detail&&<span className="prepare-entry-detail">{detail}</span>}</span></label>
+  <ReviewNotice>{[c.warning,ownMeta.review].filter(Boolean).join('\n')}</ReviewNotice>
+  <details><summary>{c.status==='change'?'기존 내용과 비교':'내용 확인'}</summary>{c.status==='change'&&<div className="prepare-before"><small>현재</small><p>{c.type==='field'?c.previous:Object.values(c.previous).filter(Boolean).join('\n')}</p></div>}<div className="prepare-after"><small>가져온 내용</small><p>{c.type==='field'?c.value:Object.values(c.fields).filter(Boolean).join('\n')||'파일 연결 위치를 준비해요.'}</p></div>{c.type==='entry'&&(Object.keys(ownMeta).length?<Sources meta={ownMeta} showReview={false} showMissing={!sourceLinks(g.meta.source).length}/>:!sourceLinks(g.meta.source).length&&<small className="prepare-unverified">출처 미기재</small>)}</details>
+ </div>;
+}
+
+function ImportGroup({group:g,enabled,choices,onToggle,onChoose,hasKorean}){
+ const compact=['profile','contact'].includes(g.kind);
+ const selected=g.changes.filter(c=>enabled&&chosenChange(c,choices)).length;
+ const replacements=g.changes.filter(c=>c.status==='change').length;
+ const changes=g.changes.map(c=><ImportChange key={c.key} change={c} group={g} enabled={enabled} choices={choices} onChoose={onChoose}/>);
+ return <section className="prepare-group" aria-label={`${g.lang.toUpperCase()} ${g.name}`}>
+  <header><label><input type="checkbox" aria-label={`${g.lang.toUpperCase()} ${g.name} 영역 반영`} checked={enabled} onChange={e=>onToggle(e.target.checked)}/><strong>{g.name}</strong><span>{g.lang.toUpperCase()}</span></label>{!g.existing&&<small>새 섹션</small>}</header>
+  {g.hidden&&<p className="prepare-note">이 섹션은 숨김 상태를 유지해요. 편집기에서 표시할 수 있어요.</p>}{g.lang==='ko'&&!hasKorean&&<p className="prepare-note">선택한 내용을 적용하면 한글 페이지도 추가돼요.</p>}
+  <ReviewNotice>{g.meta.review}</ReviewNotice>
+  {!g.changes.length&&<p className="prepare-note">기존 내용과 같아요.</p>}
+  {compact&&!!g.changes.length?<>
+   <div className="prepare-field-summary"><p>{g.changes.length}개 항목 중 {selected}개 선택{replacements>0&&<span> · 기존 내용 교체 {replacements}개는 직접 선택</span>}</p><dl>{g.changes.filter(c=>c.type==='field').map(c=><div key={c.key} data-selected={enabled&&chosenChange(c,choices)}><dt>{c.label}</dt><dd>{c.value}</dd></div>)}</dl></div>
+   <details className="prepare-field-choices"><summary>항목별 선택 · 기존 내용 비교</summary>{changes}</details>
+  </>:changes}
+  {Object.keys(g.meta).length>0&&<div className="prepare-group-sources"><Sources meta={g.meta} showReview={false}/></div>}
+ </section>;
 }
 export function PreparationDialog({site,onApply,onClose}){
  const [draft,setDraft]=useState(()=>initialPreparation(site)),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[manualPrompt,setManualPrompt]=useState(false),[reading,setReading]=useState(false);
@@ -65,7 +94,7 @@ export function PreparationDialog({site,onApply,onClose}){
  const savedSources=site.sections.flatMap(s=>Object.entries(s.provenance||{}).flatMap(([lang,records])=>Object.values(records).map(meta=>({name:s.name,lang,meta}))));
  return <div className="studio-overlay prepare-overlay"><div ref={dialog} className={`prepare-dialog ${draft.step==='review'?'prepare-wide':''}`} role="dialog" aria-modal="true" aria-labelledby="prepare-title" onKeyDown={e=>{
   if(e.key!=='Tab')return;
-  const nodes=[...dialog.current.querySelectorAll('button:not(:disabled),input:not(:disabled):not([hidden]),textarea,select,a[href],iframe')].filter(el=>el.getClientRects().length),first=nodes[0],last=nodes.at(-1);
+  const nodes=[...dialog.current.querySelectorAll('button:not(:disabled),input:not(:disabled):not([hidden]),textarea,select,a[href],summary,iframe')].filter(el=>el.getClientRects().length),first=nodes[0],last=nodes.at(-1);
   if(e.shiftKey&&(document.activeElement===first||document.activeElement===title.current)){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
  }}>
   <header className="prepare-header"><div><p className="prepare-eyebrow">CONTENT STUDIO</p><h2 ref={title} tabIndex={-1} id="prepare-title">{titleText}</h2></div><button type="button" className="prepare-close" aria-label="내용 준비 닫기" onClick={onClose}><X size={20}/></button></header>
@@ -96,13 +125,10 @@ export function PreparationDialog({site,onApply,onClose}){
      {!parsed.groups.length&&draft.raw.trim()&&<details className="prepare-repair"><summary>양식이 맞지 않나요?</summary><p>아래 요청을 AI에 전달하면 입력한 자료를 Folio 양식으로 정리할 수 있어요.</p><textarea readOnly aria-label="양식 수정 프롬프트" value={repairPrompt}/></details>}
     </>}
     {draft.step==='review'&&<>
-     <div className="prepare-review-summary"><strong>{plan.length}개 영역을 읽었어요.</strong><span>기존 내용의 교체는 직접 선택해 주세요. 빈 값은 기존 내용을 지우지 않아요.</span></div>
-     {!!parsed.warnings.length&&<details className="prepare-warnings"><summary>확인할 내용 {parsed.warnings.length}개</summary><ul>{parsed.warnings.map((warning,i)=><li key={i}>{warning}</li>)}</ul><p>필요하면 ‘자료 수정’으로 돌아가 내용을 고쳐 주세요.</p></details>}
+     <div className="prepare-review-summary"><strong>{plan.length}개 영역을 읽었어요.</strong><span>기존 내용 교체와 확인 필요 항목은 직접 선택해 주세요. 빈 값은 기존 내용을 지우지 않아요.</span></div>
+     {!!parsed.warnings.length&&<section className="prepare-warnings" aria-label="가져오기 안내"><strong>반영 전에 확인해 주세요 · {parsed.warnings.length}개</strong><ul>{parsed.warnings.map((warning,i)=><li key={i}>{warning}</li>)}</ul><p>필요하면 ‘자료 수정’으로 돌아가 내용을 고쳐 주세요.</p></section>}
      <div className="prepare-review-grid"><div className="prepare-review-options">
-      {plan.map(g=><section className="prepare-group" key={g.key}><header><label><input type="checkbox" checked={groups[g.key]!==false} onChange={e=>update({groups:{...groups,[g.key]:e.target.checked}})}/><strong>{g.name}</strong><span>{g.lang.toUpperCase()}</span></label>{!g.existing&&<small>새 섹션</small>}</header>{g.hidden&&<p className="prepare-note">이 섹션은 숨김 상태를 유지해요. 편집기에서 표시할 수 있어요.</p>}{g.lang==='ko'&&!siteLanguages(site).includes('ko')&&<p className="prepare-note">선택한 내용을 적용하면 한글 페이지도 추가돼요.</p>}
-       {!g.changes.length&&<p className="prepare-note">기존 내용과 같아요.</p>}
-       {g.changes.map(c=><div key={c.key} className="prepare-change" data-status={c.status}><label><input type="checkbox" aria-label={`${g.lang.toUpperCase()} ${g.name} ${c.label} 반영`} disabled={groups[g.key]===false||c.status==='same'} checked={groups[g.key]!==false&&chosenChange(c,choices)} onChange={e=>update({choices:{...choices,[c.key]:e.target.checked}})}/><span><small>{c.status==='same'?'이미 있는 항목':c.status==='change'?'기존 내용 교체':'새 내용'}{c.meta.notes?' · 확인 메모 있음':!sourceLinks(c.meta.source).length?' · 출처 미기재':''}</small><strong>{c.label}</strong></span></label><details><summary>{c.status==='change'?'기존 내용과 비교':'내용 · 출처 확인'}</summary>{c.status==='change'&&<div className="prepare-before"><small>현재</small><p>{c.type==='field'?c.previous:Object.values(c.previous).filter(Boolean).join('\n')}</p></div>}<div className="prepare-after"><small>가져온 내용</small><p>{c.type==='field'?c.value:Object.values(c.fields).filter(Boolean).join('\n')}</p></div><Sources meta={c.meta}/></details></div>)}
-      </section>)}
+      {plan.map(g=><ImportGroup key={g.key} group={g} enabled={groups[g.key]!==false} choices={choices} hasKorean={siteLanguages(site).includes('ko')} onToggle={checked=>update({groups:{...groups,[g.key]:checked}})} onChoose={(key,checked)=>update({choices:{...choices,[key]:checked}})}/>)}
      </div><div className="prepare-preview"><div><span>반영 후 페이지</span><small>선택한 내용으로 미리 보여드려요.</small></div><iframe title="가져온 내용 페이지 미리보기" sandbox="allow-scripts allow-popups" srcDoc={previewHtml}/></div></div>
      <p className="prepare-note">이름·소속·이메일은 연결된 위치에도 반영돼요. 사진과 PDF는 적용 후 페이지에서 올릴 수 있어요.</p>
     </>}

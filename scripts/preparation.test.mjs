@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newSite,newSection,siteLanguages,visibleSections} from '../src/model.js';
-import {entryIds,removeEntry} from '../src/entries.js';
+import {entryIds,visibleEntries,removeEntry} from '../src/entries.js';
 import {koreanSnapshot,removeKoreanPage,restoreKoreanPage} from '../src/languages.js';
 import {getBasicInfo,applyBasicInfo} from '../src/basics.js';
 import {exportSite} from '../.test-build/export.js';
@@ -109,4 +109,56 @@ test('deleting imported rows and Korean content also removes their source record
  const deleted=removeEntry(after,section.id,'en','1');assert.equal(deleted.sections[2].provenance.en['1'],undefined);assert.ok(deleted.sections[2].provenance.ko['1']);
  const snapshot=koreanSnapshot(after),english=removeKoreanPage(after);assert.deepEqual(english.sections[2].provenance.ko,{});assert.ok(english.sections[2].provenance.en['1']);
  assert.deepEqual(restoreKoreanPage(english,snapshot).sections[2].provenance,section.provenance);
+});
+
+const award=(year,organization,extra='')=>`### item\ntopic: Lifetime Achievement Award\nyear: ${year}\ntext: ${organization}\n${extra}`;
+test('awards with the same name retain distinct years and organizations, including when reimported',()=>{
+ const site=newSite(),md='## EN / awards\n'+[award('2024','Society A'),award('2017','Society A'),award('2024','Society B')].join('\n');
+ const parsed=parsePreparation(md);assert.equal(parsed.groups[0].entries.length,3);assert.equal(parsed.warnings.length,0);
+ const first=applyImportPlan(site,buildImportPlan(site,parsed));assert.equal(count(first,'awards'),3);
+ const again=plan(first,md)[0];assert.ok(again.changes.every(c=>c.status==='same'));assert.equal(new Set(again.changes.map(c=>c.id)).size,3);
+ assert.deepEqual(applyImportPlan(first,[again]),first);
+ const updated=plan(first,md.replace('Society B\n','Society B\nurl: https://example.edu/award\n'))[0];
+ const changed=updated.changes.find(c=>c.status==='change');assert.equal(changed.previous.text,'Society B');assert.equal(changed.previous.year,'2024');
+ const after=applyImportPlan(first,[updated],{[changed.key]:true});assert.equal(count(after,'awards'),3);assert.equal(after.sections.find(s=>s.kind==='awards').text.en['url'+changed.id],'https://example.edu/award');
+});
+test('duplicate awards are identified by name, year and organization and retain review concerns',()=>{
+ const parsed=parsePreparation('## EN / awards\n'+award('2024','Society A')+'\n'+award('2024','Society A','review: Confirm official English name'));
+ assert.equal(parsed.groups[0].entries.length,1);assert.match(parsed.warnings[0],/중복/);
+ const change=buildImportPlan(newSite(),parsed)[0].changes[0];assert.equal(change.meta.review,'Confirm official English name');assert.equal(change.checked,false);
+});
+test('ambiguous existing awards never target an arbitrary existing row, even after explicit selection',()=>{
+ const site=newSite(),md='## EN / awards\n'+award('2024','Society A');let first=applyImportPlan(site,plan(site,md));
+ const s=first.sections.find(s=>s.kind==='awards'),id=visibleEntries(s,'en')[0];
+ s.entryOrder.en.push('duplicate');for(const key of ['topic','year','text'])s.text.en[key+'duplicate']=s.text.en[key+id];
+ const p=plan(first,md),c=p[0].changes[0];assert.equal(c.status,'new');assert.equal(c.checked,false);assert.match(c.warning,/구분/);assert.ok(![id,'duplicate'].includes(c.id));
+ assert.deepEqual(applyImportPlan(first,p),first);
+ const after=applyImportPlan(first,p,{[c.key]:true});assert.equal(count(after,'awards'),3);assert.equal(after.sections.find(s=>s.kind==='awards').text.en['topic'+id],'Lifetime Achievement Award');
+});
+test('incomplete award identities do not overwrite a more specific existing award',()=>{
+ const site=newSite(),first=applyImportPlan(site,plan(site,'## EN / awards\n'+award('2024','Society A')));
+ const c=plan(first,'## EN / awards\n'+award('2024',''))[0].changes[0];assert.equal(c.status,'new');assert.notEqual(c.id,visibleEntries(first.sections.find(s=>s.kind==='awards'),'en')[0]);
+});
+test('ordinary notes stay neutral; explicit review issues require selection and stay out of public HTML',()=>{
+ const site=newSite(),md='## EN / profile\nname: Alex\ncollege: University\nnotes: Shared editorial context\nreview: PRIVATE_REVIEW_ISSUE\n'+publication;
+ const p=plan(site,md);assert.equal(p[0].meta.notes,'Shared editorial context');assert.ok(p[0].changes.every(c=>!c.checked));assert.equal(p[1].changes[0].checked,true);
+ const choices=Object.fromEntries(p[0].changes.map(c=>[c.key,true])),after=applyImportPlan(site,p,choices);
+ assert.equal(after.sections[0].provenance.en.section.review,'PRIVATE_REVIEW_ISSUE');assert.doesNotMatch(exportSite(after),/PRIVATE_REVIEW_ISSUE|Shared editorial context/);
+ assert.ok(plan(site,md.replace('review: PRIVATE_REVIEW_ISSUE',''))[0].changes.every(c=>c.checked));
+ assert.match(buildPreparationPrompt(site,initialPreparation(site)),/notes.*review/);assert.match(markdownTemplate(site),/review: /);
+});
+test('section review concerns cover every imported row without losing per-item notes',()=>{
+ const p=plan(newSite(),'## EN / awards\nreview: Check dates\nnotes: Shared context\n'+award('2024','Society A','notes: Item context'));
+ const c=p[0].changes[0];assert.equal(c.checked,false);assert.equal(c.meta.review,'Check dates');assert.equal(c.itemMeta.notes,'Item context');assert.equal(p[0].meta.notes,'Shared context');
+});
+test('distinct DOIs never match by title, while canonical DOI URLs are deduplicated',()=>{
+ const site=newSite(),first=applyImportPlan(site,plan(site,publication));
+ assert.equal(plan(first,publication.replace('10.1234/example','10.1234/ex.ample'))[0].changes[0].status,'new');
+ const p=parsePreparation(publication+'\n'+publication.replace('10.1234/example','https://doi.org/10.1234/EXAMPLE').replace('## EN / publications',''));
+ assert.equal(p.groups[0].entries.length,1);
+});
+test('two incoming records cannot both overwrite the same existing row',()=>{
+ const site=newSite(),first=applyImportPlan(site,plan(site,publication.replace('doi: 10.1234/example','')));
+ const md=publication+'\n'+publication.replace('## EN / publications','').replace('10.1234/example','10.5678/another');
+ const changes=plan(first,md)[0].changes;assert.equal(changes.length,2);assert.equal(changes[0].status,'change');assert.equal(changes[1].status,'new');assert.equal(changes[1].checked,false);assert.notEqual(changes[0].id,changes[1].id);assert.match(changes[1].warning,/구분/);
 });
