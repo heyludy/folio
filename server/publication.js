@@ -19,7 +19,7 @@ export class Publication{
     domain.zone=await this.provider.dns.inspect(current.name,new URL(state.url).hostname);
     domain.needsRetry=!data||!domain.zone||domain.zone.dnsStatus!=='ready';
     if(domain.zone?.status!=='active'||domain.zone?.dnsStatus!=='ready')domain.status='pending';
-   }catch(error){domain.setupError=error.message;domain.needsRetry=true;domain.status='pending';}
+   }catch(error){domain.setupError=error.message;domain.needsRetry=true;}
   }
   if(JSON.stringify(domain)!==JSON.stringify(current))return this.save({...state,domain});
   return state;

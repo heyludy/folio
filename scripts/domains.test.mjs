@@ -119,3 +119,8 @@ test('partial zones are not converted or modified automatically',async()=>{
  const f=fixture({zone:{id:'zone-qa',name,account:{id:account},type:'partial',status:'active'}});
  const result=await f.publication.run('domain-add',{name},1);assert.match(result.domain.setupError,/다른 DNS 연결/);assert.ok(f.state.calls.every(c=>c.method==='GET'));
 });
+test('already verified legacy apex links remain usable when optional DNS setup permission is absent',async()=>{
+ const f=fixture({configured:false});const saved=await f.storage.get('publication');
+ await f.storage.put('publication',{...saved,domain:{name,status:'active'}});f.state.attached={name,status:'active'};
+ const result=await f.publication.run('get');assert.equal(result.domain.status,'active');assert.match(result.domain.setupError,/권한/);
+});
