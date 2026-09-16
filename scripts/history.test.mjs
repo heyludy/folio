@@ -4,7 +4,8 @@ import {readFile} from 'node:fs/promises';
 import {PGlite} from '@electric-sql/pglite';
 import {duplicateProject} from '../src/projects.js';
 import {siteFingerprint} from '../src/projectHistory.js';
-import {newSite} from '../src/model.js';
+import {newSite,siteTitle} from '../src/model.js';
+import {editSiteField,applyBasicInfo,getBasicInfo} from '../src/basics.js';
 import {CloudStore} from '../server/cloud.js';
 import {createCloudWorkspace} from '../src/cloudWorkspace.js';
 
@@ -13,10 +14,19 @@ test('duplicated projects retain content and attachments without inheriting publ
  const site={...newSite(),example:true,deletedAt:1,linkedWebsite:'https://professor.org',publicationId:'original',photo:'data:image/png;base64,aGk='};
  site.sections[0].text.en.title='Original professor';
  const copy=duplicateProject(site,'copy');
- assert.equal(copy.id,'copy');assert.match(copy.projectLabel,/복사본$/);
+ assert.equal(copy.id,'copy');assert.equal(copy.projectLabel,'Original professor 복사본');
  for(const key of ['example','deletedAt','linkedWebsite','publicationId'])assert.equal(copy[key],undefined);
  assert.equal(copy.photo,site.photo);assert.deepEqual(copy.sections,site.sections);
  copy.sections[0].text.en.title='New professor';assert.equal(site.sections[0].text.en.title,'Original professor');
+});
+test('renaming a copied professor works both inline and through basic information',()=>{
+ const source=newSite();source.sections[0].text.en.title='Original';
+ const copy=duplicateProject(source);
+ assert.equal(siteTitle(editSiteField(copy,'profile','en','body','Biography')),'Original 복사본');
+ assert.equal(siteTitle(editSiteField(copy,'profile','en','title','Renamed inline')),'Renamed inline');
+ const basic=getBasicInfo(copy);basic.en.name='Renamed in basics';
+ assert.equal(siteTitle(applyBasicInfo(copy,basic)),'Renamed in basics');
+ assert.equal(siteTitle(copy),'Original 복사본');
 });
 test('published source comparison survives JSON key ordering and ignores management-only changes',async()=>{
  const a={id:'a',name:'Site',theme:'navy',sections:[{id:'profile',text:{en:{title:'A',body:'B'}}}]};

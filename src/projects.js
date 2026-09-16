@@ -1,3 +1,4 @@
+import {siteTitle} from './model.js';
 export const activeProjects=sites=>sites.filter(site=>!site.deletedAt);
 export const deletedProjects=sites=>sites.filter(site=>site.deletedAt).sort((a,b)=>b.deletedAt-a.deletedAt);
 
@@ -12,7 +13,7 @@ export function restoreProject(sites,id){
 export function duplicateProject(site,id=crypto.randomUUID()){
  const copy=structuredClone(site);
  copy.id=id;
- copy.name=(site.projectLabel||site.name||'새 프로젝트')+' 복사본';
+ copy.name=(siteTitle(site)||'새 프로젝트')+' 복사본';
  copy.projectLabel=copy.name;
  for(const key of ['deletedAt','linkedWebsite','example','publication','publicationId','publishedAt'])delete copy[key];
  return copy;

@@ -12,7 +12,7 @@ import {BasicInfoDialog} from './BasicInfoDialog';
 import {PreparationDialog} from './PreparationDialog';
 import {undoPreparation} from './preparation';
 import {mergeDrafts} from './draftMerge';
-import {applyBasicInfo,editSiteField,getBasicInfo} from './basics';
+import {applyBasicInfo,editSiteField} from './basics';
 import {updateElement} from './elements';
 import {addEntry,removeEntry,entryIds} from './entries';
 import {resolveTemplate} from './templates';
@@ -227,7 +227,7 @@ function App({account,onLogout}){
  const createSite=()=>setBasicsModal({site:newSite(),creating:true,initialLanguage:'en'});
  const saveBasics=(draft,languages,templateId,icon)=>{
   if(basicsModal.creating){const next=prepareTemplate({...applyBasicInfo(basicsModal.site,draft),languages,icon},resolveTemplate(templateId).id);setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
-  else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages,icon,template:resolveTemplate(templateId).id,...(draft.en.name!==getBasicInfo(s).en.name||draft.ko.name!==getBasicInfo(s).ko.name?{projectLabel:undefined}:{})}:s));if(!languages.includes(lang))setLang('en')}
+  else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages,icon,template:resolveTemplate(templateId).id}:s));if(!languages.includes(lang))setLang('en')}
   setBasicsModal(null);
  };
  const openPreparation=()=>{endDrag();setPaletteOpen(false);setSelected(null);setSelectedElement(null);setPreparing(true)};

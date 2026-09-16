@@ -17,6 +17,7 @@ export function editSiteField(site,id,lang,key,value){
  if(!source)return site;
  const profile=getSection(site,'profile'),contact=getSection(site,'contact'),old=source.text[lang][key]||'';
  let result=setField(site,id,lang,key,value);
+ if(source.kind==='profile'&&key==='title'&&old!==value)delete result.projectLabel;
  // Update repeated values together, while retaining previously customized placements.
  if(source.kind==='profile'&&key==='college'&&contact&&contact.text[lang].organization===old)result=setField(result,contact.id,lang,'organization',value);
  if(source.kind==='contact'&&key==='organization'&&profile&&profile.text[lang].college===old)result=setField(result,profile.id,lang,'college',value);
@@ -31,6 +32,7 @@ export function applyBasicInfo(site,next){
  const previous=getBasicInfo(site),profile=getSection(site,'profile'),contact=getSection(site,'contact');
  if(next.email===previous.email&&['en','ko'].every(lang=>Object.keys(previous[lang]).every(key=>next[lang][key]===previous[lang][key])))return site;
  let result={...site,basics:structuredClone(next)};
+ if(['en','ko'].some(lang=>next[lang].name!==previous[lang].name))delete result.projectLabel;
  for(const lang of ['en','ko']){
   for(const [key,field] of Object.entries(profileKeys)){
    if(next[lang][key]===previous[lang][key])continue;
