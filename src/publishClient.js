@@ -1,5 +1,6 @@
 import {publishingEndpoint,PublishError} from './publishing.js';
 import {cloudRuntime,cloudPublicationId} from './cloudRuntime.js';
+import {existingPublicationId,websiteUrl,publishedUrl} from './publicationLinks.js';
 const settingsKey='folio-publisher-endpoint',sessionKey='folio-publisher-session';
 export function publisherSettings(){
  const cloud=cloudRuntime();if(cloud)return {endpoint:cloud.endpoint,cloud:true};
@@ -35,6 +36,21 @@ export async function publishRequest(config,path,{method='GET',body,revision}={}
  return data;
 }
 export const publicationLinkRequest=(endpoint,id)=>publishRequest({endpoint},`/v1/sites/${encodeURIComponent(id)}/link`);
+export async function connectPublication(config,site,storage=localStorage){
+ const previous=existingPublicationId(config.endpoint,site.id,storage);
+ const existing=previous?await publishRequest(config,`/v1/sites/${previous}`):null;
+ if(config.cloud||existing?.projectName||existing?.status==='unpublished'||!websiteUrl(site.linkedWebsite)){
+  const id=previous||publicationId(config.endpoint,site.id);
+  return {id,state:existing||await publishRequest(config,`/v1/sites/${id}`),recovered:false};
+ }
+ // A shortcut is not permission to create a second public site. Resolve its
+ // authenticated server record before saving any new identity in this browser.
+ const result=await publishRequest(config,'/v1/recovery',{method:'POST',body:{url:site.linkedWebsite}});
+ if(!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(result.id)||!publishedUrl(result.state))throw new Error('기존 게시 연결을 확인하지 못했어요.');
+ if(existingPublicationId(config.endpoint,site.id,storage)!==previous)throw new Error('다른 탭에서 게시 연결이 변경됐어요. 다시 열어 주세요.');
+ storage.setItem(`folio-publication:${config.endpoint}:${site.id}`,result.id);
+ return {...result,recovered:true};
+}
 export async function unlockPublisher(endpoint,password){
  const session=await publishRequest({endpoint},'/v1/session',{method:'POST',body:{password}});
  return rememberPublisher({endpoint,key:session.token,expiresAt:session.expiresAt});

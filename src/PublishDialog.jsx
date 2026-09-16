@@ -4,10 +4,10 @@ import {exportSite} from './export';
 import {publishBundle,domainName,publicationLabel} from './publishing';
 import {createShareCard} from './shareCard';
 import {shareUrl} from './share';
-import {publishedUrl,rememberPublicationLink,existingPublicationId,websiteUrl} from './publicationLinks';
-import {DomainSettings,LinkedDomainGuide} from './DomainSettings';
+import {publishedUrl,rememberPublicationLink,websiteUrl} from './publicationLinks';
+import {DomainSettings} from './DomainSettings';
 import {PUBLICATION_CHANGED} from './usePublicationLinks';
-import {publisherSettings,rememberPublisher,disconnectPublisher,publicationId,publishRequest,unlockPublisher} from './publishClient';
+import {publisherSettings,rememberPublisher,disconnectPublisher,connectPublication,publishRequest,unlockPublisher} from './publishClient';
 import './publish.css';
 
 export function PublishDialog({site,onClose,initialView='publish'}){
@@ -15,7 +15,6 @@ export function PublishDialog({site,onClose,initialView='publish'}){
  const [config,setConfig]=useState(publisherSettings),[connected,setConnected]=useState(false),[state,setState]=useState(null),[bundle,setBundle]=useState(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(''),[domain,setDomain]=useState(''),[confirm,setConfirm]=useState(null);
  const dialog=useRef(null),close=useRef(null),previousFocus=useRef(document.activeElement),alive=useRef(true),busyRef=useRef(false),path=useRef(null),polls=useRef(0);
  const [shareImage,setShareImage]=useState('');
- const linkedOnly=view==='domain'&&websiteUrl(site.linkedWebsite)&&!existingPublicationId(config.endpoint,site.id);
  const receive=(next,endpoint=config.endpoint)=>{
   setState(next);
   try{rememberPublicationLink(endpoint,site.id,next);window.dispatchEvent(new Event(PUBLICATION_CHANGED))}catch{setNotice('게시 주소를 홈에 저장하지 못했어요. 주소를 복사해 보관해 주세요.')}
@@ -30,11 +29,13 @@ export function PublishDialog({site,onClose,initialView='publish'}){
  const connect=async(connection=config)=>{
   const response=await publishRequest(connection,'/v1/session');
   if(response.service!=='folio-publisher')throw new Error('Folio 게시 서버 주소를 확인해 주세요.');
-  const saved=rememberPublisher(connection);path.current=`/v1/sites/${publicationId(saved.endpoint,site.id)}`;
-  const next=await publishRequest(saved,path.current);if(!alive.current)return;
-  setConfig(saved);receive(next,saved.endpoint);setConnected(true);
+  const saved=rememberPublisher(connection),result=await connectPublication(saved,site);
+  if(!alive.current)return;
+  path.current=`/v1/sites/${result.id}`;
+  setConfig(saved);receive(result.state,saved.endpoint);setConnected(true);
+  if(result.recovered)setNotice('기존 게시 연결을 복구했어요. 변경사항을 게시하면 같은 주소에 반영돼요.');
  };
- useEffect(()=>{if(!linkedOnly&&config.endpoint&&(config.key||config.cloud))perform('연결 확인 중',connect)},[]);
+ useEffect(()=>{if(config.endpoint&&(config.key||config.cloud))perform('연결 확인 중',connect)},[]);
  const refresh=async()=>{const next=await publishRequest(config,path.current);if(alive.current)receive(next)};
  useEffect(()=>{
   if(!connected||(!state?.pending&&(!state?.domain||state.domain.status==='active'))){polls.current=0;return;}
@@ -55,7 +56,7 @@ export function PublishDialog({site,onClose,initialView='publish'}){
  }}>
   <header className="publish-heading"><div><span className="publish-eyebrow">PUBLISH</span><h2 id="publish-title">{view==='domain'?'도메인 연결':'게시 설정'}</h2><p>{view==='domain'?'구매한 도메인을 교수님 홈페이지에 연결하세요.':'완성한 홈페이지를 주소 하나로 공유하세요.'}</p></div><button ref={close} className="publish-icon" type="button" aria-label="게시 설정 닫기" disabled={!!busy} onClick={onClose}><X size={20}/></button></header>
   <nav className="publish-tabs" aria-label="게시 설정 메뉴"><button type="button" aria-pressed={view==='publish'} onClick={()=>{setView('publish');setError('');setConfirm(null)}}>게시</button><button type="button" aria-pressed={view==='domain'} onClick={()=>{setView('domain');setError('');setConfirm(null)}}>도메인</button></nav>
-  {linkedOnly?<LinkedDomainGuide url={websiteUrl(site.linkedWebsite)}/>:!connected&&config.cloud?<div className="publish-intro"><Globe size={25}/><h3>게시 연결 확인</h3><p>로그인한 계정으로 공용 프로젝트를 관리해요.</p><button className="studio-button primary" disabled={!!busy} onClick={()=>perform('연결 확인 중',connect)}>{busy||'다시 연결'}</button></div>:!connected?<form className="publish-connect" onSubmit={event=>{event.preventDefault();perform('암호 확인 중',async()=>{try{const saved=await unlockPublisher(config.endpoint,password);setConfig(saved);await connect(saved)}finally{setPassword('')}})}}><div className="publish-intro"><Globe size={25}/><h3>게시 암호를 입력하세요.</h3><p>함께 정한 암호로 게시와 도메인 설정을 관리해요.</p></div><label>게시 암호<input required type="password" minLength={4} maxLength={128} value={password} placeholder="함께 정한 암호" onChange={event=>setPassword(event.target.value)} autoComplete="current-password"/></label><details className="publisher-advanced" open={!config.endpoint||undefined}><summary>서버 설정</summary><label>게시 서버 주소<input required type="url" value={config.endpoint} placeholder="https://folio-publisher.example.workers.dev" onChange={event=>setConfig({...config,endpoint:event.target.value})} autoComplete="url"/></label></details><p className="publish-note">한 번 확인하면 이 탭에서 8시간 동안 사용할 수 있어요.</p><button disabled={!!busy} className="studio-button primary" type="submit">{busy||'확인'}<ArrowRight size={14}/></button></form>:<>
+  {!connected&&config.cloud?<div className="publish-intro"><Globe size={25}/><h3>게시 연결 확인</h3><p>로그인한 계정으로 공용 프로젝트를 관리해요.</p><button className="studio-button primary" disabled={!!busy} onClick={()=>perform('연결 확인 중',connect)}>{busy||'다시 연결'}</button></div>:!connected?<form className="publish-connect" onSubmit={event=>{event.preventDefault();perform('암호 확인 중',async()=>{try{const saved=await unlockPublisher(config.endpoint,password);setConfig(saved);await connect(saved)}finally{setPassword('')}})}}><div className="publish-intro"><Globe size={25}/><h3>게시 암호를 입력하세요.</h3><p>{websiteUrl(site.linkedWebsite)?'암호를 확인하면 이 홈페이지의 기존 게시 연결을 찾아요.':'함께 정한 암호로 게시와 도메인 설정을 관리해요.'}</p></div><label>게시 암호<input required type="password" minLength={4} maxLength={128} value={password} placeholder="함께 정한 암호" onChange={event=>setPassword(event.target.value)} autoComplete="current-password"/></label><details className="publisher-advanced" open={!config.endpoint||undefined}><summary>서버 설정</summary><label>게시 서버 주소<input required type="url" value={config.endpoint} placeholder="https://folio-publisher.example.workers.dev" onChange={event=>setConfig({...config,endpoint:event.target.value})} autoComplete="url"/></label></details><p className="publish-note">한 번 확인하면 이 탭에서 8시간 동안 사용할 수 있어요.</p><button disabled={!!busy} className="studio-button primary" type="submit">{busy||'확인'}<ArrowRight size={14}/></button></form>:<>
    {view==='publish'&&<>
    <section className="publish-card"><div className="publish-status"><span data-live={isLive&&!state.pending}>{isLive&&!state.pending?<Check size={14}/>:<Globe size={14}/>} {label}</span><button type="button" className="publish-text-button" disabled={!!busy} onClick={()=>perform('상태 확인 중',refresh)}><RefreshCw size={13}/>새로고침</button></div>
     {isLive?<><div className="publish-url"><a href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}<ExternalLink size={14}/></a><button className="publish-icon" aria-label="게시 주소 복사" onClick={()=>copy(publicUrl)} disabled={!!busy}><Copy size={16}/></button></div>{state.domain?.status==='active'&&<p className="publish-note">기본 주소 <a href={state.url} target="_blank" rel="noreferrer">{state.url}</a></p>}<p className="publish-note">마지막 게시 · {new Date(state.publishedAt).toLocaleString('ko-KR')}</p></>:<div className="publish-empty"><h3>{state.pending?'홈페이지를 게시하고 있어요.':'도메인 없이도 시작할 수 있어요.'}</h3><p>게시하면 기본 주소가 발급돼요.<br/>구매한 도메인은 나중에 연결할 수 있어요.</p></div>}

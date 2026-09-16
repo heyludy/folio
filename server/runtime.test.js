@@ -23,6 +23,37 @@ beforeEach(()=>{publicStatus=200;publicHtml='';network.use(http.get(/^https:\/\/
 afterEach(()=>{expect(pending).toHaveLength(0);network.resetHandlers()});
 afterAll(()=>network.disable());
 describe('publisher in the Workers runtime',()=>{
+ it('recovers a legacy publication into the same object, domain and revision',async()=>{
+  const original=crypto.randomUUID(),stub=env.PUBLICATIONS.getByName(original),name='www.recovery-professor.org',projectName='folio-abcdef123456abcdef12';
+  await runInDurableObject(stub,async(instance,ctx)=>{await ctx.storage.put('publication',{revision:8,status:'published',projectName,url:`https://${projectName}.pages.dev`,liveHash:'old-hash',pending:null,domain:{name,status:'active',associated:true,mode:'subdomain'},publishedAt:'2026-09-16'})});
+  const refresh=()=>{cf('GET',new RegExp('/pages/projects/'+projectName+'$'),{name:projectName});cf('GET',new RegExp('/domains/'+name.replaceAll('.','\\.')+'$'),{name,status:'active'})};
+  refresh();
+  const seeded=await exports.default.fetch('https://publisher.test/v1/admin/recovery',{method:'POST',headers,body:JSON.stringify({objectIds:[stub.id.toString()],projectName})});
+  expect(seeded.status).toBe(200);const record=await seeded.json();expect(record.id).not.toBe(original);
+  refresh();
+  const recovered=await exports.default.fetch('https://publisher.test/v1/recovery',{method:'POST',headers,body:JSON.stringify({url:`https://${name}/#en`})});
+  const result=await recovered.json();expect(recovered.status).toBe(200);expect(result.id).toBe(record.id);expect(result.state.projectName).toBe(projectName);
+  const changed=await publishBundle('<!doctype html><h1>Recovered edit</h1>');publicHtml=atob(changed.files[0].content);
+  cf('GET',new RegExp('/pages/projects/'+projectName+'$'),{name:projectName});
+  cf('GET',/\/upload-token$/,{jwt:'upload-test'});cf('POST','/client/v4/pages/assets/check-missing',[]);cf('POST','/client/v4/pages/assets/upsert-hashes',{});cf('POST',new RegExp('/projects/'+projectName+'/deployments$'),{id:'recovery-d1'});cf('GET',/\/deployments\/recovery-d1$/,{id:'recovery-d1',latest_stage:{name:'deploy',status:'success'}});
+  const posted=await exports.default.fetch(route(record.id),{method:'PUT',headers:{...headers,'If-Match':String(result.state.revision)},body:JSON.stringify({files:changed.files})});
+  expect(posted.status).toBe(200);const updated=await posted.json();expect(updated.liveHash).toBe(changed.hash);expect(updated.domain.name).toBe(name);expect(updated.projectName).toBe(projectName);
+  await runInDurableObject(stub,async(instance,ctx)=>{expect((await ctx.storage.get('publication')).liveHash).toBe(changed.hash)});
+  const stale=await exports.default.fetch(route(original),{method:'PUT',headers:{...headers,'If-Match':String(result.state.revision)},body:JSON.stringify({files:changed.files})});expect(stale.status).toBe(409);
+  // A removed domain must not remain recoverable through its old lookup record.
+  await runInDurableObject(stub,async(instance,ctx)=>{await ctx.storage.put('publication',{...updated,domain:null,revision:updated.revision+1})});
+  cf('GET',new RegExp('/pages/projects/'+projectName+'$'),{name:projectName});
+  const detached=await exports.default.fetch('https://publisher.test/v1/recovery',{method:'POST',headers,body:JSON.stringify({url:`https://${name}`})});expect(detached.status).toBe(409);
+ });
+ it('protects recovery and reserves legacy bootstrap for the operator',async()=>{
+  const url='https://publisher.test/v1/recovery',body=JSON.stringify({url:'https://unknown-professor.org'});
+  expect((await exports.default.fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body})).status).toBe(401);
+  expect((await exports.default.fetch(url,{method:'POST',headers:{...headers,Origin:'https://evil.test'},body})).status).toBe(403);
+  expect((await exports.default.fetch(url,{method:'POST',headers,body})).status).toBe(404);
+  const login=await exports.default.fetch('https://publisher.test/v1/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.18'},body:JSON.stringify({password:'qa-publish-passphrase'})});
+  const session=await login.json();
+  const denied=await exports.default.fetch('https://publisher.test/v1/admin/recovery',{method:'POST',headers:{...headers,Authorization:'Bearer '+session.token},body:'{}'});expect(denied.status).toBe(403);
+ });
  it('uses native Worker fetch to verify Google identity and load the shared workspace',async()=>{
   const member={id:crypto.randomUUID(),email:'editor@apub.kr',email_confirmed_at:'2026-09-16',identities:[{provider:'google',identity_data:{email:'editor@apub.kr',email_verified:true}}]};
   network.use(http.get('https://folio-qa.supabase.co/auth/v1/user',({request})=>{

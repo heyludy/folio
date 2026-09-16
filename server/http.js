@@ -53,6 +53,16 @@ export async function handleRequest(request,env){
   const account=cloud&&!operator?await cloud.account(request):null;
   if(!cloud&&!await authorized(request,env.ADMIN_KEY,env.PUBLISH_PASSWORD_HASH))fail('게시 암호를 입력해 주세요. 이전 연결은 만료되었을 수 있어요.',401);
   if(path==='/v1/session'&&request.method==='GET')return Response.json({service:'folio-publisher',version:1},{headers});
+  if(path==='/v1/recovery'&&request.method==='POST'){
+   // Cloud users recover through workspace ownership, never the legacy PIN flow.
+   if(cloud)fail('클라우드 프로젝트의 게시 연결은 관리자에게 요청해 주세요.',403);
+   const body=await readJson(request,2048);
+   return Response.json(await env.RECOVERY.recover(body?.url),{headers});
+  }
+  if(path==='/v1/admin/recovery'&&request.method==='POST'){
+   if(!await authorized(request,env.ADMIN_KEY,null))fail('관리자 복구 권한이 필요해요.',403);
+   return Response.json(await env.RECOVERY.seed(await readJson(request,10000)),{headers});
+  }
   const match=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})(\/unpublish|\/domain)?$/);
   if(!match)fail('주소를 찾지 못했어요.',404);
   if(account)await cloud.owns(account,match[1]);

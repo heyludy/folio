@@ -9,7 +9,7 @@
     "ALLOWED_ORIGINS": "https://heyludy.github.io",
     "CLOUDFLARE_ACCOUNT_ID": "d7663a43226330209b6ed3bc72db3323"
   },
-  "durable_objects": {"bindings": [{"name": "PUBLICATIONS", "class_name": "PublicationObject"}]},
-  "migrations": [{"tag": "v1", "new_sqlite_classes": ["PublicationObject"]}],
+  "durable_objects": {"bindings": [{"name": "PUBLICATIONS", "class_name": "PublicationObject"}, {"name": "PUBLICATION_LOOKUPS", "class_name": "PublicationLookup"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["PublicationObject"]}, {"tag": "v2", "new_sqlite_classes": ["PublicationLookup"]}],
   "observability": {"enabled": true, "traces": {"enabled": true, "head_sampling_rate": 0.1}}
 }

@@ -3,8 +3,27 @@ import {CloudflarePages} from './cloudflare.js';
 import {Publication} from './publication.js';
 import {PublishError,MAX_REQUEST_BYTES} from '../src/publishing.js';
 import {handleRequest,readJson} from './http.js';
+import {recoveryService} from './recovery.js';
+export class PublicationLookup extends DurableObject{
+ async read(){return await this.ctx.storage.get('target')||null}
+ async bind(record){
+  return this.ctx.storage.transaction(async storage=>{
+   const previous=await storage.get('target');
+   if(previous)return previous.objectId===record.objectId&&previous.id===record.id;
+   await storage.put('target',record);return true;
+  });
+ }
+}
 export class PublicationObject extends DurableObject{
  constructor(ctx,env){super(ctx,env);this.publication=new Publication(ctx.storage,new CloudflarePages(env))}
+ async snapshot(){return this.publication.load()}
+ async recoveryIdentity(preferred){
+  return this.ctx.storage.transaction(async storage=>{
+   let id=await storage.get('recovery-id');
+   if(!id){id=preferred||crypto.randomUUID();await storage.put('recovery-id',id)}
+   return id;
+  });
+ }
  async execute(action,payload,revision){
   // RPC does not preserve custom Error prototypes or properties.
   try{
@@ -14,5 +33,6 @@ export class PublicationObject extends DurableObject{
  }
 }
 export default{fetch(request,env){
- return handleRequest(request,{...env,PUBLICATIONS:{getByName(id){const stub=env.PUBLICATIONS.getByName(id);return {async execute(...args){const result=await stub.execute(...args);if(!result.ok)throw new PublishError(result.error,result.status);return result.data}}}}});
+ const recovery=recoveryService(env);
+ return handleRequest(request,{...env,PUBLICATIONS:recovery.publications,RECOVERY:recovery});
 }};
