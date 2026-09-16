@@ -20,7 +20,8 @@ import {beginSectionDrag} from './sectionDrag';
 import {addKoreanPage,removeKoreanPage,restoreKoreanPage,koreanSnapshot} from './languages';
 import {themes,fonts,catalog,newSite,newSection,reorder,siteLanguages,siteTitle} from './model';
 import {loadSites} from './storage';
-import {readDrafts,writeDrafts,initializeDrafts} from './draftStore';
+import {readDrafts,writeDrafts,initializeDrafts,initializeHeoDetails,finishHeoUpdate} from './draftStore';
+import {loadHeoDetailSite} from './examples/heo';
 import {readAsset,setAsset} from './assets';
 import {downloadSite} from './export';
 import {revealSections} from './motion';
@@ -34,6 +35,7 @@ function App({account,onLogout}){
  const savedLabel=account?'공용 공간에 저장됨':'이 브라우저에 저장됨';
  const [importBusy,setImportBusy]=useState(false),[loadAttempt,setLoadAttempt]=useState(0);
  const [ready,setReady]=useState(false),[loadError,setLoadError]=useState('');
+ const [heoNotice,setHeoNotice]=useState(false),[heoNoticeError,setHeoNoticeError]=useState('');
  const lastSaved=useRef(null),queuedBase=useRef(null),saveStopped=useRef(false),saveQueue=useRef(Promise.resolve()),saveVersion=useRef(0);
  const [saveProblem,setSaveProblem]=useState(null),[saveAttempt,setSaveAttempt]=useState(0);
  const [sites,setSites]=useState(loadSites),[siteId,setSiteId]=useState(()=>activeProjects(sites)[0]?.id??null),[lang,setLang]=useState('en');
@@ -68,9 +70,10 @@ function App({account,onLogout}){
  useEffect(()=>{
   let active=true;
   (async()=>{try{
-   const initial=store?await store.initialize():await initializeDrafts(loadSites(),async()=>{
+   let initial=store?await store.initialize():await initializeDrafts(loadSites(),async()=>{
     const {loadHintonSite}=await import('./examples/hinton.js');return loadHintonSite();
    });
+   if(!store){const updated=await initializeHeoDetails(initial,loadHeoDetailSite);initial=updated.sites;if(active)setHeoNotice(updated.notice);}
    if(active){lastSaved.current=initial;queuedBase.current=initial;setSites(initial);setSiteId(activeProjects(initial)[0]?.id??null);setReady(true);setLoadError('');}
   }catch(error){if(active)setLoadError(store?error.message:'저장된 프로젝트를 열지 못했어요. 브라우저의 사이트 저장 권한을 확인하고 다시 열어 주세요.')}})();
   return()=>{active=false};
@@ -97,6 +100,14 @@ function App({account,onLogout}){
   window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
  },[sites]);
  const retrySave=async()=>{await saveQueue.current;queuedBase.current=lastSaved.current;saveStopped.current=false;setSaveProblem(null);setSaveAttempt(value=>value+1)};
+ const closeHeoNotice=async restore=>{
+  if(restore&&(sites!==lastSaved.current||saveProblem))return;
+  try{
+   const saved=await finishHeoUpdate(restore);
+   if(restore){lastSaved.current=saved;queuedBase.current=saved;setSites(saved);}
+   setHeoNotice(false);setHeoNoticeError('');
+  }catch{setHeoNoticeError(restore?'이후 수정한 내용이 있어 자동으로 되돌릴 수 없어요.':'알림을 닫지 못했어요. 다시 시도해 주세요.');}
+ };
  useEffect(()=>{
   if(!store||!ready||saveProblem||importBusy)return;
   let active=true,refreshing=false;
@@ -281,6 +292,7 @@ function App({account,onLogout}){
   </div>}
   <input hidden ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPhoto}/>
   {importUndo&&importUndo.siteId===site.id&&!home&&<div className="studio-undo" role="status"><span>{importProblem||'가져온 내용을 반영했어요'}</span><button onClick={undoImport}>가져오기 되돌리기</button><button aria-label="가져오기 알림 닫기" onClick={()=>setImportUndo(null)}><X size={15}/></button></div>}
+  {heoNotice&&home&&!removedProject&&<div className="studio-undo" role="status"><span>{heoNoticeError||'허은녕 프로젝트에 게시된 상세본을 반영했어요'}</span><button disabled={sites!==lastSaved.current||!!saveProblem} onClick={()=>closeHeoNotice(true)}>이전 편집본 복원</button><button aria-label="상세본 업데이트 알림 닫기" onClick={()=>closeHeoNotice(false)}><X size={15}/></button></div>}
   {removedProject&&home&&<div className="studio-undo" role="status"><span>{removedProject.title} 프로젝트 삭제됨</span><button onClick={()=>restoreDeletedProject(removedProject.id)}>되돌리기</button><button aria-label="프로젝트 삭제 알림 닫기" onClick={()=>setRemovedProject(null)}><X size={15}/></button></div>}
   {removedSection&&<div className="studio-undo" role="status"><span>{removedSection.snapshot.section.name} 섹션 삭제됨</span><button onClick={undoRemoveSection}>되돌리기</button><button aria-label="삭제 알림 닫기" onClick={()=>setRemovedSection(null)}><X size={15}/></button></div>}
   {removedLanguage&&<div className="studio-undo" role="status"><span>{removedLanguage.title} · 한글 페이지 삭제됨</span><button onClick={undoRemoveLanguage}>되돌리기</button><button aria-label="알림 닫기" onClick={()=>setRemovedLanguage(null)}><X size={15}/></button></div>}

@@ -1,5 +1,6 @@
-import {mergeDrafts} from './draftMerge.js';
+import {mergeDrafts,DraftConflictError} from './draftMerge.js';
 import {EXAMPLE_MIGRATION,addExampleOnce,validateDrafts} from './exampleMigration.js';
+import {HEO_DETAIL_MIGRATION,applyHeoDetails,isHeoProject} from './examples/heo.js';
 const DATABASE='folio-projects',STORE='workspace',KEY='projects';
 function openDatabase(){
  return new Promise((resolve,reject)=>{
@@ -54,6 +55,57 @@ export async function writeDrafts(sites,base){
   };
   tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(error||tx.error);tx.onabort=()=>reject(error||tx.error);
  })}finally{db.close()}
+}
+
+// Update the approved Heo release once, with an atomic backup of the actual
+// latest draft. Re-read inside the write transaction to handle concurrent tabs.
+export async function initializeHeoDetails(fallback,makeDetail){
+ const db=await openDatabase();
+ try{
+  const snapshot=await new Promise((resolve,reject)=>{
+   const tx=db.transaction(STORE),store=tx.objectStore(STORE),projects=store.get(KEY),marker=store.get(HEO_DETAIL_MIGRATION);
+   tx.oncomplete=()=>{try{resolve({sites:validateDrafts(projects.result??fallback),marker:marker.result})}catch(error){reject(error)}};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+  const notice=marker=>!!(marker?.backup&&!marker.dismissed&&!marker.restored);
+  if(snapshot.marker)return {sites:snapshot.sites,notice:notice(snapshot.marker)};
+  let detail;
+  if(snapshot.sites.some(isHeoProject)){
+   try{detail=await makeDetail()}catch{return {sites:snapshot.sites,notice:false};}
+  }
+  return await new Promise((resolve,reject)=>{
+   const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),projects=store.get(KEY),marker=store.get(HEO_DETAIL_MIGRATION);let result,error;
+   marker.onsuccess=()=>{try{
+    const sites=validateDrafts(projects.result??fallback);
+    if(marker.result){result={sites,notice:notice(marker.result)};return;}
+    // If a Heo project appeared in another tab while reading, retry next visit
+    // after loading its release rather than recording a skipped migration.
+    if(!detail&&sites.some(isHeoProject)){result={sites,notice:false};return;}
+    const change=detail?applyHeoDetails(sites,detail):{sites,backup:null};
+    store.put(change.sites,KEY);store.put({backup:change.backup,applied:true},HEO_DETAIL_MIGRATION);
+    result={sites:change.sites,notice:!!change.backup};
+   }catch(cause){error=cause;tx.abort();}};
+   tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(error||tx.error);tx.onabort=()=>reject(error||tx.error);
+  });
+ }finally{db.close();}
+}
+export async function finishHeoUpdate(restore=false){
+ const db=await openDatabase();
+ try{return await new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),projects=store.get(KEY),marker=store.get(HEO_DETAIL_MIGRATION);let sites,error;
+  marker.onsuccess=()=>{try{
+   sites=validateDrafts(projects.result);
+   const record=marker.result;
+   if(!record)return;
+   if(restore&&record.backup&&!record.restored){
+    const {before,after}=record.backup,current=sites.find(site=>site.id===after.id);
+    if(!current||current.deletedAt)throw new DraftConflictError();
+    const restored=mergeDrafts(after,before,current);
+    sites=sites.map(site=>site.id===current.id?restored:site);store.put(sites,KEY);
+   }
+   store.put({...record,dismissed:true,restored:record.restored||restore},HEO_DETAIL_MIGRATION);
+  }catch(cause){error=cause;tx.abort();}};
+  tx.oncomplete=()=>resolve(sites);tx.onerror=()=>reject(error||tx.error);tx.onabort=()=>reject(error||tx.error);
+ })}finally{db.close();}
 }
 
 // Preparation drafts are separate from published content and normal project saves.

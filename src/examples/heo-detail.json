@@ -1,0 +1,988 @@
+{
+  "id": "eunnyeong-heo",
+  "name": "허은녕 홈페이지",
+  "template": "classic",
+  "languages": [
+    "en",
+    "ko"
+  ],
+  "theme": "plum",
+  "font": "academic",
+  "photo": "",
+  "sections": [
+    {
+      "id": "profile",
+      "kind": "profile",
+      "name": "소개",
+      "enName": "About",
+      "nav": true,
+      "hidden": false,
+      "defaults": {
+        "ko": "소개",
+        "en": "About"
+      },
+      "text": {
+        "en": {
+          "title": "Eunnyeong Heo",
+          "college": "Seoul National University",
+          "department": "Department of Energy Resources Engineering",
+          "position": "Professor",
+          "body": "Eunnyeong Heo is a professor at Seoul National University. He studies energy and resource markets, the economic value of technologies and environmental assets, and energy policy. His work brings economic analysis to decisions about energy supply, investment and technological change."
+        },
+        "ko": {
+          "title": "허은녕",
+          "college": "서울대학교",
+          "department": "에너지자원공학과",
+          "position": "교수",
+          "body": "허은녕은 서울대학교 에너지자원공학과 교수로, 에너지·자원시장과 기술·환경자산의 가치평가, 에너지정책을 연구한다. 에너지 공급과 투자, 기술 변화에 관한 의사결정을 경제학적으로 분석한다."
+        }
+      },
+      "provenance": {
+        "en": {
+          "section": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "section": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          }
+        }
+      }
+    },
+    {
+      "id": "research",
+      "kind": "research",
+      "name": "연구 분야",
+      "enName": "Research",
+      "nav": true,
+      "hidden": false,
+      "defaults": {
+        "ko": "연구 분야",
+        "en": "Research"
+      },
+      "text": {
+        "en": {
+          "title": "Research interests",
+          "topic1": "Energy & resource markets",
+          "text1": "Energy demand, investment and market structure, with a focus on international energy and mineral markets.",
+          "topic2": "Technology, environment & policy",
+          "text2": "Technology valuation, renewable energy, energy security and ESG, informed by economic modeling.",
+          "topicentry-import-44bb8184": "Energy and resource markets",
+          "textentry-import-44bb8184": "Market prices, industrial structure and energy security.",
+          "topicentry-import-5c6d0507": "Environmental economics",
+          "textentry-import-5c6d0507": "Economic assessment of emissions reduction and recycling policy.",
+          "topicentry-import-aa8ee7b4": "Technology and industrial economics",
+          "textentry-import-aa8ee7b4": "Technology adoption, R&D evaluation and investment decisions."
+        },
+        "ko": {
+          "title": "연구 분야",
+          "topic1": "에너지·자원시장",
+          "text1": "국제시장 가격, 산업구조, 에너지안보를 분석한다.",
+          "topic2": "기술·환경·정책",
+          "text2": "경제 모형을 활용해 기술의 가치, 재생에너지, 에너지 안보와 ESG를 연구합니다.",
+          "topicentry-import-67a904a2": "환경경제·경영",
+          "textentry-import-67a904a2": "온실가스 감축과 자원 재활용 정책의 경제적 효과를 평가한다.",
+          "topicentry-import-35bddf02": "기술·산업경제",
+          "textentry-import-35bddf02": "기술 도입, 연구개발 평가와 투자 의사결정을 다룬다."
+        }
+      },
+      "provenance": {
+        "en": {
+          "entry-import-44bb8184": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-5c6d0507": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-aa8ee7b4": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "1": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-67a904a2": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-35bddf02": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16"
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-44bb8184",
+          "entry-import-5c6d0507",
+          "entry-import-aa8ee7b4"
+        ],
+        "ko": [
+          "1",
+          "entry-import-67a904a2",
+          "entry-import-35bddf02"
+        ]
+      }
+    },
+    {
+      "id": "publications",
+      "kind": "publications",
+      "name": "주요 논문",
+      "enName": "Publications",
+      "nav": true,
+      "hidden": false,
+      "defaults": {
+        "ko": "주요 논문",
+        "en": "Publications"
+      },
+      "text": {
+        "en": {
+          "title": "Selected publications",
+          "year1": "2024",
+          "topic1": "Economic and environmental impacts from the China-Korea power grid interconnection",
+          "text1": "H. I. Chang, Y. Chun, E. Heo & Y. Her\nElectricity Journal, 37(6), 107416.",
+          "year2": "2023",
+          "topic2": "Myanmar’s decision-making structure for the introduction of renewable energy",
+          "text2": "S. Oh, S. Kim, I. Cho, Z. H. Kyaw & E. Heo\nJournal of Cleaner Production, 413, 137254.",
+          "yearentry-import-2b489295": "2021",
+          "topicentry-import-2b489295": "Speculative incentives to hoard aluminum: Relationship between capital gains and inventories",
+          "textentry-import-2b489295": "S. Kim, J. Kim & E. Heo",
+          "venueentry-import-2b489295": "Resources Policy, 70, 101901",
+          "doientry-import-2b489295": "10.1016/j.resourpol.2020.101901",
+          "urlentry-import-2b489295": "https://www.sciencedirect.com/science/article/pii/S0301420720309326",
+          "abstractentry-import-2b489295": "Examines how opportunities for capital gains relate to aluminum inventory accumulation.",
+          "yearentry-import-4606aa96": "2021",
+          "topicentry-import-4606aa96": "Determinants of nuclear power expansion in Indonesia",
+          "textentry-import-4606aa96": "I. Cho, S. Oh, S. Kim, F. Ardin & E. Heo",
+          "venueentry-import-4606aa96": "Nuclear Engineering and Technology, 53(1), 314–321",
+          "doientry-import-4606aa96": "10.1016/j.net.2020.06.008",
+          "urlentry-import-4606aa96": "https://www.sciencedirect.com/science/article/pii/S1738573320302035",
+          "abstractentry-import-4606aa96": "Analyzes the factors shaping Indonesian energy policymakers’ views on nuclear power."
+        },
+        "ko": {
+          "title": "주요 논문",
+          "year1": "2024",
+          "topic1": "Economic and environmental impacts from the China-Korea power grid interconnection",
+          "text1": "H. I. Chang, Y. Chun, E. Heo & Y. Her\nElectricity Journal, 37(6), 107416.",
+          "year2": "2023",
+          "topic2": "Myanmar’s decision-making structure for the introduction of renewable energy",
+          "text2": "S. Oh, S. Kim, I. Cho, Z. H. Kyaw & E. Heo\nJournal of Cleaner Production, 413, 137254.",
+          "yearentry-import-ae20a7e9": "2021",
+          "topicentry-import-ae20a7e9": "Speculative incentives to hoard aluminum: Relationship between capital gains and inventories",
+          "textentry-import-ae20a7e9": "S. Kim, J. Kim & E. Heo",
+          "venueentry-import-ae20a7e9": "Resources Policy, 70, 101901",
+          "doientry-import-ae20a7e9": "10.1016/j.resourpol.2020.101901",
+          "urlentry-import-ae20a7e9": "https://www.sciencedirect.com/science/article/pii/S0301420720309326",
+          "abstractentry-import-ae20a7e9": "알루미늄 재고 축적과 자본이득 기회의 관계를 분석한 연구.",
+          "yearentry-import-4b4b419f": "2021",
+          "topicentry-import-4b4b419f": "Determinants of nuclear power expansion in Indonesia",
+          "textentry-import-4b4b419f": "I. Cho, S. Oh, S. Kim, F. Ardin & E. Heo",
+          "venueentry-import-4b4b419f": "Nuclear Engineering and Technology, 53(1), 314–321",
+          "doientry-import-4b4b419f": "10.1016/j.net.2020.06.008",
+          "urlentry-import-4b4b419f": "https://www.sciencedirect.com/science/article/pii/S1738573320302035",
+          "abstractentry-import-4b4b419f": "인도네시아 에너지정책 담당자의 원자력 도입 인식과 의사결정 요인을 분석한 연구."
+        }
+      },
+      "provenance": {
+        "en": {
+          "section": {
+            "source": "https://www.sciencedirect.com/science/article/pii/S0301420720309326",
+            "checked": "2026-09-16",
+            "notes": "기존 2024·2023년 논문에 더할 자료. 출판사에서 학술지·권호·DOI를 확인함."
+          },
+          "entry-import-2b489295": {
+            "source": "https://www.sciencedirect.com/science/article/pii/S0301420720309326",
+            "checked": "2026-09-16",
+            "notes": "기존 2024·2023년 논문에 더할 자료. 출판사에서 학술지·권호·DOI를 확인함."
+          },
+          "entry-import-4606aa96": {
+            "source": "https://www.sciencedirect.com/science/article/pii/S1738573320302035",
+            "checked": "2026-09-16",
+            "notes": "기존 2024·2023년 논문에 더할 자료. 출판사에서 학술지·권호·DOI를 확인함."
+          }
+        },
+        "ko": {
+          "section": {
+            "source": "https://www.sciencedirect.com/science/article/pii/S0301420720309326",
+            "checked": "2026-09-16",
+            "notes": "기존 2024·2023년 논문에 더할 자료. 출판사에서 학술지·권호·DOI를 확인함."
+          },
+          "entry-import-ae20a7e9": {
+            "source": "https://www.sciencedirect.com/science/article/pii/S0301420720309326",
+            "checked": "2026-09-16",
+            "notes": "기존 2024·2023년 논문에 더할 자료. 출판사에서 학술지·권호·DOI를 확인함."
+          },
+          "entry-import-4b4b419f": {
+            "source": "https://www.sciencedirect.com/science/article/pii/S1738573320302035",
+            "checked": "2026-09-16",
+            "notes": "기존 2024·2023년 논문에 더할 자료. 출판사에서 학술지·권호·DOI를 확인함."
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "1",
+          "2",
+          "entry-import-2b489295",
+          "entry-import-4606aa96"
+        ],
+        "ko": [
+          "1",
+          "2",
+          "entry-import-ae20a7e9",
+          "entry-import-4b4b419f"
+        ]
+      }
+    },
+    {
+      "id": "import-projects-a7e5fa70",
+      "kind": "projects",
+      "name": "연구 프로젝트",
+      "enName": "Projects",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "연구 프로젝트",
+        "en": "Projects"
+      },
+      "text": {
+        "en": {
+          "title": "Selected lab projects",
+          "body": "",
+          "yearentry-import-c702b699": "2022.03–2023.12",
+          "topicentry-import-c702b699": "Carbon-neutrality and ESG talent development",
+          "textentry-import-c702b699": "Talent development for carbon neutrality and ESG.",
+          "fundingentry-import-c702b699": "Ministry of Science and ICT",
+          "yearentry-import-cfbd3444": "2019.06–2020.12",
+          "topicentry-import-cfbd3444": "Valuation of energy cloud technologies",
+          "textentry-import-cfbd3444": "Development of a technology valuation system.",
+          "fundingentry-import-cfbd3444": "Ministry of Science and ICT"
+        },
+        "ko": {
+          "title": "주요 연구실 과제",
+          "body": "",
+          "yearentry-import-16eea76d": "2022.03–2023.12",
+          "topicentry-import-16eea76d": "현장연계 탄소중립 ESG 미래선도인재양성",
+          "textentry-import-16eea76d": "탄소중립과 ESG 분야 인재양성 사업.",
+          "fundingentry-import-16eea76d": "과학기술정보통신부",
+          "yearentry-import-3a6fd3d2": "2019.06–2020.12",
+          "topicentry-import-3a6fd3d2": "에너지 클라우드 기술 가치평가 체계",
+          "textentry-import-3a6fd3d2": "에너지 클라우드 기술의 가치평가시스템 구축 과제.",
+          "fundingentry-import-3a6fd3d2": "과학기술정보통신부"
+        }
+      },
+      "provenance": {
+        "en": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16",
+            "notes": "연구실 공개 과제 목록에 근거함. 교수 개인의 연구책임자 여부와 전체 사업비는 기재하지 않음."
+          },
+          "entry-import-c702b699": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16",
+            "notes": "연구실 공개 과제 목록에 근거함. 교수 개인의 연구책임자 여부와 전체 사업비는 기재하지 않음."
+          },
+          "entry-import-cfbd3444": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16",
+            "notes": "연구실 공개 과제 목록에 근거함. 교수 개인의 연구책임자 여부와 전체 사업비는 기재하지 않음."
+          }
+        },
+        "ko": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16",
+            "notes": "연구실 공개 과제 목록에 근거함. 교수 개인의 연구책임자 여부와 전체 사업비는 기재하지 않음."
+          },
+          "entry-import-16eea76d": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16",
+            "notes": "연구실 공개 과제 목록에 근거함. 교수 개인의 연구책임자 여부와 전체 사업비는 기재하지 않음."
+          },
+          "entry-import-3a6fd3d2": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/research/research-areas/",
+            "checked": "2026-09-16",
+            "notes": "연구실 공개 과제 목록에 근거함. 교수 개인의 연구책임자 여부와 전체 사업비는 기재하지 않음."
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-c702b699",
+          "entry-import-cfbd3444"
+        ],
+        "ko": [
+          "entry-import-16eea76d",
+          "entry-import-3a6fd3d2"
+        ]
+      }
+    },
+    {
+      "id": "import-career-f4ffbfc8",
+      "kind": "career",
+      "name": "학력·경력",
+      "enName": "Background",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "학력·경력",
+        "en": "Background"
+      },
+      "text": {
+        "en": {
+          "title": "University appointments",
+          "body": "",
+          "yearentry-import-5cee95fa": "2022–2024",
+          "topicentry-import-5cee95fa": "Vice Dean, GSEP",
+          "textentry-import-5cee95fa": "Seoul National University",
+          "yearentry-import-a375e24e": "2020–2021",
+          "topicentry-import-a375e24e": "Chair, Engineering Faculty Council",
+          "textentry-import-a375e24e": "Seoul National University",
+          "yearentry-import-78471b1": "2017–2019",
+          "topicentry-import-78471b1": "Head, Energy Systems / Energy Resources Engineering",
+          "textentry-import-78471b1": "Seoul National University"
+        },
+        "ko": {
+          "title": "교내 주요 경력",
+          "body": "",
+          "yearentry-import-4f34e324": "2022–2024",
+          "topicentry-import-4f34e324": "공학전문대학원 부원장",
+          "textentry-import-4f34e324": "서울대학교",
+          "yearentry-import-6abcf8ef": "2020–2021",
+          "topicentry-import-6abcf8ef": "공과대학 교수협의회 의장",
+          "textentry-import-6abcf8ef": "서울대학교",
+          "yearentry-import-3170a3dd": "2017–2019",
+          "topicentry-import-3170a3dd": "에너지시스템공학부장 · 에너지자원공학과장",
+          "textentry-import-3170a3dd": "서울대학교"
+        }
+      },
+      "provenance": {
+        "en": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          },
+          "entry-import-5cee95fa": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          },
+          "entry-import-a375e24e": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          },
+          "entry-import-78471b1": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          }
+        },
+        "ko": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          },
+          "entry-import-4f34e324": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          },
+          "entry-import-6abcf8ef": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          },
+          "entry-import-3170a3dd": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "종료 연도가 확인되는 경력을 우선 수록. 현직 부원장으로 표시하지 않음."
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-5cee95fa",
+          "entry-import-a375e24e",
+          "entry-import-78471b1"
+        ],
+        "ko": [
+          "entry-import-4f34e324",
+          "entry-import-6abcf8ef",
+          "entry-import-3170a3dd"
+        ]
+      }
+    },
+    {
+      "id": "cv",
+      "kind": "cv",
+      "name": "학력",
+      "enName": "Education",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "학력",
+        "en": "Education"
+      },
+      "text": {
+        "en": {
+          "title": "Education",
+          "body": "",
+          "yearentry-import-e27fbb77": "1996",
+          "topicentry-import-e27fbb77": "Ph.D., Mineral Economics",
+          "textentry-import-e27fbb77": "The Pennsylvania State University",
+          "yearentry-import-39a36d25": "1989",
+          "topicentry-import-39a36d25": "M.S., Resource Economics",
+          "textentry-import-39a36d25": "Seoul National University",
+          "yearentry-import-5960793d": "1987",
+          "topicentry-import-5960793d": "B.S., Mineral and Petroleum Engineering",
+          "textentry-import-5960793d": "Seoul National University"
+        },
+        "ko": {
+          "title": "학력",
+          "body": "",
+          "yearentry-import-1ad25676": "1996",
+          "topicentry-import-1ad25676": "자원경제학 박사",
+          "textentry-import-1ad25676": "미국 펜실베이니아주립대학교",
+          "yearentry-import-ee7b350f": "1989",
+          "topicentry-import-ee7b350f": "공학석사 · 자원경제학",
+          "textentry-import-ee7b350f": "서울대학교 자원공학과",
+          "yearentry-import-34396e56": "1987",
+          "topicentry-import-34396e56": "공학사 · 자원공학",
+          "textentry-import-34396e56": "서울대학교 자원공학과"
+        }
+      },
+      "provenance": {
+        "en": {
+          "entry-import-e27fbb77": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          },
+          "entry-import-39a36d25": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          },
+          "entry-import-5960793d": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "entry-import-1ad25676": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          },
+          "entry-import-ee7b350f": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          },
+          "entry-import-34396e56": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-e27fbb77",
+          "entry-import-39a36d25",
+          "entry-import-5960793d"
+        ],
+        "ko": [
+          "entry-import-1ad25676",
+          "entry-import-ee7b350f",
+          "entry-import-34396e56"
+        ]
+      }
+    },
+    {
+      "id": "import-awards-445a4a7c",
+      "kind": "awards",
+      "name": "수상",
+      "enName": "Awards",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "수상",
+        "en": "Awards"
+      },
+      "text": {
+        "en": {
+          "title": "Awards",
+          "body": "",
+          "yearentry-import-6c6e1945": "2024",
+          "topicentry-import-6c6e1945": "Doyak Order of Science and Technology Merit",
+          "textentry-import-6c6e1945": "Republic of Korea",
+          "yearentry-import-bd7ad16e": "2022",
+          "topicentry-import-bd7ad16e": "125th Anniversary Fellow",
+          "textentry-import-bd7ad16e": "Penn State, College of Earth and Mineral Sciences",
+          "yearentry-import-f4731fae": "2021",
+          "topicentry-import-f4731fae": "Lifetime Achievement Award",
+          "textentry-import-f4731fae": "Korean Resource Economics Association"
+        },
+        "ko": {
+          "title": "수상",
+          "body": "",
+          "yearentry-import-7cfe4db9": "2024",
+          "topicentry-import-7cfe4db9": "과학기술훈장 도약장",
+          "textentry-import-7cfe4db9": "대한민국",
+          "yearentry-import-3123060a": "2022",
+          "topicentry-import-3123060a": "지구자원대학 125주년 기념 펠로우",
+          "textentry-import-3123060a": "펜실베이니아주립대학교 지구자원대학",
+          "yearentry-import-d5f50444": "2021",
+          "topicentry-import-d5f50444": "공로상",
+          "textentry-import-d5f50444": "한국자원경제학회"
+        }
+      },
+      "provenance": {
+        "en": {
+          "entry-import-6c6e1945": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-bd7ad16e": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-f4731fae": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "entry-import-7cfe4db9": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-3123060a": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-d5f50444": {
+            "source": "https://temep.snu.ac.kr/en/about/faculty/professor?mode=view&profidx=9",
+            "checked": "2026-09-16"
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-6c6e1945",
+          "entry-import-bd7ad16e",
+          "entry-import-f4731fae"
+        ],
+        "ko": [
+          "entry-import-7cfe4db9",
+          "entry-import-3123060a",
+          "entry-import-d5f50444"
+        ]
+      }
+    },
+    {
+      "id": "import-service-ba92daa9",
+      "kind": "service",
+      "name": "학회·사회 활동",
+      "enName": "Service",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "학회·사회 활동",
+        "en": "Service"
+      },
+      "text": {
+        "en": {
+          "title": "Selected professional service",
+          "body": "",
+          "yearentry-import-10e29d2c": "2018–2022",
+          "topicentry-import-10e29d2c": "President",
+          "textentry-import-10e29d2c": "Korea Society of Innovation",
+          "yearentry-import-9b1dd686": "2017–2019",
+          "topicentry-import-9b1dd686": "Vice President",
+          "textentry-import-9b1dd686": "International Association for Energy Economics"
+        },
+        "ko": {
+          "title": "주요 학회 활동",
+          "body": "",
+          "yearentry-import-5d97342d": "2018–2022",
+          "topicentry-import-5d97342d": "회장",
+          "textentry-import-5d97342d": "한국혁신학회",
+          "yearentry-import-523ab55d": "2017–2019",
+          "topicentry-import-523ab55d": "부회장",
+          "textentry-import-523ab55d": "세계에너지경제학회"
+        }
+      },
+      "provenance": {
+        "en": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-10e29d2c": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-9b1dd686": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-5d97342d": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          },
+          "entry-import-523ab55d": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16"
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-10e29d2c",
+          "entry-import-9b1dd686"
+        ],
+        "ko": [
+          "entry-import-5d97342d",
+          "entry-import-523ab55d"
+        ]
+      }
+    },
+    {
+      "id": "import-teaching-696a45c9",
+      "kind": "teaching",
+      "name": "강의",
+      "enName": "Teaching",
+      "nav": true,
+      "hidden": false,
+      "defaults": {
+        "ko": "강의",
+        "en": "Teaching"
+      },
+      "text": {
+        "en": {
+          "title": "Teaching",
+          "body": "",
+          "topicentry-import-c4e3159c": "Management of Energy, Environment and Technology",
+          "textentry-import-c4e3159c": "465.202 · Project economics and comparison of engineering alternatives.",
+          "levelentry-import-c4e3159c": "Undergraduate",
+          "urlentry-import-c4e3159c": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+          "topicentry-import-6e74b078": "Energy and Technology Economics",
+          "textentry-import-6e74b078": "M1594.002500 · Energy choices, technology adoption and social effects.",
+          "levelentry-import-6e74b078": "Undergraduate",
+          "urlentry-import-6e74b078": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+          "topicentry-import-23d884f2": "Analysis of International Energy Markets",
+          "textentry-import-23d884f2": "465.408 · Commodity prices and time-series analysis.",
+          "levelentry-import-23d884f2": "Undergraduate",
+          "urlentry-import-23d884f2": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+          "topicentry-import-c66066a5": "Advanced Energy and Energy Technology Economics",
+          "textentry-import-c66066a5": "459.502 · Resource scarcity, externalities and public policy.",
+          "levelentry-import-c66066a5": "Graduate",
+          "urlentry-import-c66066a5": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+          "topicentry-import-c5bcc038": "Econometric Analysis of Industry and Technology",
+          "textentry-import-c5bcc038": "459.720 · Empirical methods for industrial decisions.",
+          "levelentry-import-c5bcc038": "Graduate",
+          "urlentry-import-c5bcc038": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+          "topicentry-import-d5638dad": "Seminar in Energy Issues",
+          "textentry-import-d5638dad": "459.500 · Energy systems and policymaking.",
+          "levelentry-import-d5638dad": "Graduate",
+          "urlentry-import-d5638dad": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/"
+        },
+        "ko": {
+          "title": "강의",
+          "body": "",
+          "topicentry-import-2538be25": "에너지환경기술경영",
+          "textentry-import-2538be25": "465.202 · 공학 대안의 경제성 비교와 프로젝트 평가.",
+          "levelentry-import-2538be25": "학부",
+          "urlentry-import-2538be25": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+          "topicentry-import-e7c07f64": "에너지와 기술의 경제학",
+          "textentry-import-e7c07f64": "M1594.002500 · 에너지 선택과 기술 도입의 사회경제적 영향.",
+          "levelentry-import-e7c07f64": "학부",
+          "urlentry-import-e7c07f64": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+          "topicentry-import-c530d7e1": "국제에너지시장분석",
+          "textentry-import-c530d7e1": "465.408 · 국제시장 가격과 시계열 분석.",
+          "levelentry-import-c530d7e1": "학부",
+          "urlentry-import-c530d7e1": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+          "topicentry-import-d5c124bc": "고급에너지경제학",
+          "textentry-import-d5c124bc": "459.502 · 자원 희소성, 외부성과 정책 개입.",
+          "levelentry-import-d5c124bc": "대학원",
+          "urlentry-import-d5c124bc": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+          "topicentry-import-90cad40a": "산업경제계량분석",
+          "textentry-import-90cad40a": "459.720 · 산업 의사결정을 위한 계량분석.",
+          "levelentry-import-90cad40a": "대학원",
+          "urlentry-import-90cad40a": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+          "topicentry-import-d5f179c9": "에너지정책세미나",
+          "textentry-import-d5f179c9": "459.500 · 에너지 시스템과 정책 의사결정.",
+          "levelentry-import-d5f179c9": "대학원",
+          "urlentry-import-d5f179c9": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/"
+        }
+      },
+      "provenance": {
+        "en": {
+          "entry-import-c4e3159c": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-6e74b078": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-23d884f2": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-c66066a5": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-c5bcc038": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-d5638dad": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          }
+        },
+        "ko": {
+          "entry-import-2538be25": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-e7c07f64": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-c530d7e1": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/undergraduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-d5c124bc": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-90cad40a": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          },
+          "entry-import-d5f179c9": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/classes/graduate/",
+            "checked": "2026-09-16",
+            "notes": "공식 연구실의 교과목 소개를 정리함. 이번 학기 개설 여부·강의 시간은 별도 수강편람 확인 필요."
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-c4e3159c",
+          "entry-import-6e74b078",
+          "entry-import-23d884f2",
+          "entry-import-c66066a5",
+          "entry-import-c5bcc038",
+          "entry-import-d5638dad"
+        ],
+        "ko": [
+          "entry-import-2538be25",
+          "entry-import-e7c07f64",
+          "entry-import-c530d7e1",
+          "entry-import-d5c124bc",
+          "entry-import-90cad40a",
+          "entry-import-d5f179c9"
+        ]
+      }
+    },
+    {
+      "id": "import-books-9198961c",
+      "kind": "books",
+      "name": "저서",
+      "enName": "Books",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "저서",
+        "en": "Books"
+      },
+      "text": {
+        "en": {
+          "title": "Books",
+          "body": "",
+          "yearentry-import-37a6f273": "2020",
+          "topicentry-import-37a6f273": "우리는 미래에 살고 있다",
+          "textentry-import-37a6f273": "Contributing author · SNU College of Engineering · Changbi Education (Korean)",
+          "descriptionentry-import-37a6f273": "A collection introducing engineering research to general readers. ISBN 9791165700423.",
+          "urlentry-import-37a6f273": "https://books.changbiedu.com/Home/BookDetail?bookid=2119"
+        },
+        "ko": {
+          "title": "저서",
+          "body": "",
+          "yearentry-import-2a204ecd": "2020",
+          "topicentry-import-2a204ecd": "우리는 미래에 살고 있다",
+          "textentry-import-2a204ecd": "공저 · 서울대학교 공과대학 · 창비교육",
+          "descriptionentry-import-2a204ecd": "서울대 공과대학 교수들이 공학 연구를 일반 독자에게 소개하는 책. ISBN 9791165700423.",
+          "urlentry-import-2a204ecd": "https://books.changbiedu.com/Home/BookDetail?bookid=2119"
+        }
+      },
+      "provenance": {
+        "en": {
+          "entry-import-37a6f273": {
+            "source": "https://books.changbiedu.com/Home/BookDetail?bookid=2119",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "entry-import-2a204ecd": {
+            "source": "https://books.changbiedu.com/Home/BookDetail?bookid=2119",
+            "checked": "2026-09-16"
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-37a6f273"
+        ],
+        "ko": [
+          "entry-import-2a204ecd"
+        ]
+      }
+    },
+    {
+      "id": "import-press-abaa25a1",
+      "kind": "press",
+      "name": "언론·인터뷰",
+      "enName": "In the press",
+      "nav": false,
+      "hidden": false,
+      "defaults": {
+        "ko": "언론·인터뷰",
+        "en": "In the press"
+      },
+      "text": {
+        "en": {
+          "title": "In the press",
+          "body": "",
+          "topicentry-import-f235ba22": "A conversation about energy, resources and economic choices",
+          "textentry-import-f235ba22": "SNU Engineering magazine, Gongdae Sangsang",
+          "typeentry-import-f235ba22": "Interview",
+          "descriptionentry-import-f235ba22": "Heo discusses market forecasting, resource allocation and the growing role of renewable technologies.",
+          "urlentry-import-f235ba22": "https://snu-eng.kr/html/2203/s0302.html"
+        },
+        "ko": {
+          "title": "언론·인터뷰",
+          "body": "",
+          "topicentry-import-3f701e9e": "에너지·자원과 경제적 선택에 관한 연구실 인터뷰",
+          "textentry-import-3f701e9e": "서울대학교 공대상상",
+          "typeentry-import-3f701e9e": "인터뷰",
+          "descriptionentry-import-3f701e9e": "시장 예측과 자원 배분, 재생에너지 기술로 확장되는 연구 주제를 설명한다.",
+          "urlentry-import-3f701e9e": "https://snu-eng.kr/html/2203/s0302.html"
+        }
+      },
+      "provenance": {
+        "en": {
+          "entry-import-f235ba22": {
+            "source": "https://snu-eng.kr/html/2203/s0302.html",
+            "checked": "2026-09-16"
+          }
+        },
+        "ko": {
+          "entry-import-3f701e9e": {
+            "source": "https://snu-eng.kr/html/2203/s0302.html",
+            "checked": "2026-09-16"
+          }
+        }
+      },
+      "entryOrder": {
+        "en": [
+          "entry-import-f235ba22"
+        ],
+        "ko": [
+          "entry-import-3f701e9e"
+        ]
+      }
+    },
+    {
+      "id": "contact",
+      "kind": "contact",
+      "name": "연락처",
+      "enName": "Contact",
+      "nav": true,
+      "hidden": false,
+      "defaults": {
+        "ko": "연락처",
+        "en": "Contact"
+      },
+      "text": {
+        "en": {
+          "title": "Contact",
+          "email": "heoe@snu.ac.kr",
+          "organization": "Seoul National University",
+          "office": "Building 38, Room 314, 1 Gwanak-ro, Seoul 08826, Korea"
+        },
+        "ko": {
+          "title": "연락처",
+          "email": "heoe@snu.ac.kr",
+          "organization": "서울대학교",
+          "office": "서울특별시 관악구 관악로 1, 서울대학교 38동 314호 (08826)"
+        }
+      },
+      "provenance": {
+        "en": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "교수 연구실 314호와 연구센터 행정 연락처 327호를 구분함. 교수 업무 전화: +82-2-880-8323."
+          }
+        },
+        "ko": {
+          "section": {
+            "source": "https://enecon.snu.ac.kr/staticdata/static/people/Faculty/",
+            "checked": "2026-09-16",
+            "notes": "교수 연구실 314호와 연구센터 행정 연락처 327호를 구분함. 교수 업무 전화: +82-2-880-8323."
+          }
+        }
+      }
+    }
+  ],
+  "basics": {
+    "email": "heoe@snu.ac.kr",
+    "en": {
+      "name": "Eunnyeong Heo",
+      "college": "Seoul National University",
+      "department": "Department of Energy Resources Engineering",
+      "position": "Professor",
+      "office": "Building 38, Room 314, 1 Gwanak-ro, Seoul 08826, Korea"
+    },
+    "ko": {
+      "name": "허은녕",
+      "college": "서울대학교",
+      "department": "에너지자원공학과",
+      "position": "교수",
+      "office": "서울특별시 관악구 관악로 1, 서울대학교 38동 314호 (08826)"
+    }
+  },
+  "linkedWebsite": "https://heoe.info/"
+}
