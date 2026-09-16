@@ -2,15 +2,17 @@ import React,{useState,useEffect,useRef} from 'react';
 import {X,Globe,ExternalLink,Copy,RefreshCw,Check,ArrowRight} from 'lucide-react';
 import {exportSite} from './export';
 import {publishBundle,domainName,publicationLabel} from './publishing';
+import {createShareCard} from './shareCard';
 import {publisherSettings,rememberPublisher,disconnectPublisher,publicationId,publishRequest} from './publishClient';
 import './publish.css';
 
 export function PublishDialog({site,onClose}){
  const [config,setConfig]=useState(publisherSettings),[connected,setConnected]=useState(false),[state,setState]=useState(null),[bundle,setBundle]=useState(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(''),[domain,setDomain]=useState(''),[confirm,setConfirm]=useState(null);
  const dialog=useRef(null),close=useRef(null),previousFocus=useRef(document.activeElement),alive=useRef(true),busyRef=useRef(false),path=useRef(null),polls=useRef(0);
+ const [shareImage,setShareImage]=useState('');
  const restoreFocus=()=>{if(previousFocus.current?.isConnected)previousFocus.current.focus({preventScroll:true})};
  useEffect(()=>{alive.current=true;close.current?.focus();const escape=e=>{if(e.key==='Escape'){e.stopImmediatePropagation();if(!busyRef.current)onClose()}};document.addEventListener('keydown',escape,true);return()=>{alive.current=false;document.removeEventListener('keydown',escape,true);restoreFocus()}},[]);
- useEffect(()=>{let active=true;publishBundle(exportSite(site)).then(value=>{if(active)setBundle(value)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[site]);
+ useEffect(()=>{let active=true;setBundle(null);setShareImage('');createShareCard(site).then(async image=>({image,bundle:await publishBundle(exportSite(site,{shareImage:image}))})).then(value=>{if(active){setShareImage(value.image);setBundle(value.bundle)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[site]);
  const perform=async(label,work)=>{
   if(busyRef.current)return;busyRef.current=true;setBusy(label);setError('');setNotice('');
   try{await work()}catch(e){if(alive.current){setError(e.message);if(e.status===401)setConnected(false)}}finally{busyRef.current=false;if(alive.current)setBusy('')}
@@ -48,6 +50,7 @@ export function PublishDialog({site,onClose}){
     <button type="button" className="studio-button primary publish-main" disabled={disabled||!bundle||label==='게시됨'} onClick={publish}>{state.pending?.phase==='verifying'?'공개 주소 확인 중…':state.pending?'게시 처리 중…':isLive?'변경사항 게시':'게시하기'}<ArrowRight size={15}/></button>
     <p className="publish-note">현재 페이지와 첨부한 사진·PDF가 공개돼요. AI 확인 메모와 출처 검토 기록은 포함되지 않아요.</p>
    </section>
+   <section className="publish-share"><h3>링크 미리보기</h3>{shareImage?<img src={shareImage} width="1200" height="630" alt="이름과 소속, 테마 색을 담은 공유 이미지"/>:<p className="publish-note" role="status">미리보기를 준비하고 있어요.</p>}<p className="publish-note">카카오톡 등에 링크를 공유할 때 사용돼요. 이름·소속·사진·테마를 바꾸면 함께 바뀌어요.</p></section>
    <section className="publish-domain"><div><h3>내 도메인</h3><p>구매한 도메인을 연결하세요.</p></div>
     {state.domain?<><div className="publish-domain-current"><strong>{state.domain.name}</strong><span>{state.domain.status==='active'?'연결됨 · HTTPS':state.domain.status==='error'||state.domain.status==='blocked'?'연결 확인 필요':'DNS · HTTPS 확인 중'}</span></div>{state.domain.error&&<p role="alert">{state.domain.error}</p>}{state.domain.status!=='active'&&<div className="publish-dns"><p>도메인을 관리하는 곳의 DNS 설정에 아래 값을 입력하세요.</p><dl><dt>종류</dt><dd>CNAME</dd><dt>이름</dt><dd>{state.domain.name}</dd><dt>대상</dt><dd>{state.url?.replace('https://','')}<button className="publish-icon" aria-label="DNS 대상 복사" onClick={()=>copy(state.url?.replace('https://',''))}><Copy size={13}/></button></dd></dl>{state.domain.txtName&&<dl><dt>종류</dt><dd>TXT</dd><dt>이름</dt><dd>{state.domain.txtName}</dd><dt>값</dt><dd>{state.domain.txtValue}</dd></dl>}<p className="publish-note">example.com처럼 앞에 www가 없는 루트 도메인은 게시 서버와 같은 Cloudflare 계정에 도메인을 추가하고 네임서버를 연결해야 해요. www.example.com 같은 하위 도메인은 다른 DNS에서도 연결할 수 있어요.</p><p className="publish-note">기존 레코드가 있다면 충돌 여부를 확인해 주세요. DNS 반영과 HTTPS 발급에는 시간이 걸릴 수 있어요.</p></div>}<button type="button" className="publish-text-button danger" disabled={disabled} onClick={()=>setConfirm('domain')}>도메인 연결 해제</button></>:<form className="publish-domain-form" onSubmit={e=>{e.preventDefault();perform('도메인 연결 중',async()=>mutate('/domain','POST',{name:domainName(domain)}))}}><label className="sr-only" htmlFor="publish-domain-name">연결할 도메인</label><input id="publish-domain-name" value={domain} onChange={e=>setDomain(e.target.value)} placeholder="www.example.com" disabled={!isLive||disabled} required/><button className="studio-button" disabled={!isLive||disabled} type="submit">연결</button></form>}
     {!isLive&&<p className="publish-note">기본 주소로 먼저 게시하면 연결할 수 있어요.</p>}

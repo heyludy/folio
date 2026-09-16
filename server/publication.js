@@ -1,4 +1,5 @@
 import {fail,validateBundle,domainName,sha256,fromBase64} from '../src/publishing.js';
+import {publishedBundle} from './shareMetadata.js';
 export const emptyPublication=()=>({revision:0,status:'draft',url:null,liveHash:null,publishedAt:null,pending:null,domain:null,error:null});
 const domainView=data=>data?{name:data.name,status:data.status,verification:data.verification_data?.status,validation:data.validation_data?.status,error:data.validation_data?.error_message||data.verification_data?.error_message||null,txtName:data.validation_data?.txt_name||null,txtValue:data.validation_data?.txt_value||null}:null;
 
@@ -40,12 +41,13 @@ export class Publication{
    if(action==='publish'){
     const bundle=await validateBundle(body);
     if(state.liveHash===bundle.hash)return state;
-    const htmlHash=await sha256(fromBase64(bundle.files.find(file=>file.path==='index.html').content));
     const operation=crypto.randomUUID(),name=state.projectName||`folio-${crypto.randomUUID().replaceAll('-','').slice(0,20)}`;
+    const published=await publishedBundle(bundle,`https://${name}.pages.dev`);
+    const htmlHash=await sha256(fromBase64(published.files.find(file=>file.path==='index.html').content));
     state=await this.save({...state,projectName:name,url:`https://${name}.pages.dev`,error:null,pending:{kind:'publish',operation,hash:bundle.hash,htmlHash,at:this.now()}});
     try{
      if(!await this.provider.project(name))await this.provider.create(name);
-     const deployment=await this.provider.deploy(name,bundle,operation);
+     const deployment=await this.provider.deploy(name,published,operation);
      state=await this.save({...state,pending:{...state.pending,deploymentId:deployment.id}});
      return await this.refresh(state);
     }catch(error){await this.save({...state,error:error.message});throw error}
