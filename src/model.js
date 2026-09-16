@@ -1,13 +1,13 @@
 import {DEFAULT_TEMPLATE} from './templates.js';
 import {validAsset} from './assets.js';
 
-const neutral={paper:'#fcfcfc',ink:'#25292c',muted:'#62686e',line:'#e4e6e5',wash:'#f3f4f3'};
+const neutral={ink:'#25292c',muted:'#62686e'};
 export const themes = {
- forest:{...neutral,name:'화이트 / 그린',accent:'#355b49'},
- navy:{...neutral,name:'화이트 / 네이비',accent:'#344e70'},
- burgundy:{...neutral,name:'화이트 / 버건디',accent:'#724552'},
- plum:{...neutral,name:'화이트 / 플럼',accent:'#62506e'},
- charcoal:{...neutral,name:'화이트 / 차콜',accent:'#414141'}
+ forest:{...neutral,name:'그린',paper:'#f7faf8',wash:'#e4eee7',line:'#cddbd1',accent:'#355b49'},
+ navy:{...neutral,name:'네이비',paper:'#f7f9fc',wash:'#e3ebf5',line:'#ccd7e6',accent:'#344e70'},
+ burgundy:{...neutral,name:'버건디',paper:'#fcf9fa',wash:'#f0e5e9',line:'#e2cfd6',accent:'#724552'},
+ plum:{...neutral,name:'플럼',paper:'#faf9fc',wash:'#ece6f2',line:'#dad0e3',accent:'#62506e'},
+ charcoal:{...neutral,name:'차콜',paper:'#f8f9fa',wash:'#e7eaed',line:'#d1d6da',accent:'#414141'}
 };
 export const fonts={
  academic:{name:'Source Serif 4 / Source Sans 3',en:['Source Serif 4','Source Sans 3','Source Sans 3'],ko:['Noto Serif KR','Pretendard']},
