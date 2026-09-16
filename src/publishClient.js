@@ -1,7 +1,7 @@
-import {publishingEndpoint,PublishError} from './publishing';
+import {publishingEndpoint,PublishError} from './publishing.js';
 const settingsKey='folio-publisher-endpoint',sessionKey='folio-publisher-session';
 export function publisherSettings(){
- try{return {endpoint:localStorage.getItem(settingsKey)||import.meta.env.VITE_PUBLISH_API_URL||'',...JSON.parse(sessionStorage.getItem(sessionKey)||'{}')}}catch{return {endpoint:import.meta.env.VITE_PUBLISH_API_URL||''}}
+ try{return {endpoint:localStorage.getItem(settingsKey)||import.meta.env?.VITE_PUBLISH_API_URL||'',...JSON.parse(sessionStorage.getItem(sessionKey)||'{}')}}catch{return {endpoint:import.meta.env?.VITE_PUBLISH_API_URL||''}}
 }
 export function rememberPublisher(config){
  const endpoint=publishingEndpoint(config.endpoint);
