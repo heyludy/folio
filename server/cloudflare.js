@@ -5,7 +5,8 @@ import {PublishError,fileType} from '../src/publishing.js';
 // Same Pages asset hash used by Cloudflare's Wrangler deploy-helpers.
 export const pagesHash=file=>bytesToHex(blake3(utf8ToBytes(file.content+file.path.split('.').at(-1)))).slice(0,32);
 export class CloudflarePages{
- constructor(env,fetcher=fetch){this.env=env;this.fetcher=fetcher;this.root=`/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/pages/projects`;}
+ // Native Workers fetch rejects the provider instance as its receiver.
+ constructor(env,fetcher=fetch){this.env=env;this.fetcher=(...args)=>fetcher(...args);this.root=`/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/pages/projects`;}
  async request(path,{method='GET',body,token=this.env.CLOUDFLARE_API_TOKEN,missing=false}={}){
   const headers={Authorization:`Bearer ${token}`};
   if(body&&!(body instanceof FormData)){headers['Content-Type']='application/json';body=JSON.stringify(body)}

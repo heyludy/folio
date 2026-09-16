@@ -80,6 +80,14 @@ test('Pages asset hash matches the installed Wrangler implementation',()=>{
  const require=createRequire(import.meta.url),wranglerRequire=createRequire(require.resolve('wrangler/package.json')),blake=wranglerRequire('blake3-wasm');
  const file={path:'index.html',content:Buffer.from('Hello 교수님').toString('base64')};assert.equal(pagesHash(file),blake.hash(file.content+'html').toString('hex').slice(0,32));
 });
+test('provider adapter preserves the native fetch receiver required by Workers',async t=>{
+ t.mock.method(globalThis,'fetch',function(){
+  assert.ok(this===undefined||this===globalThis,'Native fetch must not receive the provider instance as this');
+  return Promise.resolve(Response.json({success:true,result:{name:'folio-receiver-test'}}));
+ });
+ const provider=new CloudflarePages({CLOUDFLARE_ACCOUNT_ID:'account',CLOUDFLARE_API_TOKEN:'test-token'});
+ assert.equal((await provider.project('folio-receiver-test')).name,'folio-receiver-test');
+});
 test('provider adapter uploads the manifest with server token, asset JWT, and production branch',async()=>{
  const requests=[],f=new CloudflarePages({CLOUDFLARE_ACCOUNT_ID:'account',CLOUDFLARE_API_TOKEN:'server-token'},async(url,init)=>{
   requests.push({url,...init});const suffix=new URL(url).pathname;

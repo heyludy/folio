@@ -2,9 +2,12 @@
 
 ## 검증한 흐름
 
-- 기존 편집·언어·자료 준비·HTML 내보내기 회귀 검사 + 게시 계약/인증/파일/동시성: 101개 통과.
+- 기존 편집·언어·자료 준비·HTML 내보내기 회귀 검사 + 게시 계약/인증/파일/동시성: 102개 통과.
 - Workers 런타임, RPC, SQLite 실제 저장과 새 인스턴스에서 복구, Origin/관리 키 검증, 게시/중단: 2개 통과. 외부 Pages API는 이 테스트에서 모의 응답.
 - 실 Cloudflare Pages API: 개인정보 없는 테스트 페이지 생성 → HTML/PDF HTTP 확인 → 내용 변경 후 동일 URL HTTP 확인 → 프로젝트 삭제 → 삭제 조회 확인. 테스트 프로젝트 `folio-qa-e94c257d-048` 정리 완료.
+- 운영 Worker + 운영용 Secret: 관리 키 인증 → 기본 주소 발급 → 공개 HTML/PDF 내용 확인 → 동일 주소 재게시 → 게시 중단 → 저장된 중단 상태와 공개 주소 제거 확인. 교수님 자료 대신 합성 테스트 자료만 사용하고 테스트 사이트 정리.
+- 원격 검증 중 발견한 Workers 네이티브 `fetch` 호출의 잘못된 `this` 바인딩을 수정·배포하고 회귀 검사 추가. 로컬 모의 응답만으로 발견하지 못했던 오류를 실제 서버 경로에서 재검증.
+- 게시 중단 뒤 Cloudflare 공개 주소에 삭제가 전파되기까지 지연이 있었음. 최종 HTTP 530과 테스트 내용이 없어진 것을 확인했고 안내 문서에 반영.
 - 로컬 편집 UI + 격리된 모의 게시 서버: 연결 오류, 첫 게시, 변경사항 감지, 같은 URL 재게시, 잘못된 도메인 입력 거절, DNS 안내, 연결 해제 취소/확정, 게시 중단 확인/완료.
 - 기존 실 사용자 브라우저 프로젝트는 변경하지 않음. QA는 localhost:5178의 기존 테스트 프로젝트 사용.
 - 프런트 빌드에 서버 토큰/테스트 키가 들어가지 않는 것을 검색 확인.
@@ -13,9 +16,9 @@
 
 - Worker: `https://folio-publisher.ludia0602.workers.dev`
 - 브라우저 Folio 주소: `https://heyludy.github.io/folio/`
-- Cloudflare 로그인·MCP OAuth 연결 완료. 서버 운영용 Pages API 토큰은 별도로 Secret에 넣어야 함.
+- Cloudflare 로그인·MCP OAuth, 서버 운영용 Pages API 토큰과 관리 키 Secret 연결 완료.
 - 실제 소유 도메인 연결은 도메인 제공 전까지 검증하지 못함. DNS 안내와 provider pending/active 상태 전환은 격리된 테스트로 검증.
-- 실제 원격 Worker를 통한 end-to-end 게시는 운영용 Secret 입력 후 검증 필요. 앞선 실 Pages 검사는 로그인된 Wrangler의 개발용 권한으로 adapter를 직접 실행한 결과이며, 운영 서버 검증과 구분함.
+- 원격 Worker 버전 `069d8c8b-5919-498b-ac37-4b8c53ba6ec1`에서 운영 서버 전체 경로 검증. 인증 누락 401, 허용하지 않은 Origin 403, 허용한 Folio Origin의 CORS 응답 확인.
 
 ## 알려진 범위
 
