@@ -6,8 +6,6 @@
 .basic-icon-preview span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .basic-icon-preview svg{color:#a0a5a0;flex:none}
 .basic-icon-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.basic-icon-controls label{display:flex;gap:8px;align-items:center;color:#888;font-size:11px}
-.basic-dialog .basic-icon-controls input:not([type=radio]):not([type=checkbox]){width:60px;text-align:center;padding:7px}
 .basic-icon-controls .studio-button{font-size:11px;padding:8px 11px}
 .basic-icon-reset{border:0;background:none;color:#8a918a;font-size:11px;padding:7px 2px;text-decoration:underline;text-underline-offset:3px}
 .basic-icon .basic-icon-hint{margin-top:10px;font-size:10px}

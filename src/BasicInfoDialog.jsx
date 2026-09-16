@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {X,ArrowLeft,ArrowRight} from 'lucide-react';
 import {getBasicInfo,applyBasicInfo} from './basics';
 import {readAsset} from './assets';
-import {iconLetters,siteInitials,siteIconSource} from './siteIcon';
+import {siteIconSource} from './siteIcon';
 import {siteLanguages} from './model';
 import {TemplatePicker} from './TemplatePicker';
 import {resolveTemplate} from './templates';
@@ -53,12 +53,11 @@ export function BasicInfoDialog({site,creating=false,initialLanguage='en',onSave
    <div className="basic-grid">{fields.filter(([key])=>!creating||['name','college'].includes(key)).map(([key,label,enHint,koHint])=><label className={key==='office'?'basic-wide':''} key={key}><span>{label}</span>{key==='office'?<textarea aria-label={`${language==='en'?'영문':'한글'} ${label}`} value={draft[language][key]} placeholder={language==='en'?enHint:koHint} onChange={e=>change(key,e.target.value)} rows={2}/>:<input ref={key==='name'?nameInput:undefined} aria-label={`${language==='en'?'영문':'한글'} ${label}`} value={draft[language][key]} placeholder={language==='en'?enHint:koHint} onChange={e=>change(key,e.target.value)}/>}</label>)}</div>
    {!creating&&<label className="basic-email"><span>이메일 {mode==='bilingual'&&<small>한글·영문 공통</small>}</span><input type="email" aria-label="공통 이메일" placeholder="name@university.edu" value={draft.email} onChange={e=>setDraft(current=>({...current,email:e.target.value}))}/></label>}
    {!creating&&<section className="basic-icon" aria-labelledby="site-icon-title">
-    <div><h3 id="site-icon-title">탭 아이콘</h3><p>이름 이니셜과 테마색이 기본으로 들어가요.</p></div>
+    <div><h3 id="site-icon-title">탭 아이콘</h3><p>공통 페이지 아이콘에 사이트의 테마색이 적용돼요.</p></div>
     <div className="basic-icon-preview" aria-label="브라우저 탭 미리보기"><img src={siteIconSource(iconSite)} alt="사이트 아이콘" width="20" height="20"/><span>{draft.en.name||draft.ko.name||'교수님 홈페이지'}</span><X size={12}/></div>
     <div className="basic-icon-controls">
-     {!icon.image&&<label><span>글자</span><input aria-label="탭 아이콘 글자" maxLength={2} value={icon.text||''} placeholder={siteInitials(iconSite)} onChange={e=>setIcon(current=>({...current,text:iconLetters(e.target.value)}))}/></label>}
      <button type="button" className="studio-button" disabled={iconLoading} onClick={()=>iconInput.current.click()}>{iconLoading?'불러오는 중…':icon.image?'로고 변경':'로고 업로드'}</button>
-     {(icon.image||icon.text)&&<button type="button" className="basic-icon-reset" disabled={iconLoading} onClick={()=>{setIcon({});setIconError('')}}>기본으로</button>}
+     {icon.image&&<button type="button" className="basic-icon-reset" disabled={iconLoading} onClick={()=>{setIcon({});setIconError('')}}>기본으로</button>}
     </div>
     <input ref={iconInput} hidden type="file" tabIndex={-1} accept="image/png,image/jpeg,image/webp" aria-label="탭 아이콘 로고 파일" onChange={uploadIcon}/>
     <p className="basic-icon-hint">정사각형 PNG · JPG · WebP, 최대 2MB</p>
