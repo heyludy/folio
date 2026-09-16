@@ -75,7 +75,12 @@ export class CloudStore{
    if(digest!==hash)fail('첨부 파일이 손상되었어요.');
    const response=await this.fetcher(url,{method:'POST',headers:{...headers,'Content-Type':type,'x-upsert':'false'},body:bytes,signal:AbortSignal.timeout(45000),redirect:'manual'});
    // Content-addressed objects are immutable; an existing identical hash is safe.
-   if(!response.ok){const error=await response.json().catch(()=>({}));if(response.status!==409&&error.code!=='Duplicate')fail('첨부 파일을 저장하지 못했어요. 다시 시도해 주세요.',502);}
+   if(!response.ok){
+    const error=await response.json().catch(()=>({}));
+    // Storage can wrap a duplicate object's 409 inside an HTTP 400 response.
+    const duplicate=response.status===409||error.code==='Duplicate'||response.status===400&&String(error.statusCode)==='409'&&(error.error==='Duplicate'||error.code==='KeyAlreadyExists');
+    if(!duplicate)fail('첨부 파일을 저장하지 못했어요. 다시 시도해 주세요.',502);
+   }
    return {ok:true};
   }
   const response=await this.fetcher(url,{headers,signal:AbortSignal.timeout(30000),redirect:'manual'});

@@ -71,6 +71,18 @@ test('modern secret keys authorize shared data and private assets without replac
  assert.deepEqual(seen,new Set(['account','workspace','upload','download']));
 });
 
+test('saving existing photos after reopening accepts Storage duplicate responses but not other failures',async()=>{
+ const bytes=new TextEncoder().encode('same photo');
+ const hash=Buffer.from(await crypto.subtle.digest('SHA-256',bytes)).toString('hex');
+ const request=()=>new Request('https://test',{method:'PUT',headers:{'Content-Type':'image/jpeg'},body:bytes});
+ for(const [status,body] of [[409,{}],[400,{statusCode:'409',error:'Duplicate',code:'KeyAlreadyExists',message:'The resource already exists'}]]){
+  const store=new CloudStore({SUPABASE_URL:'https://test.supabase.co',SUPABASE_SECRET_KEY:'sb_secret_test'},async()=>Response.json(body,{status}));
+  assert.deepEqual(await store.asset(user(),hash,request()),{ok:true});
+ }
+ const denied=new CloudStore({SUPABASE_URL:'https://test.supabase.co',SUPABASE_SECRET_KEY:'sb_secret_test'},async()=>Response.json({statusCode:'403',error:'Unauthorized'},{status:400}));
+ await assert.rejects(denied.asset(user(),hash,request()),error=>error.status===502);
+});
+
 test('cloud snapshots reject duplicate project identities and embedded oversized assets',()=>{
  assert.throws(()=>validateWorkspace([{id:'a',sections:[]},{id:'a',sections:[]}]),/중복/);
  assert.throws(()=>validateWorkspace([{id:'a',sections:[],photo:'data:image/png;base64,aGk='}]),/첨부/);
