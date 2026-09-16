@@ -41,6 +41,29 @@ test('cloud mode blocks legacy password sessions and never serves private data w
  response=await handleRequest(new Request('https://test/v1/sites/'+crypto.randomUUID()),env);assert.equal(response.status,401);assert.equal(touched,false);
 });
 
+test('modern secret keys authorize shared data and private assets without replacing the user JWT',async()=>{
+ const bytes=new TextEncoder().encode('%PDF-1.4 test');
+ const hash=Buffer.from(await crypto.subtle.digest('SHA-256',bytes)).toString('hex');
+ const seen=new Set(),key='sb_secret_test-only';
+ const store=new CloudStore({SUPABASE_URL:'https://test.supabase.co/',SUPABASE_SECRET_KEY:key,SUPABASE_SERVICE_KEY:'obsolete'},async(url,init)=>{
+  const headers=new Headers(init.headers);assert.equal(headers.get('apikey'),key);
+  if(url.endsWith('/auth/v1/user')){assert.equal(headers.get('Authorization'),'Bearer actual-login');seen.add('account');return Response.json(user());}
+  assert.equal(headers.has('Authorization'),false);
+  if(url.includes('/storage/')){
+   assert.ok(url.endsWith('/folio-assets/apub/'+hash));seen.add(init.method==='POST'?'upload':'download');
+   if(init.method==='POST'){assert.deepEqual(init.body,bytes);return Response.json({});}
+   return new Response(bytes,{headers:{'Content-Type':'application/pdf'}});
+  }
+  seen.add('workspace');return Response.json([]);
+ });
+ const account=await store.account(new Request('https://test',{headers:{Authorization:'Bearer actual-login'}}));
+ assert.deepEqual(await store.workspace(account),{sites:[],revision:0,publications:{}});
+ await store.asset(account,hash,new Request('https://test',{method:'PUT',headers:{'Content-Type':'application/pdf'},body:bytes}));
+ const download=await store.asset(account,hash,new Request('https://test'));
+ assert.deepEqual(new Uint8Array(await download.arrayBuffer()),bytes);
+ assert.deepEqual(seen,new Set(['account','workspace','upload','download']));
+});
+
 test('cloud snapshots reject duplicate project identities and embedded oversized assets',()=>{
  assert.throws(()=>validateWorkspace([{id:'a',sections:[]},{id:'a',sections:[]}]),/중복/);
  assert.throws(()=>validateWorkspace([{id:'a',sections:[],photo:'data:image/png;base64,aGk='}]),/첨부/);

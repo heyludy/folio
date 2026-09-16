@@ -39,7 +39,7 @@ Worker가 매 요청 Supabase 사용자 API로 유효한 세션과 Google에서 
 Worker 비밀 설정:
 
 - `SUPABASE_URL`: 해당 프로젝트 URL.
-- `SUPABASE_SERVICE_KEY`: 서버 전용 legacy `service_role` 키. **GitHub Pages 변수나 VITE 변수에 넣지 않는다.**
+- `SUPABASE_SECRET_KEY`: 서버 전용 `sb_secret_...` 키. **GitHub Pages 변수나 VITE 변수에 넣지 않는다.** 기존 `SUPABASE_SERVICE_KEY`의 legacy `service_role` 키도 호환된다.
 - `CLOUD_ENABLED`: `true`로 지정하면 공유 게시 암호 로그인은 차단된다. 준비 전에는 지정하지 않는다.
 
 `npx wrangler secret put <이름>`의 비공개 입력으로 설정한다. 키를 CLI 인수로 직접 넘기지 않는다.

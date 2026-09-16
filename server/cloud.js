@@ -2,6 +2,12 @@ import {fail} from '../src/publishing.js';
 
 const admins=new Set(['ludia0602@gmail.com','ludy.kim@furiosa.ai']);
 export const cloudEnabled=env=>env.CLOUD_ENABLED==='true';
+function connection(env){
+ const url=env.SUPABASE_URL,key=env.SUPABASE_SECRET_KEY||env.SUPABASE_SERVICE_KEY;
+ if(!url||!key)fail('클라우드 연결 설정을 마치지 않았어요.',503);
+ // Modern secret keys aren't JWTs. Legacy service_role keys still use Bearer.
+ return {url:url.replace(/\/$/,''),headers:{apikey:key,...(!key.startsWith('sb_secret_')?{Authorization:`Bearer ${key}`}:{})}};
+}
 export function accountRole(user){
  const email=typeof user?.email==='string'?user.email.trim().toLowerCase():'';
  // identity_data is supplied by Google. user_metadata can be edited by a user.
@@ -12,10 +18,9 @@ export function accountRole(user){
 export class CloudStore{
  constructor(env,fetcher=fetch){this.env=env;this.fetcher=fetcher===fetch?fetch.bind(globalThis):fetcher;}
  async call(path,{method='GET',body,headers={}}={}){
-  const {SUPABASE_URL:url,SUPABASE_SERVICE_KEY:key}=this.env;
-  if(!url||!key)fail('클라우드 연결 설정을 마치지 않았어요.',503);
+  const {url,headers:credentials}=connection(this.env);
   let response;
-  try{response=await this.fetcher(url.replace(/\/$/,'')+path,{method,headers:{apikey:key,Authorization:`Bearer ${key}`,...(body?{'Content-Type':'application/json'}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(30000),redirect:'manual'});}catch{fail('클라우드에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.',503);}
+  try{response=await this.fetcher(url+path,{method,headers:{...credentials,...(body?{'Content-Type':'application/json'}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(30000),redirect:'manual'});}catch{fail('클라우드에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.',503);}
   if(!response.ok){
    if(response.status===401||response.status===403)fail('클라우드 연결 권한을 확인해 주세요.',503);
    fail('클라우드 요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.',502);
@@ -25,10 +30,9 @@ export class CloudStore{
  async account(request){
   const token=request.headers.get('Authorization');
   if(!token?.startsWith('Bearer ')||token.length>12000)fail('Google 계정으로 로그인해 주세요.',401);
-  const {SUPABASE_URL:url,SUPABASE_SERVICE_KEY:key}=this.env;
-  if(!url||!key)fail('클라우드 연결 설정을 마치지 않았어요.',503);
+  const {url,headers}=connection(this.env);
   let response;
-  try{response=await this.fetcher(url.replace(/\/$/,'')+'/auth/v1/user',{headers:{apikey:key,Authorization:token},signal:AbortSignal.timeout(15000),redirect:'manual'});}catch{fail('로그인을 확인하지 못했어요. 다시 시도해 주세요.',503);}
+  try{response=await this.fetcher(url+'/auth/v1/user',{headers:{...headers,Authorization:token},signal:AbortSignal.timeout(15000),redirect:'manual'});}catch{fail('로그인을 확인하지 못했어요. 다시 시도해 주세요.',503);}
   if(!response.ok)fail(response.status>=500?'로그인 서버에 연결하지 못했어요.':'Google 계정으로 다시 로그인해 주세요.',response.status>=500?503:401);
   const user=await response.json(),role=accountRole(user);
   if(!role)fail('이 계정은 Folio 사용 권한이 없어요. apub.kr 계정 또는 등록된 관리자 계정으로 로그인해 주세요.',403);
@@ -61,8 +65,8 @@ export class CloudStore{
  }
  async asset(account,hash,request){
   const path=`apub/${hash}`;
-  const url=this.env.SUPABASE_URL.replace(/\/$/,'')+'/storage/v1/object/folio-assets/'+path;
-  const headers={apikey:this.env.SUPABASE_SERVICE_KEY,Authorization:`Bearer ${this.env.SUPABASE_SERVICE_KEY}`};
+  const {url:baseUrl,headers}=connection(this.env);
+  const url=baseUrl+'/storage/v1/object/folio-assets/'+path;
   if(request.method==='PUT'){
    const type=request.headers.get('Content-Type');
    if(!['image/png','image/jpeg','image/webp','application/pdf'].includes(type))fail('사진이나 PDF 파일을 선택해 주세요.',415);
