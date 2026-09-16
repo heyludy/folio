@@ -26,13 +26,13 @@ export function PublishDialog({site,onClose}){
  const refresh=async()=>{const next=await publishRequest(config,path.current);if(alive.current)setState(next)};
  useEffect(()=>{
   if(!connected||!state?.pending){polls.current=0;return;}
-  if(polls.current++>=30)return;
-  const timer=setTimeout(()=>perform('게시 상태 확인 중',refresh),4000);return()=>clearTimeout(timer);
+  if(busy||polls.current>=30)return;
+  const timer=setTimeout(()=>{polls.current++;perform('게시 상태 확인 중',refresh)},4000);return()=>clearTimeout(timer);
  },[connected,state,busy]);
  const publish=()=>perform('게시 중',async()=>{
   if(!bundle)return;
   const next=await publishRequest(config,path.current,{method:'PUT',body:{files:bundle.files},revision:state.revision});
-  if(alive.current){setState(next);setNotice(next.pending?'게시를 처리하고 있어요. 창을 다시 열어도 상태를 확인할 수 있어요.':'페이지가 게시됐어요.')}
+  if(alive.current){setState(next);setNotice(next.pending?'완료되면 공개 주소가 표시돼요. 창을 다시 열어도 확인할 수 있어요.':'페이지가 게시됐어요.')}
  });
  const mutate=async(suffix,method,body)=>{const next=await publishRequest(config,path.current+suffix,{method,body,revision:state.revision});if(alive.current){setState(next);setConfirm(null)}};
  const copy=value=>perform('복사 중',async()=>{try{await navigator.clipboard.writeText(value);setNotice('주소를 복사했어요.')}catch{throw new Error('복사하지 못했어요. 표시된 주소를 직접 복사해 주세요.')}});
@@ -44,7 +44,8 @@ export function PublishDialog({site,onClose}){
   {!connected?<form className="publish-connect" onSubmit={e=>{e.preventDefault();perform('연결 확인 중',connect)}}><div className="publish-intro"><Globe size={25}/><h3>게시 연결</h3><p>관리자가 전달한 게시 서버와 관리 키로 연결하세요.<br/>편집한 내용은 ‘게시’를 누르기 전까지 공개되지 않아요.</p></div><label>게시 서버 주소<input required type="url" value={config.endpoint} placeholder="https://folio-publisher.example.workers.dev" onChange={e=>setConfig({...config,endpoint:e.target.value})} autoComplete="url"/></label><label>게시 관리 키<input required type="password" minLength={32} value={config.key||''} placeholder="관리자에게 받은 키" onChange={e=>setConfig({...config,key:e.target.value})} autoComplete="off"/></label><p className="publish-note">관리 키는 이 탭의 세션에만 보관돼요.</p><button disabled={!!busy} className="studio-button primary" type="submit">{busy||'연결하기'}<ArrowRight size={14}/></button></form>:<>
    <section className="publish-card"><div className="publish-status"><span data-live={isLive&&!state.pending}>{isLive&&!state.pending?<Check size={14}/>:<Globe size={14}/>} {label}</span><button type="button" className="publish-text-button" disabled={!!busy} onClick={()=>perform('상태 확인 중',refresh)}><RefreshCw size={13}/>새로고침</button></div>
     {isLive?<><div className="publish-url"><a href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}<ExternalLink size={14}/></a><button className="publish-icon" aria-label="게시 주소 복사" onClick={()=>copy(publicUrl)} disabled={!!busy}><Copy size={16}/></button></div>{publicUrl!==state.url&&<p className="publish-note">기본 주소 <a href={state.url} target="_blank" rel="noreferrer">{state.url}</a></p>}<p className="publish-note">마지막 게시 · {new Date(state.publishedAt).toLocaleString('ko-KR')}</p></>:<div className="publish-empty"><h3>{state.pending?'홈페이지를 게시하고 있어요.':'도메인 없이도 시작할 수 있어요.'}</h3><p>게시하면 기본 주소가 발급돼요.<br/>구매한 도메인은 나중에 연결할 수 있어요.</p></div>}
-    <button type="button" className="studio-button primary publish-main" disabled={disabled||!bundle||label==='게시됨'} onClick={publish}>{state.pending?'게시 처리 중…':isLive?'변경사항 게시':'게시하기'}<ArrowRight size={15}/></button>
+    {state.pending?.phase==='verifying'&&<p className="publish-note" role="status">공개 주소에서 새 페이지가 열리는지 확인하고 있어요. 처음 게시할 때는 잠시 걸릴 수 있어요. 확인이 오래 걸리면 새로고침을 눌러주세요.</p>}
+    <button type="button" className="studio-button primary publish-main" disabled={disabled||!bundle||label==='게시됨'} onClick={publish}>{state.pending?.phase==='verifying'?'공개 주소 확인 중…':state.pending?'게시 처리 중…':isLive?'변경사항 게시':'게시하기'}<ArrowRight size={15}/></button>
     <p className="publish-note">현재 페이지와 첨부한 사진·PDF가 공개돼요. AI 확인 메모와 출처 검토 기록은 포함되지 않아요.</p>
    </section>
    <section className="publish-domain"><div><h3>내 도메인</h3><p>구매한 도메인을 연결하세요.</p></div>

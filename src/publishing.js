@@ -50,7 +50,7 @@ export async function validateBundle(input){
 }
 export function fileType(path){return types[path.split('.').at(-1)]}
 export function publicationLabel(state,hash){
- if(state?.pending)return '게시 중';
+ if(state?.pending)return state.pending.phase==='verifying'?'주소 확인 중':'게시 중';
  if(!state?.liveHash)return state?.status==='unpublished'?'게시 중단됨':'미게시';
  return hash&&state.liveHash!==hash?'수정사항 있음':'게시됨';
 }

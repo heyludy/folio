@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {publishBundle,validateBundle,domainName,publishingEndpoint,publicationLabel} from '../src/publishing.js';
+import {publishBundle,validateBundle,domainName,publishingEndpoint,publicationLabel,sha256} from '../src/publishing.js';
 import {Publication} from '../server/publication.js';
 import {handleRequest,readJson} from '../server/http.js';
 import {CloudflarePages,pagesHash} from '../server/cloudflare.js';
@@ -11,6 +11,7 @@ const key='a'.repeat(64),id='148ff929-fd6d-48b6-99b0-f1d42532b1f5';
 function fixture(){
  const data=new Map(),storage={async get(k){return structuredClone(data.get(k))},async put(k,v){data.set(k,structuredClone(v))}};
  const provider={projects:new Map(),calls:[],async project(name){return this.projects.get(name)||null},async create(name){this.calls.push('create');this.projects.set(name,{name});return {name}},async deploy(name,bundle,operation){this.calls.push('deploy');this.last={id:'deployment-1',latest_stage:{name:'deploy',status:'success'},deployment_trigger:{metadata:{commit_message:`Folio ${operation}`}}};return this.last},async deployment(){return this.last},async deployments(){return [this.last].filter(Boolean)},async remove(name){this.calls.push('remove');this.projects.delete(name)},async domain(){return this.attached||null},async addDomain(name,domain){this.attached={name:domain,status:'pending',verification_data:{status:'pending'}};return this.attached},async removeDomain(){this.attached=null}};
+ provider.ready=async()=>true;
  return {storage,provider,publication:new Publication(storage,provider)};
 }
 const bundle=()=>publishBundle('<!doctype html><h1>Test professor</h1>');
@@ -47,6 +48,31 @@ test('provider failure leaves previous published content and can recover an unce
  f.provider.deploy=async function(...args){await old.apply(this,args);throw new Error('lost response')};
  const changed=await publishBundle('<h1>Changed</h1>');await assert.rejects(f.publication.run('publish',changed,state.revision));assert.equal((await f.publication.load()).liveHash,b.hash);
  state=await new Publication(f.storage,f.provider).run('get');assert.equal(state.liveHash,changed.hash);assert.equal(state.pending,null);
+});
+test('deployment success waits for the public page, survives restart, and preserves the previous version',async()=>{
+ const f=fixture(),b=await bundle();f.provider.ready=async()=>false;
+ let state=await f.publication.run('publish',b,0);
+ assert.equal(state.status,'draft');assert.equal(state.liveHash,null);assert.equal(state.pending.phase,'verifying');assert.equal(publicationLabel(state,b.hash),'주소 확인 중');
+ const restarted=new Publication(f.storage,f.provider);
+ assert.equal((await restarted.run('get')).revision,state.revision);
+ f.provider.ready=async(name,hash)=>{assert.equal(name,state.projectName);assert.equal(hash,await sha256(Buffer.from(b.files[0].content,'base64')));return true};
+ state=await restarted.run('get');assert.equal(state.liveHash,b.hash);assert.equal(state.pending,null);
+ const url=state.url,next=await publishBundle('<h1>Changed page</h1>');f.provider.ready=async()=>false;
+ state=await restarted.run('publish',next,state.revision);assert.equal(state.liveHash,b.hash);assert.equal(state.url,url);assert.equal(state.pending.phase,'verifying');
+ f.provider.ready=async()=>true;
+ state=await new Publication(f.storage,f.provider).run('get');assert.equal(state.liveHash,next.hash);assert.equal(state.url,url);assert.equal(state.pending,null);
+});
+test('public readiness rejects 522, stale content, redirects, oversized bodies and network failures without sending credentials',async()=>{
+ const html='<!doctype html><h1>Ready</h1>',hash=await sha256(html);
+ let current=()=>new Response(html,{headers:{'Content-Type':'text/html'}});
+ const provider=new CloudflarePages({CLOUDFLARE_API_TOKEN:'must-stay-private'},async(url,init)=>{
+  assert.match(url,/^https:\/\/folio-test\.pages\.dev\//);assert.equal(init.headers.Authorization,undefined);assert.equal(init.redirect,'manual');
+  return current();
+ });
+ assert.equal(await provider.ready('folio-test',hash),true);
+ for(const response of [()=>new Response('Timeout',{status:522}),()=>new Response('<h1>Old page</h1>',{headers:{'Content-Type':'text/html'}}),()=>new Response(null,{status:302,headers:{Location:'https://other.test'}}),()=>new Response('x'.repeat(2*1024*1024+1),{headers:{'Content-Type':'text/html'}}),()=>{throw new TypeError('fetch failed')}]){
+  current=response;assert.equal(await provider.ready('folio-test',hash),false);
+ }
 });
 test('concurrent requests and stale revisions cannot publish over another operation',async()=>{
  const f=fixture(),b=await bundle();let release;f.provider.deploy=()=>new Promise(resolve=>{release=()=>{f.provider.last={id:'x',latest_stage:{name:'deploy',status:'success'}};resolve(f.provider.last)}});

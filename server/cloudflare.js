@@ -1,6 +1,6 @@
 import {blake3} from '@noble/hashes/blake3.js';
 import {bytesToHex,utf8ToBytes} from '@noble/hashes/utils.js';
-import {PublishError,fileType} from '../src/publishing.js';
+import {PublishError,fileType,sha256} from '../src/publishing.js';
 
 // Same Pages asset hash used by Cloudflare's Wrangler deploy-helpers.
 export const pagesHash=file=>bytesToHex(blake3(utf8ToBytes(file.content+file.path.split('.').at(-1)))).slice(0,32);
@@ -21,6 +21,21 @@ export class CloudflarePages{
   return data.result;
  }
  project(name){return this.request(`${this.root}/${name}`,{missing:true})}
+ async ready(name,htmlHash){
+  // Deployment success can precede the public hostname becoming reachable.
+  // Probe without credentials, following no redirects, and bound the response.
+  let reader;
+  try{
+   const response=await this.fetcher(`https://${name}.pages.dev/?__folio_check=${htmlHash||'ready'}`,{redirect:'manual',headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(6000)});
+   reader=response.body?.getReader();
+   if(response.status!==200||!response.headers.get('Content-Type')?.includes('text/html')||!reader)return false;
+   const chunks=[];let size=0;
+   while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>2*1024*1024)return false;chunks.push(value)}
+   if(!size)return false;
+   const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
+   return !htmlHash||await sha256(bytes)===htmlHash;
+  }catch{return false}finally{try{await reader?.cancel()}catch{}}
+ }
  create(name){return this.request(this.root,{method:'POST',body:{name,production_branch:'main'}})}
  async deploy(name,bundle,operation){
   const {jwt}=await this.request(`${this.root}/${name}/upload-token`);

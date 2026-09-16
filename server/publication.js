@@ -1,4 +1,4 @@
-import {fail,validateBundle,domainName} from '../src/publishing.js';
+import {fail,validateBundle,domainName,sha256,fromBase64} from '../src/publishing.js';
 export const emptyPublication=()=>({revision:0,status:'draft',url:null,liveHash:null,publishedAt:null,pending:null,domain:null,error:null});
 const domainView=data=>data?{name:data.name,status:data.status,verification:data.verification_data?.status,validation:data.validation_data?.status,error:data.validation_data?.error_message||data.verification_data?.error_message||null,txtName:data.validation_data?.txt_name||null,txtValue:data.validation_data?.txt_value||null}:null;
 
@@ -15,7 +15,11 @@ export class Publication{
     if(this.now()-state.pending.at>120000)return this.save({...state,pending:null,error:'게시 중단을 완료하지 못했어요. 다시 시도해 주세요.'});
    }else{
     const deployment=state.pending.deploymentId?await this.provider.deployment(state.projectName,state.pending.deploymentId):(await this.provider.project(state.projectName)?(await this.provider.deployments(state.projectName)).find(d=>d.deployment_trigger?.metadata?.commit_message===`Folio ${state.pending.operation}`):null);
-    if(deployment?.latest_stage?.name==='deploy'&&deployment.latest_stage.status==='success')return this.save({...state,status:'published',liveHash:state.pending.hash,publishedAt:deployment.modified_on||new Date(this.now()).toISOString(),pending:null,error:null});
+    if(deployment?.latest_stage?.name==='deploy'&&deployment.latest_stage.status==='success'){
+     if(await this.provider.ready(state.projectName,state.pending.htmlHash))return this.save({...state,status:'published',liveHash:state.pending.hash,publishedAt:deployment.modified_on||new Date(this.now()).toISOString(),pending:null,error:null});
+     if(state.pending.phase!=='verifying')return this.save({...state,pending:{...state.pending,deploymentId:deployment.id,phase:'verifying'},error:null});
+     return state;
+    }
     if(['failure','canceled'].includes(deployment?.latest_stage?.status))return this.save({...state,pending:null,error:'게시가 완료되지 않았어요. 이전에 게시한 내용은 유지돼요.'});
     if(deployment&&!state.pending.deploymentId)state=await this.save({...state,pending:{...state.pending,deploymentId:deployment.id}});
     if(!deployment&&this.now()-state.pending.at>120000)return this.save({...state,pending:null,error:'게시 결과를 확인하지 못했어요. 다시 게시해 주세요.'});
@@ -36,8 +40,9 @@ export class Publication{
    if(action==='publish'){
     const bundle=await validateBundle(body);
     if(state.liveHash===bundle.hash)return state;
+    const htmlHash=await sha256(fromBase64(bundle.files.find(file=>file.path==='index.html').content));
     const operation=crypto.randomUUID(),name=state.projectName||`folio-${crypto.randomUUID().replaceAll('-','').slice(0,20)}`;
-    state=await this.save({...state,projectName:name,url:`https://${name}.pages.dev`,error:null,pending:{kind:'publish',operation,hash:bundle.hash,at:this.now()}});
+    state=await this.save({...state,projectName:name,url:`https://${name}.pages.dev`,error:null,pending:{kind:'publish',operation,hash:bundle.hash,htmlHash,at:this.now()}});
     try{
      if(!await this.provider.project(name))await this.provider.create(name);
      const deployment=await this.provider.deploy(name,bundle,operation);
