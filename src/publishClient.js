@@ -37,9 +37,13 @@ export async function publishRequest(config,path,{method='GET',body,revision}={}
 }
 export const publicationLinkRequest=(endpoint,id)=>publishRequest({endpoint},`/v1/sites/${encodeURIComponent(id)}/link`);
 export async function connectPublication(config,site,storage=localStorage){
+ if(config.cloud){
+  const id=publicationId(config.endpoint,site.id);
+  return {id,state:await publishRequest(config,`/v1/sites/${id}`),recovered:false};
+ }
  const previous=existingPublicationId(config.endpoint,site.id,storage);
  const existing=previous?await publishRequest(config,`/v1/sites/${previous}`):null;
- if(config.cloud||existing?.projectName||existing?.status==='unpublished'||!websiteUrl(site.linkedWebsite)){
+ if(existing?.projectName||existing?.status==='unpublished'||!websiteUrl(site.linkedWebsite)){
   const id=previous||publicationId(config.endpoint,site.id);
   return {id,state:existing||await publishRequest(config,`/v1/sites/${id}`),recovered:false};
  }

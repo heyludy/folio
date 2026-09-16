@@ -1,11 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {connectPublication} from '../src/publishClient.js';
+import {setCloudRuntime} from '../src/cloudRuntime.js';
 import {recoveryHost,publicationHosts} from '../server/recovery.js';
 const endpoint='https://publisher.example.org',id='148ff929-fd6d-48b6-99b0-f1d42532b1f5';
 const site={id:'heo',linkedWebsite:'https://professor.org/#contact'};
 const state={revision:8,status:'published',projectName:'folio-abc',url:'https://folio-abc.pages.dev',liveHash:'hash',domain:{name:'professor.org',status:'active'}};
 const storage=()=>{const map=new Map();return {getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,String(v))}};
+test('cloud publishing uses the shared identity even when a browser has a different legacy connection',async t=>{
+ const store=storage(),key=`folio-publication:${endpoint}:heo`,old='248ff929-fd6d-48b6-99b0-f1d42532b1f5';store.setItem(key,old);
+ setCloudRuntime({account:{id:'google-user'},endpoint,publications:{heo:id},token:async()=>'google-session'});
+ t.after(()=>setCloudRuntime(null));let calls=0;
+ t.mock.method(globalThis,'fetch',async(url,init)=>{calls++;assert.equal(url,endpoint+'/v1/sites/'+id);assert.equal(init.method,'GET');assert.equal(init.headers.Authorization,'Bearer google-session');return Response.json(state)});
+ assert.deepEqual(await connectPublication({endpoint,cloud:true},site,store),{id,state,recovered:false});
+ assert.equal(calls,1);assert.equal(store.getItem(key),old);
+});
 test('recovering a shortcut saves only the server-verified ID and never allocates a new publication',async t=>{
  const store=storage();let calls=0;
  t.mock.method(globalThis,'fetch',async(url,init)=>{calls++;assert.equal(url,endpoint+'/v1/recovery');assert.equal(init.method,'POST');assert.equal(init.headers.Authorization,'Bearer session');assert.equal(JSON.parse(init.body).url,site.linkedWebsite);return Response.json({id,state})});
