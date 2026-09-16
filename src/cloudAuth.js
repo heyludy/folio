@@ -2,6 +2,9 @@ import {createClient} from '@supabase/supabase-js';
 import {publishingEndpoint,PublishError} from './publishing.js';
 export const loginEnabled=!!(import.meta.env?.VITE_SUPABASE_URL&&import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY);
 let client;
+export function oauthRedirectUrl(href,base='./'){
+ const url=new URL(base,href);url.search='';url.hash='';return url.href;
+}
 export function authClient(){
  if(!loginEnabled)return null;
  return client??=createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});

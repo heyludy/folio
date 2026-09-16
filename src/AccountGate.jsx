@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {ArrowRight,Cloud,LogOut,Upload,X} from 'lucide-react';
-import {authClient,loginEnabled,cloudApi,accessToken} from './cloudAuth.js';
+import {authClient,loginEnabled,cloudApi,accessToken,oauthRedirectUrl} from './cloudAuth.js';
 import {setCloudRuntime,cloudRuntime} from './cloudRuntime.js';
 import {createCloudWorkspace} from './cloudWorkspace.js';
 import {readDrafts} from './draftStore.js';
@@ -31,7 +31,7 @@ export function AccountGate({children}){
  },[attempt]);
  const login=async()=>{
   setState({loading:true});
-  const {error}=await authClient().auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+import.meta.env.BASE_URL,queryParams:{prompt:'select_account'}}});
+  const {error}=await authClient().auth.signInWithOAuth({provider:'google',options:{redirectTo:oauthRedirectUrl(location.href,import.meta.env.BASE_URL),queryParams:{prompt:'select_account'}}});
   if(error)setState({error:'Google 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.'});
  };
  const logout=async()=>{

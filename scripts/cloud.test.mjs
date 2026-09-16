@@ -6,7 +6,14 @@ import {accountRole,CloudStore,validateWorkspace} from '../server/cloud.js';
 import {handleRequest} from '../server/http.js';
 import {packAssets,unpackAssets} from '../src/cloudAssets.js';
 import {createCloudWorkspace} from '../src/cloudWorkspace.js';
+import {oauthRedirectUrl} from '../src/cloudAuth.js';
 const user=(email='editor@apub.kr')=>({id:'771af7ce-852f-4c7a-a5a5-241647636629',email,email_confirmed_at:'2026-09-16',identities:[{provider:'google',identity_data:{email,email_verified:true}}]});
+
+test('Google login returns to the GitHub Pages app when Vite uses a relative base',()=>{
+ assert.equal(oauthRedirectUrl('https://heyludy.github.io/folio/?v=build#en-section-profile','./'),'https://heyludy.github.io/folio/');
+ assert.equal(oauthRedirectUrl('https://heyludy.github.io/folio/?code=temporary-code','/folio/'),'https://heyludy.github.io/folio/');
+ assert.equal(oauthRedirectUrl('http://127.0.0.1:5173/?v=test','./'),'http://127.0.0.1:5173/');
+});
 
 test('access uses verified Google identity, exact domain, and only the two admin exceptions',()=>{
  for(const email of ['ludia0602@gmail.com','ludy.kim@furiosa.ai'])assert.equal(accountRole(user(email)),'admin');
