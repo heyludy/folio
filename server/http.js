@@ -1,13 +1,7 @@
 import {PublishError,fail,MAX_REQUEST_BYTES} from '../src/publishing.js';
 import {publicationSummary} from '../src/publicationLinks.js';
-export async function authorized(request,secret){
- if(!secret||secret.length<32)return false;
- const token=request.headers.get('Authorization')?.replace(/^Bearer /,'')||'';
- if(token.length>512)return false;
- const encoder=new TextEncoder(),key=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);
- const signature=await crypto.subtle.sign('HMAC',key,encoder.encode(secret));
- return crypto.subtle.verify('HMAC',key,signature,encoder.encode(token));
-}
+import {authorized,login} from './auth.js';
+export {authorized} from './auth.js';
 export async function readJson(request,limit=MAX_REQUEST_BYTES){
  if(!request.headers.get('Content-Type')?.startsWith('application/json'))fail('JSON 요청이 필요해요.',415);
  if(Number(request.headers.get('Content-Length'))>limit)fail('게시 자료가 너무 커요.',413);
@@ -26,6 +20,7 @@ export async function handleRequest(request,env){
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
   if(!env.ADMIN_KEY||!env.CLOUDFLARE_ACCOUNT_ID||!env.CLOUDFLARE_API_TOKEN)fail('게시 서버 연결을 마치지 않았어요. 관리자에게 연결을 요청해 주세요.',503);
   const path=new URL(request.url).pathname;
+  if(path==='/v1/session'&&request.method==='POST')return Response.json(await login(request,env,readJson),{headers});
   // A stored, unguessable publication ID can recover its public address after
   // the management session expires. Never return DNS data, errors or payloads.
   const link=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})\/link$/);
@@ -33,7 +28,7 @@ export async function handleRequest(request,env){
    const state=await env.PUBLICATIONS.getByName(link[1]).execute('get',null,null);
    return Response.json(publicationSummary(state),{headers});
   }
-  if(!await authorized(request,env.ADMIN_KEY))fail('게시 관리 키를 확인해 주세요.',401);
+  if(!await authorized(request,env.ADMIN_KEY,env.PUBLISH_PASSWORD_HASH))fail('게시 암호를 입력해 주세요. 이전 연결은 만료되었을 수 있어요.',401);
   if(path==='/v1/session'&&request.method==='GET')return Response.json({service:'folio-publisher',version:1},{headers});
   const match=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})(\/unpublish|\/domain)?$/);
   if(!match)fail('주소를 찾지 못했어요.',404);

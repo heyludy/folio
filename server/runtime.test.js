@@ -22,6 +22,13 @@ beforeEach(()=>{publicStatus=200;publicHtml='';network.use(http.get(/^https:\/\/
 afterEach(()=>{expect(pending).toHaveLength(0);network.resetHandlers()});
 afterAll(()=>network.disable());
 describe('publisher in the Workers runtime',()=>{
+ it('unlocks with a shared password, then protects private operations with the issued session',async()=>{
+  const login=await exports.default.fetch('https://publisher.test/v1/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.16'},body:JSON.stringify({password:'qa-publish-passphrase'})});
+  expect(login.status).toBe(200);const session=await login.json();expect(session.token).toMatch(/^folio\.v1\./);
+  const res=await exports.default.fetch(route(crypto.randomUUID()),{headers:{Origin:origin,Authorization:'Bearer '+session.token}});expect(res.status).toBe(200);
+  for(let i=0;i<5;i++)await exports.default.fetch('https://publisher.test/v1/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.17'},body:JSON.stringify({password:'wrong'})});
+  const limited=await exports.default.fetch('https://publisher.test/v1/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.17'},body:JSON.stringify({password:'qa-publish-passphrase'})});expect(limited.status).toBe(429);
+ });
  it('authenticates before routing and isolates publication objects',async()=>{
   const a=crypto.randomUUID(),b=crypto.randomUUID();
   expect((await exports.default.fetch(route(a))).status).toBe(401);
@@ -53,6 +60,12 @@ describe('publisher in the Workers runtime',()=>{
   });
   cf('GET',/\/pages\/projects\/folio-[a-f0-9]+$/,{name:'exists'});
   const recovered=await exports.default.fetch(route(id),{headers});expect((await recovered.json()).liveHash).toBe(bundle.hash);
+  cf('GET',/\/domains\/www\.professor\.org$/,null);cf('POST',/\/domains$/,{name:'www.professor.org',status:'pending',validation_data:{txt_name:'_cf-custom-hostname.www.professor.org',txt_value:'test-dns-proof'}});
+  const connected=await exports.default.fetch(route(id,'/domain'),{method:'POST',headers:{...headers,'If-Match':String(state.revision)},body:JSON.stringify({name:'www.professor.org'})});expect(connected.status).toBe(200);state=await connected.json();expect(state.domain.status).toBe('pending');
+  cf('GET',/\/pages\/projects\/folio-[a-f0-9]+$/,{name:'exists'});cf('GET',/\/domains\/www\.professor\.org$/,{name:'www.professor.org',status:'active'});
+  const domainReady=await exports.default.fetch(route(id,'/link'),{headers:{Origin:origin}});const summary=await domainReady.json();expect(summary.url).toBe('https://www.professor.org');expect(summary.domain).toBeUndefined();state.revision=summary.revision;
+  cf('DELETE',/\/domains\/www\.professor\.org$/,{});
+  const detached=await exports.default.fetch(route(id,'/domain'),{method:'DELETE',headers:{...headers,'If-Match':String(state.revision)},body:JSON.stringify({confirm:'disconnect'})});expect(detached.status).toBe(200);state=await detached.json();expect(state.domain).toBe(null);
   const stale=await exports.default.fetch(route(id),{method:'PUT',headers:{...headers,'If-Match':'0'},body:JSON.stringify({files:bundle.files})});expect(stale.status).toBe(409);
   cf('DELETE',/\/pages\/projects\/folio-[a-f0-9]+$/,{});
   cf('GET',/\/pages\/projects\/folio-[a-f0-9]+$/,null);

@@ -4,6 +4,7 @@
   "main": "server/worker.js",
   "compatibility_date": "2026-09-16",
   "workers_dev": true,
+  "ratelimits": [{"name": "LOGIN_LIMITER", "namespace_id": "9162601", "simple": {"limit": 5, "period": 60}}],
   "vars": {
     "ALLOWED_ORIGINS": "https://heyludy.github.io",
     "CLOUDFLARE_ACCOUNT_ID": "d7663a43226330209b6ed3bc72db3323"

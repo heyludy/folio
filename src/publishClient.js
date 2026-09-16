@@ -5,8 +5,9 @@ export function publisherSettings(){
 }
 export function rememberPublisher(config){
  const endpoint=publishingEndpoint(config.endpoint);
- try{localStorage.setItem(settingsKey,endpoint);sessionStorage.setItem(sessionKey,JSON.stringify({endpoint,key:config.key}))}catch{throw new Error('게시 연결을 저장하지 못했어요. 브라우저 저장 권한을 확인해 주세요.')}
- return {endpoint,key:config.key};
+ const saved={endpoint,key:config.key,...(config.expiresAt?{expiresAt:config.expiresAt}:{})};
+ try{localStorage.setItem(settingsKey,endpoint);sessionStorage.setItem(sessionKey,JSON.stringify(saved))}catch{throw new Error('게시 연결을 저장하지 못했어요. 브라우저 저장 권한을 확인해 주세요.')}
+ return saved;
 }
 export function disconnectPublisher(){sessionStorage.removeItem(sessionKey)}
 export function publicationId(endpoint,siteId){
@@ -27,3 +28,7 @@ export async function publishRequest(config,path,{method='GET',body,revision}={}
  return data;
 }
 export const publicationLinkRequest=(endpoint,id)=>publishRequest({endpoint},`/v1/sites/${encodeURIComponent(id)}/link`);
+export async function unlockPublisher(endpoint,password){
+ const session=await publishRequest({endpoint},'/v1/session',{method:'POST',body:{password}});
+ return rememberPublisher({endpoint,key:session.token,expiresAt:session.expiresAt});
+}
