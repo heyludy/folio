@@ -10,8 +10,9 @@ import {PUBLICATION_CHANGED} from './usePublicationLinks';
 import {publisherSettings,rememberPublisher,disconnectPublisher,connectPublication,publishRequest,unlockPublisher} from './publishClient';
 import './publish.css';
 import {siteFingerprint} from './projectHistory';
+import {ReviewSummary} from './SiteReview';
 
-export function PublishDialog({site,onClose,initialView='publish',onCheckpoint}){
+export function PublishDialog({site,onClose,initialView='publish',onCheckpoint,onReview}){
  const [view,setView]=useState(initialView),[password,setPassword]=useState('');
  const [config,setConfig]=useState(publisherSettings),[connected,setConnected]=useState(false),[state,setState]=useState(null),[bundle,setBundle]=useState(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(''),[domain,setDomain]=useState(''),[confirm,setConfirm]=useState(null);
  const dialog=useRef(null),close=useRef(null),previousFocus=useRef(document.activeElement),alive=useRef(true),busyRef=useRef(false),path=useRef(null),polls=useRef(0);
@@ -63,6 +64,7 @@ export function PublishDialog({site,onClose,initialView='publish',onCheckpoint})
    <section className="publish-card"><div className="publish-status"><span data-live={isLive&&!state.pending}>{isLive&&!state.pending?<Check size={14}/>:<Globe size={14}/>} {label}</span><button type="button" className="publish-text-button" disabled={!!busy} onClick={()=>perform('상태 확인 중',refresh)}><RefreshCw size={13}/>새로고침</button></div>
     {isLive?<><div className="publish-url"><a href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}<ExternalLink size={14}/></a><button className="publish-icon" aria-label="게시 주소 복사" onClick={()=>copy(publicUrl)} disabled={!!busy}><Copy size={16}/></button></div>{state.domain?.status==='active'&&<p className="publish-note">기본 주소 <a href={state.url} target="_blank" rel="noreferrer">{state.url}</a></p>}<p className="publish-note">마지막 게시 · {new Date(state.publishedAt).toLocaleString('ko-KR')}</p></>:<div className="publish-empty"><h3>{state.pending?'홈페이지를 게시하고 있어요.':'도메인 없이도 시작할 수 있어요.'}</h3><p>게시하면 기본 주소가 발급돼요.<br/>구매한 도메인은 나중에 연결할 수 있어요.</p></div>}
     {state.pending?.phase==='verifying'&&<p className="publish-note" role="status">공개 주소에서 새 페이지가 열리는지 확인하고 있어요. 처음 게시할 때는 잠시 걸릴 수 있어요. 확인이 오래 걸리면 새로고침을 눌러주세요.</p>}
+   {onReview&&<ReviewSummary site={site} onOpen={onReview} disabled={!!busy}/>}
     <button type="button" className="studio-button primary publish-main" disabled={disabled||!bundle||label==='게시됨'} onClick={publish}>{state.pending?.phase==='verifying'?'공개 주소 확인 중…':state.pending?'게시 처리 중…':isLive?'변경사항 게시':'게시하기'}<ArrowRight size={15}/></button>
     <p className="publish-note">현재 페이지와 첨부한 사진·PDF가 공개돼요. AI 확인 메모와 출처 검토 기록은 포함되지 않아요.</p>
     {isLive&&<a className="studio-button publish-visit" href={publicUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>게시된 사이트 열기</a>}

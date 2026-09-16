@@ -190,6 +190,7 @@
 
 /* Layout variants use the same content model, editor controls and export CSS. */
 .site-sidebar-identity{display:none}
+.faculty-site[lang=ko] .site-name{word-break:keep-all}
 @container site-viewport (min-width:821px){
  .faculty-site[data-template=sidebar]{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:44px;--site-gutter:38px}
  .faculty-site[data-template=sidebar]>.site-example-note{grid-column:1/-1;grid-row:1}

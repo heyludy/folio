@@ -10,7 +10,7 @@ export function Attachment({section,lang,name,type,editing,onAsset,label,cv=fals
  },[asset?.data,type]);
  if(!asset&&!editing)return null;
  const tools=editing&&<div className="attachment-tools">
-  <label className="attachment-upload">{asset?`${label} 변경`:`${label} 추가`}<input type="file" aria-label={`${section.name} ${label} 업로드`} accept={type==='pdf'?'.pdf,application/pdf':'image/jpeg,image/png,image/webp'} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)onAsset?.(section.id,lang,name,file,type)}}/></label>
+  <label className="attachment-upload">{asset?`${label} 변경`:`${label} 추가`}<input type="file" data-asset-field={name} aria-label={`${section.name} ${label} 업로드`} accept={type==='pdf'?'.pdf,application/pdf':'image/jpeg,image/png,image/webp'} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)onAsset?.(section.id,lang,name,file,type)}}/></label>
   {asset&&<button type="button" onClick={()=>onAsset?.(section.id,lang,name,null,type)} aria-label={`${section.name} ${label} 삭제`}>삭제</button>}
  </div>;
  if(type==='image')return <ElementFrame sectionId={section.id} elementKey={name} kind="image" label={label} layout={section.elements?.[lang]?.[name]} className={`site-media site-media-${section.kind}`}>

@@ -35,14 +35,14 @@ test('downloaded runtime initializes without imported bindings or a React runtim
  vm.runInNewContext(script,{...env.scope,document:doc});env.paint();env.paint();
  assert.equal(env.observers.length,1);assert.equal(env.observers[0].nodes.length,1);assert.ok(env.classes.has('will-reveal'));
 });
-function routingEnvironment(hash='#ko-section-contact'){
+function routingEnvironment(hash='#ko-section-contact',initialLanguage='en'){
  const pages=['en','ko'].map(lang=>({dataset:{languagePage:lang},hidden:lang!=='en',querySelectorAll:()=>[]}));
  const events={},clicks={},scrolls=[],frames=new Map();let index=0;
  const target={closest:()=>pages[1],scrollIntoView:value=>scrolls.push({target:'contact',...value})};
  const doc={documentElement:{lang:'en'},querySelectorAll:()=>pages,getElementById:id=>id==='ko-section-contact'?target:null,addEventListener:(name,fn)=>clicks[name]=fn};
  const win={location:{hash},history:{pushState:(_state,_title,value)=>win.location.hash=value},scrollTo:value=>scrolls.push({target:'top',...value}),matchMedia:()=>({matches:false}),addEventListener:(name,fn)=>events[name]=fn};
  const scope={window:win,document:doc,requestAnimationFrame:fn=>{frames.set(++index,fn);return index},cancelAnimationFrame:id=>frames.delete(id)};
- vm.runInNewContext(`(${publicRuntime.toString()})(()=>()=>{})`,scope);
+ vm.runInNewContext(`(${publicRuntime.toString()})(()=>()=>{},${JSON.stringify(initialLanguage)})`,scope);
  const paint=()=>{for(const fn of frames.values())fn();frames.clear()};
  return {pages,doc,win,events,clicks,scrolls,paint};
 }
@@ -65,4 +65,20 @@ test('sandboxed previews still switch languages when history writes are unavaila
  const click=language=>env.clicks.click({target:{closest:selector=>selector==='[data-language]'?{dataset:{language}}:null}});
  click('ko');assert.equal(env.doc.documentElement.lang,'ko');assert.equal(env.pages[1].hidden,false);
  click('en');assert.equal(env.doc.documentElement.lang,'en');assert.equal(env.pages[0].hidden,false);
+});
+test('preview navigation scrolls to a section without navigating the frame to the parent app',()=>{
+ for(const sandboxed of [false,true]){
+  const env=routingEnvironment('','ko');env.paint();assert.equal(env.doc.documentElement.lang,'ko');
+  if(sandboxed)env.win.history.pushState=()=>{throw new Error('SecurityError')};
+  const links={dataset:{}},nav={querySelector:selector=>selector==='.site-navlinks'?links:null};
+  const link={getAttribute:()=> '#ko-section-contact',closest:()=>nav};let prevented=false;
+  env.clicks.click({target:{closest:selector=>selector==='.site-navlinks a'?link:null},preventDefault(){prevented=true}});env.paint();
+  assert.equal(prevented,true);assert.equal(links.dataset.open,'false');assert.equal(env.scrolls.at(-1).target,'contact');assert.equal(env.scrolls.at(-1).behavior,'smooth');
+ }
+});
+test('Korean editor previews open Korean directly and unsupported languages fall back to English',()=>{
+ const site=newSite();site.languages=['en','ko'];site.sections[0].text.en.title='Professor';site.sections[0].text.ko.title='교수';
+ const html=exportSite(site,{initialLanguage:'ko'});
+ assert.match(html,/<html lang="ko">/);assert.match(html,/data-language-page="en" hidden/);assert.doesNotMatch(html,/data-language-page="ko" hidden/);
+ site.languages=['en'];assert.match(exportSite(site,{initialLanguage:'ko'}),/<html lang="en">/);
 });

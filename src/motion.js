@@ -16,7 +16,7 @@ export function revealSections(root=document,scrollRoot=null){
  return ()=>{cancelAnimationFrame(frame);showAll();root.removeEventListener('focusin',focus);reduce.removeEventListener('change',showAll)};
 }
 
-export function publicRuntime(reveal){
+export function publicRuntime(reveal,initialLanguage='en'){
  const pages=[...document.querySelectorAll('[data-language-page]')];
  let cleanup=()=>{},activeLanguage,frame;
  const activate=lang=>{
@@ -28,7 +28,7 @@ export function publicRuntime(reveal){
  const followAddress=(initial=false)=>{
   let hash;try{hash=decodeURIComponent(window.location.hash.slice(1))}catch{hash='';}
   const target=document.getElementById(hash),page=target?.closest('[data-language-page]');
-  const language=page?.dataset.languagePage||(pages.some(p=>p.dataset.languagePage===hash)?hash:'en');
+  const language=page?.dataset.languagePage||(pages.some(p=>p.dataset.languagePage===hash)?hash:initialLanguage);
   if(language!==activeLanguage)activate(language);
   cancelAnimationFrame(frame);
   if(language)frame=requestAnimationFrame(()=>{
@@ -44,7 +44,15 @@ export function publicRuntime(reveal){
   const toggle=e.target.closest('.site-menu-toggle');
   if(toggle){const open=toggle.getAttribute('aria-expanded')!=='true';toggle.setAttribute('aria-expanded',String(open));document.getElementById(toggle.getAttribute('aria-controls')).dataset.open=String(open);}
   const link=e.target.closest('.site-navlinks a');
-  if(link){const nav=link.closest('.site-nav');closeMenu(nav);const toggle=nav.querySelector('.site-menu-toggle');if(toggle?.getClientRects().length)toggle.focus({preventScroll:true});}
+  if(link){
+   const nav=link.closest('.site-nav');closeMenu(nav);const toggle=nav.querySelector('.site-menu-toggle');if(toggle?.getClientRects().length)toggle.focus({preventScroll:true});
+   const href=link.getAttribute('href'),target=href?.startsWith('#')&&document.getElementById(href.slice(1));
+   if(target){
+    e.preventDefault();
+    try{window.history.pushState(null,'',href);followAddress();}
+    catch{cancelAnimationFrame(frame);target.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+   }
+  }
   const button=e.target.closest('[data-language]');
   if(button){
    const language=button.dataset.language;
