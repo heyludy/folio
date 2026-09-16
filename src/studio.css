@@ -53,7 +53,7 @@
 .studio-sectionlist .section-remove{flex-shrink:0;display:grid;place-items:center;width:26px;height:28px;padding:0;margin-right:3px;background:transparent;border:0;border-radius:3px;opacity:.6}
 .studio-sectionlist .section-remove:hover,.studio-sectionlist .section-remove:focus-visible{opacity:1;background:#e3e3e3}
 .studio-save-problem{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:14px 24px;border-bottom:1px solid #dfd2b8;background:#fff8e8;color:#654d24;font:12px/1.6 Pretendard,sans-serif}
-.studio:has(>.studio-save-problem){grid-template-rows:auto auto minmax(0,1fr)}
+.studio:has(>.studio-background>.studio-save-problem){grid-template-rows:auto auto minmax(0,1fr)}
 .studio-save-problem>div{flex:1;min-width:250px}.studio-save-problem p{margin:2px 0 0}.studio-save-problem button{padding:7px 10px;border:1px solid #d6c7aa;border-radius:4px;background:#fff;color:inherit;font:inherit;cursor:pointer}
 .studio-sectionlist li{position:relative}.studio-sectionlist li>button:first-child{padding-left:4px}
 .studio-sectionlist .section-sort{order:-1;flex-shrink:0;width:24px;height:30px;display:grid;place-items:center;padding:0;margin-left:3px;border:0;background:transparent;border-radius:3px;cursor:grab;touch-action:none}

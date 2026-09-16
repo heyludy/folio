@@ -60,3 +60,9 @@ test('language controls update the address; back/forward and hash navigation res
  env.win.location.hash='#ko-section-contact';env.events.hashchange();env.paint();assert.equal(env.doc.documentElement.lang,'ko');assert.equal(env.scrolls.at(-1).target,'contact');
  env.win.location.hash='';env.events.popstate();env.paint();assert.equal(env.doc.documentElement.lang,'en');assert.equal(env.scrolls.at(-1).target,'top');
 });
+test('sandboxed previews still switch languages when history writes are unavailable',()=>{
+ const env=routingEnvironment('');env.paint();env.win.history.pushState=()=>{throw new Error('SecurityError')};
+ const click=language=>env.clicks.click({target:{closest:selector=>selector==='[data-language]'?{dataset:{language}}:null}});
+ click('ko');assert.equal(env.doc.documentElement.lang,'ko');assert.equal(env.pages[1].hidden,false);
+ click('en');assert.equal(env.doc.documentElement.lang,'en');assert.equal(env.pages[0].hidden,false);
+});

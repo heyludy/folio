@@ -50,7 +50,11 @@ export function publicRuntime(reveal){
    const language=button.dataset.language;
    if(!pages.some(page=>page.dataset.languagePage===language))return;
    pages.forEach(page=>page.querySelectorAll('.site-nav').forEach(closeMenu));
-   window.history.pushState(null,'','#'+language);followAddress(true);
+   try{window.history.pushState(null,'','#'+language);followAddress(true);}
+   catch{
+    // Sandboxed import previews can prohibit history updates.
+    cancelAnimationFrame(frame);activate(language);window.scrollTo({top:0,behavior:'instant'});
+   }
   }
  });
  document.addEventListener('keydown',e=>{const nav=e.target.closest('.site-nav');if(e.key==='Escape'&&nav){closeMenu(nav);nav.querySelector('.site-menu-toggle')?.focus()}});

@@ -54,6 +54,7 @@ export function removeEntry(site,sectionId,lang,id){
  return {...site,sections:site.sections.map(s=>s!==section?s:{...s,
   entryOrder:{...s.entryOrder,[lang]:entryIds(s,lang).filter(key=>key!==id)},
   text:{...s.text,[lang]:text},
+  ...(s.provenance?.[lang]?{provenance:{...s.provenance,[lang]:Object.fromEntries(Object.entries(s.provenance[lang]).filter(([key])=>key!==id))}}:{}),
   ...(s.attachments?.[lang]?{attachments:{...s.attachments,[lang]:Object.fromEntries(Object.entries(s.attachments[lang]).filter(([key])=>key!=='image'+id&&key!=='pdf'+id))}}:{}),
   ...(elements?{elements:{...s.elements,[lang]:Object.fromEntries(Object.entries(elements).filter(([key])=>!keys.has(key)))}}:{})
  })};
