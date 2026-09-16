@@ -1,4 +1,4 @@
-import {DEFAULT_TEMPLATE} from './templates.js';
+import {DEFAULT_TEMPLATE,resolveTemplate} from './templates.js';
 import {validAsset} from './assets.js';
 
 // Reference colors and their Folio roles are documented in docs/theme-references.md.
@@ -44,6 +44,14 @@ export function section(kind,name,enName,fields={}){
 }
 export function newSite(){
  return {id:crypto.randomUUID(),name:'새 교수님 사이트',template:DEFAULT_TEMPLATE,languages:['en'],theme:'forest',font:'academic',photo:'',sections:defaultSections.map(([kind,ko,en])=>section(kind,ko,en,defaultFields[kind]))};
+}
+export function prepareTemplate(site,template){
+ template=resolveTemplate(template).id;
+ const extras=template==='research'?['projects']:template==='editorial'?['books','press','talks']:[];
+ const added=extras.filter(kind=>!site.sections.some(s=>s.kind===kind)).map(kind=>({...newSection(kind),nav:true}));
+ const split=template==='editorial'?1:2;
+ const sections=[...site.sections.slice(0,split),...added,...site.sections.slice(split)];
+ return {...site,template,sections};
 }
 export function newSection(kind){
  const item=catalog.find(t=>t[0]===kind);if(!item)return null;

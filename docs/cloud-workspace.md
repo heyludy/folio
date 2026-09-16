@@ -13,10 +13,18 @@
 - 서로 다른 필드 수정은 합치고 같은 필드 수정은 충돌을 표시한다. 동시 커서가 보이는 실시간 공동 편집은 아니다.
 - 인터넷이 끊겨 저장이 실패하면 계정별 브라우저 임시본을 유지한다. 다시 저장/다시 접속할 때 서버와 비교한다. 저장 실패 중에는 로그아웃을 막고 HTML 내보내기를 제공한다.
 - 홈/편집기는 유휴 상태에서 20초마다 최신 내용을 확인한다. AI 자료 준비 중간본은 브라우저에만 보관한다.
+- 수정 이력은 프로젝트별 최근 30개다. 같은 사람의 연속 수정은 5분 단위로 묶고, MD 반영·게시·복원 전에는 별도로 보관한다. 홈과 편집기의 ‘수정 이력’에서 이전 페이지 미리보기·HTML 다운로드·복원이 가능하다.
+- 복원 직전 내용도 보관한다. 현재 프로젝트 ID·게시 연결·다른 프로젝트는 유지한다. 다른 사람이 수정했거나 로컬에 미저장 초안이 있으면 복원을 중단하고 최신 내용을 확인하도록 안내한다.
+- 홈에서 최근 수정한 사람·시간과 미게시 변경사항을 표시한다. 복제본은 별도의 ID·게시 연결을 받는다.
 
 ## 1. Supabase 무료 프로젝트
 
-별도 Folio 프로젝트를 만든다. SQL Editor에서 [`supabase/migrations/202609160001_folio.sql`](../supabase/migrations/202609160001_folio.sql)을 실행한다.
+별도 Folio 프로젝트를 만든다. SQL Editor에서 다음 마이그레이션을 순서대로 실행한다.
+
+1. [`202609160001_folio.sql`](../supabase/migrations/202609160001_folio.sql): 공용 공간·사진/PDF·인증 권한
+2. [`202609160002_history.sql`](../supabase/migrations/202609160002_history.sql): 수정 이력·최근 수정 정보·안전한 복원
+
+기존 설치는 두 번째 마이그레이션을 적용한 뒤 Worker와 프런트엔드를 배포한다. 이력은 적용 이후부터 쌓이며 과거 수정 기록을 재구성하지 않는다.
 
 테이블과 함수는 Worker의 service role만 접근한다. 브라우저용 키에는 권한을 주지 않으며, 테이블 RLS와 비공개 버킷을 유지한다. 공유 공간 ID는 서버에서 `apub`으로 고정한다.
 
@@ -60,6 +68,6 @@ GitHub Actions repository variables:
 
 SQL은 PGlite PostgreSQL로 실제 실행해 권한, 공유 revision, 게시 ID 안정성을 검사한다. 가짜 OAuth 서버를 사용한 로컬 UI 검증과 실제 Google 로그인 검증을 구분한다. 실제 Google 로그인은 프로젝트 연결 후 진행한다.
 
-파일은 해시로 중복 저장을 막는다. 삭제된 프로젝트는 복원 가능하므로 첨부 파일도 보존한다. 파일의 자동 영구 삭제·백업/감사 기록 UI는 아직 제공하지 않는다. 사용량은 Supabase 대시보드에서 확인한다.
+파일은 해시로 중복 저장을 막으며 이력에도 파일 참조만 저장한다. 삭제된 프로젝트와 이전 버전을 복원할 수 있도록 첨부 파일을 보존한다. 파일의 자동 영구 삭제와 별도의 외부 백업은 아직 제공하지 않는다. 사용량은 Supabase 대시보드에서 확인한다.
 
 공식 문서: [Google](https://supabase.com/docs/guides/auth/social-login/auth-google) · [인증 hook](https://supabase.com/docs/guides/auth/auth-hooks/before-user-created-hook) · [Storage 권한](https://supabase.com/docs/guides/storage/security/access-control).

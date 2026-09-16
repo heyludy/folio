@@ -12,7 +12,7 @@ import {BasicInfoDialog} from './BasicInfoDialog';
 import {PreparationDialog} from './PreparationDialog';
 import {undoPreparation} from './preparation';
 import {mergeDrafts} from './draftMerge';
-import {applyBasicInfo,editSiteField} from './basics';
+import {applyBasicInfo,editSiteField,getBasicInfo} from './basics';
 import {updateElement} from './elements';
 import {addEntry,removeEntry,entryIds} from './entries';
 import {resolveTemplate} from './templates';
@@ -20,7 +20,7 @@ import {insertSection,moveSection,sectionSnapshot,deleteSection,restoreSection} 
 import {scrollCanvasTo} from './scroll';
 import {beginSectionDrag} from './sectionDrag';
 import {addKoreanPage,removeKoreanPage,restoreKoreanPage,koreanSnapshot} from './languages';
-import {themes,fonts,catalog,newSite,newSection,reorder,siteLanguages,siteTitle} from './model';
+import {themes,fonts,catalog,newSite,newSection,prepareTemplate,reorder,siteLanguages,siteTitle} from './model';
 import {loadSites} from './storage';
 import {readDrafts,writeDrafts,initializeDrafts,initializeHeoDetails,finishHeoUpdate} from './draftStore';
 import {loadHeoDetailSite} from './examples/heo';
@@ -226,8 +226,8 @@ function App({account,onLogout}){
  const openBasics=()=>{setPaletteOpen(false);setBasicsModal({site,initialLanguage:lang})};
  const createSite=()=>setBasicsModal({site:newSite(),creating:true,initialLanguage:'en'});
  const saveBasics=(draft,languages,templateId,icon)=>{
-  if(basicsModal.creating){const next={...applyBasicInfo(basicsModal.site,draft),languages,icon,template:resolveTemplate(templateId).id};setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
-  else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages,icon}:s));if(!languages.includes(lang))setLang('en')}
+  if(basicsModal.creating){const next=prepareTemplate({...applyBasicInfo(basicsModal.site,draft),languages,icon},resolveTemplate(templateId).id);setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
+  else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages,icon,template:resolveTemplate(templateId).id,...(draft.en.name!==getBasicInfo(s).en.name||draft.ko.name!==getBasicInfo(s).ko.name?{projectLabel:undefined}:{})}:s));if(!languages.includes(lang))setLang('en')}
   setBasicsModal(null);
  };
  const openPreparation=()=>{endDrag();setPaletteOpen(false);setSelected(null);setSelectedElement(null);setPreparing(true)};

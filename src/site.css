@@ -187,3 +187,61 @@
 .site-researchitem{border-top-color:var(--site-detail)}
 .site-languages button[aria-pressed=true]{background:var(--site-accent);color:#fff}
 .site-example-note{display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;font:11px/1.6 var(--site-ui);color:var(--site-muted);padding:0 0 16px}.site-example-note a,.site-photo-credit a{color:var(--site-accent);text-underline-offset:3px}.site-photo-credit{flex-basis:100%;font-size:10px}
+
+/* Layout variants use the same content model, editor controls and export CSS. */
+.site-sidebar-identity{display:none}
+@container site-viewport (min-width:821px){
+ .faculty-site[data-template=sidebar]{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:44px;--site-gutter:38px}
+ .faculty-site[data-template=sidebar]>.site-example-note{grid-column:1/-1;grid-row:1}
+ .faculty-site[data-template=sidebar]>.site-nav{grid-column:1;grid-row:2;position:sticky;top:24px;align-self:start;max-height:calc(100dvh - 48px);overflow:auto;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;border:0;border-right:1px solid var(--site-line);padding:30px 26px 30px 0;gap:24px}
+ .faculty-site[data-template=sidebar] .site-sidebar-identity{display:flex;flex-direction:column;gap:12px}
+ .faculty-site[data-template=sidebar] .site-sidebar-identity strong{font:500 28px/1.12 var(--site-heading);color:var(--site-title);letter-spacing:-.8px}
+ .faculty-site[data-template=sidebar] .site-sidebar-identity span{font-size:12px;line-height:1.7;color:var(--site-muted)}
+ .faculty-site[data-template=sidebar] .site-navlinks{flex-direction:column;align-items:stretch;gap:3px}
+ .faculty-site[data-template=sidebar] .site-navlinks a{padding:8px 0;font-size:13px}
+ .faculty-site[data-template=sidebar] .site-languages{border-left:0;border-top:1px solid var(--site-line);padding:16px 0 0}
+ .faculty-site[data-template=sidebar]>.site-sections{grid-column:2;grid-row:2;min-width:0}
+ .faculty-site[data-template=sidebar]>.site-language-empty{grid-column:2;grid-row:2;min-width:0}
+ .faculty-site[data-template=sidebar]>.site-footer{grid-column:2;grid-row:3}
+ .faculty-site[data-template=sidebar] .site-name{font-size:42px}
+ .faculty-site[data-template=sidebar] .site-photo{width:min(var(--portrait-width,120px),32cqw)}
+ .faculty-site[data-template=sidebar] .site-profile{gap:25px}
+ .faculty-site[data-template=sidebar] .site-research{gap:25px}
+ .faculty-site[data-template=sidebar] .site-record{grid-template-columns:45px minmax(0,1fr);gap:18px}
+ .faculty-site[data-template=sidebar] .site-record[data-year=false]{grid-template-columns:1fr}
+ .faculty-site[data-template=sidebar] .site-section[data-kind=contact]{margin-inline:0;padding-inline:20px}
+}
+.faculty-site[data-template=research] .site-section[data-kind=profile]{margin-top:28px;padding:38px 30px;background:var(--site-wash);border:1px solid var(--site-line);border-top:4px solid var(--site-accent);border-radius:4px}
+.faculty-site[data-template=research] .site-researchitem{padding:24px;background:var(--site-wash);border:1px solid var(--site-line);border-radius:4px}
+.faculty-site[data-template=research] .site-researchitem .site-subtitle{font-size:21px;margin-bottom:14px}
+.faculty-site[data-template=research] .site-section[data-kind=projects] .site-publications{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.faculty-site[data-template=research] .site-section[data-kind=projects] .site-record{display:block;border:1px solid var(--site-line);padding:24px;border-radius:4px;background:var(--site-wash)}
+.faculty-site[data-template=research] .site-section[data-kind=projects] .site-entry-body{flex-direction:column;gap:18px}
+.faculty-site[data-template=research] .site-media-projects{width:min(var(--portrait-width,100%),100%)}
+.faculty-site[data-template=research] .site-media-projects img{aspect-ratio:var(--portrait-ratio,4/3)}
+.faculty-site[data-template=research] .site-section[data-kind=projects] .site-year{margin-bottom:12px}
+.faculty-site[data-template=research] .site-heading{border-bottom:2px solid var(--site-accent);padding-bottom:14px}
+.faculty-site[data-template=editorial] .site-section[data-kind=profile]{padding-block:64px;border-bottom:3px solid var(--site-accent)}
+.faculty-site[data-template=editorial] .site-name{font-size:clamp(42px,6cqw,66px);line-height:1.08;letter-spacing:-1.5px}
+.faculty-site[data-template=editorial] .site-intro{font-size:20px;line-height:1.8;max-width:660px}
+.faculty-site[data-template=editorial] .site-photo{width:min(var(--portrait-width,185px),38cqw)}
+.faculty-site[data-template=editorial] .site-section[data-kind=books] .site-record{padding-block:30px;border-bottom:1px solid var(--site-line)}
+.faculty-site[data-template=editorial] .site-section[data-kind=books] .site-subtitle{font-size:27px;line-height:1.25;margin-bottom:15px}
+.faculty-site[data-template=editorial] .site-media-books{width:min(var(--portrait-width,165px),38%)}
+.faculty-site[data-template=editorial] .site-media-books img{object-fit:contain;box-shadow:5px 8px 16px #00000012}
+.faculty-site[data-template=editorial] .site-section[data-kind=press] .site-publications{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+.faculty-site[data-template=editorial] .site-section[data-kind=press] .site-record{display:block;padding:22px;background:var(--site-wash);border-top:2px solid var(--site-accent)}
+.faculty-site[data-template=editorial] .site-section[data-kind=press] .site-entry-body{display:flex;flex-direction:column;gap:16px}
+.faculty-site[data-template=editorial] .site-media-press{width:min(var(--portrait-width,100%),100%)}
+.faculty-site[data-template=editorial] .site-section[data-kind=press] .site-year{margin-bottom:12px}
+@container site-viewport (max-width:600px){
+ .faculty-site[data-template=research] .site-section[data-kind=profile]{margin-top:20px;padding:24px 16px}
+ .faculty-site[data-template=research] .site-researchitem{padding:20px}
+ .faculty-site[data-template=research] .site-section[data-kind=projects] .site-publications,.faculty-site[data-template=editorial] .site-section[data-kind=press] .site-publications{grid-template-columns:minmax(0,1fr)}
+ .faculty-site[data-template=editorial] .site-section[data-kind=profile]{padding-block:36px}
+ .faculty-site[data-template=editorial] .site-name{font-size:clamp(32px,8cqw,42px);letter-spacing:-.6px}
+ .faculty-site[data-template=editorial] .site-intro{font-size:16px}
+ .faculty-site[data-template=editorial] .site-photo{width:min(var(--portrait-width,108px),30cqw)}
+ .faculty-site[data-template=editorial] .site-section[data-kind=books] .site-subtitle{font-size:22px}
+ .faculty-site[data-template=editorial] .site-section[data-kind=books] .site-entry-body{gap:15px}
+}
