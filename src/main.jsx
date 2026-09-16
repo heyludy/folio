@@ -94,8 +94,8 @@ function App(){
  useEffect(()=>{
   const outside=e=>{if(themePanel.current&&!themePanel.current.contains(e.target))setPaletteOpen(false)};
   const escape=e=>{if(e.key==='Escape'){setPaletteOpen(false);setInsertAfter(null);endDrag(false);setSelected(null)}};
-  document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);
-  return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape)};
+  document.addEventListener('pointerdown',outside,true);document.addEventListener('keydown',escape);
+  return()=>{document.removeEventListener('pointerdown',outside,true);document.removeEventListener('keydown',escape)};
  },[]);
  const capture=()=>{positions.current=new Map([...canvas.current.querySelectorAll('[data-section]')].map(el=>[el.dataset.section,el.getBoundingClientRect().top+canvas.current.scrollTop]))};
  useLayoutEffect(()=>{

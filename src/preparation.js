@@ -73,11 +73,26 @@ export function parsePreparation(raw){
  const groups=[],warnings=[];
  if(new TextEncoder().encode(raw).length>MAX_MARKDOWN_BYTES)return {groups,warnings:['자료가 너무 커요. 512KB 이하로 나누어 가져와 주세요.']};
  const lines=raw.replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').split('\n');
+ const fencePattern=/^ {0,3}(`{3,}|~{3,})\s*([\w-]*)\s*$/;
+ const fenced=lines.some(line=>fencePattern.test(line));
+ let fence=null;
  let group=null,record=null,key=null,skipping=false,ignored=0;
  const warn=(line,message)=>warnings.push(`${line+1}행 · ${message}`);
  for(let i=0;i<lines.length;i++){
   const line=lines[i],trim=line.trim();
-  if(/^\s*(```|~~~)/.test(line)||!trim||/^#\s+Folio\s*$/i.test(trim)){
+  const marker=line.match(fencePattern);
+  if(marker){
+   if(!fence){
+    fence={character:marker[1][0],length:marker[1].length,readable:/^(?:markdown|md|text|txt|plaintext)?$/i.test(marker[2])};
+    if(!fence.readable)warn(i,`“${marker[2]}” 코드 블록은 제외했어요. Markdown 양식을 사용해 주세요.`);
+   }else if(marker[1][0]===fence.character&&marker[1].length>=fence.length&&!marker[2])fence=null;
+   else if(fence.readable&&record&&key){record[key]+=(record[key]?'\n':'')+line;continue;}
+   group=null;record=null;key=null;skipping=false;continue;
+  }
+  // AI answers often include instructions before/after the actual Markdown file.
+  // Those lines must never extend a public field across a code-block boundary.
+  if(fenced&&(!fence||!fence.readable)){if(trim)ignored++;continue;}
+  if(!trim||/^#\s+Folio\s*$/i.test(trim)){
    if(!trim&&record&&key&&record[key])record[key]+='\n';
    continue;
   }
@@ -115,6 +130,7 @@ export function parsePreparation(raw){
   if(key&&!skipping)record[key]+=(record[key]?'\n':'')+line.replace(/^ {1,2}/,'');
   else if(!skipping){ignored++;}
  }
+ if(fence)warnings.push('코드 블록의 끝 표시가 없어요. 가져온 내용이 완전한지 확인해 주세요.');
  if(ignored)warnings.push(`양식 밖의 내용 ${ignored}줄은 반영하지 않았어요.`);
  const result=[];
  for(const g of groups){

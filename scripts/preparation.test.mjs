@@ -162,3 +162,17 @@ test('two incoming records cannot both overwrite the same existing row',()=>{
  const md=publication+'\n'+publication.replace('## EN / publications','').replace('10.1234/example','10.5678/another');
  const changes=plan(first,md)[0].changes;assert.equal(changes.length,2);assert.equal(changes[0].status,'change');assert.equal(changes[1].status,'new');assert.equal(changes[1].checked,false);assert.notEqual(changes[0].id,changes[1].id);assert.match(changes[1].warning,/구분/);
 });
+
+test('AI instructions outside Markdown fences never enter public fields, even when they look like Folio keys',()=>{
+ const raw='Here is your Markdown:\n```markdown\n# Folio\n## EN / custom\nbody: A public test paragraph.\n```\nSave this as profile.md and upload it to Folio.\nbody: PRIVATE_AI_INSTRUCTION\n## EN / contact\nemail: unwanted@example.edu';
+ const parsed=parsePreparation(raw);assert.equal(parsed.groups.length,1);assert.equal(parsed.groups[0].fields.body,'A public test paragraph.');assert.ok(parsed.warnings.some(w=>w.includes('양식 밖')));
+ const site=newSite(),html=exportSite(applyImportPlan(site,buildImportPlan(site,parsed)));assert.match(html,/A public test paragraph/);assert.doesNotMatch(html,/PRIVATE_AI_INSTRUCTION|Save this as|unwanted@example/);
+});
+test('separate Markdown blocks and longer tilde fences preserve both languages and paragraphs',()=>{
+ const raw='~~~~md\n## EN / profile\nbody: |\n  First paragraph.\n\n  Second paragraph.\n~~~~\nKorean version follows:\n```\n## KO / profile\nbody: 한국어 소개입니다.\n```\nYou can upload this now.';
+ const parsed=parsePreparation(raw);assert.equal(parsed.groups.length,2);assert.equal(parsed.groups[0].fields.body,'First paragraph.\n\nSecond paragraph.');assert.equal(parsed.groups[1].fields.body,'한국어 소개입니다.');
+});
+test('unsupported code blocks and unterminated Markdown blocks are reported without leaking surrounding prose',()=>{
+ const bad=parsePreparation('```json\n## EN / profile\nname: Not Markdown\n```');assert.equal(bad.groups.length,0);assert.ok(bad.warnings.some(w=>w.includes('json')));
+ const partial=parsePreparation('```markdown\n## EN / profile\nbody: A partial file');assert.equal(partial.groups[0].fields.body,'A partial file');assert.ok(partial.warnings.some(w=>w.includes('끝 표시')));
+});
