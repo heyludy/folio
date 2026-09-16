@@ -3,17 +3,23 @@ import {fonts,siteLanguages,themes,visibleSections} from './model.js';
 
 const clean=value=>String(value||'').replace(/\s+/g,' ').trim();
 export const escapeMeta=value=>String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Use the published fingerprint, never the unsaved draft or the section hash.
+export function shareUrl(publicUrl,liveHash){
+ if(!publicUrl||!liveHash)return '';
+ try{const url=new URL(publicUrl);if(!['https:','http:'].includes(url.protocol))return '';url.hash='';url.searchParams.set('share',liveHash.slice(0,12));return url.href}catch{return ''}
+}
 export function shareInfo(site){
  const basics=getBasicInfo(site),lang=clean(basics.en.name)?'en':siteLanguages(site).includes('ko')?'ko':'en';
  const basic=basics[lang],profile=site.sections.find(s=>s.kind==='profile'&&!s.hidden);
- const title=clean(basic.name)||'Professor website',college=clean(basic.college),department=clean(basic.department);
+ const name=clean(basic.name)||'Professor website',title=name+(site.example?' · Folio example':''),college=clean(basic.college),department=clean(basic.department);
  const intro=clean(profile?.text[lang]?.body);
  const fallback=[college,department].filter(Boolean).join(' · ')||(lang==='ko'?'연구와 활동을 소개하는 개인 홈페이지입니다.':'Research, publications and academic activities.');
- const description=(intro||fallback).length>190?(intro||fallback).slice(0,187).trimEnd()+'…':intro||fallback;
+ const summary=college||department?fallback:intro||fallback;
+ const description=summary.length>190?summary.slice(0,187).trimEnd()+'…':summary;
  const research=site.sections.find(s=>s.kind==='research'&&!s.hidden)?.text[lang]||{};
  const topics=Object.entries(research).filter(([key,value])=>/^topic\d+$/.test(key)&&clean(value)).slice(0,2).map(([,value])=>clean(value));
  const sections=visibleSections(site,lang).filter(s=>!['profile','contact'].includes(s.kind)).map(s=>clean(s.text[lang]?.title)).filter(Boolean);
- return {title,college,department,description,lang,photo:profile?site.photo||'':'',topics:topics.length?topics:sections.slice(0,2),theme:themes[site.theme]||themes.forest,font:(fonts[site.font]||fonts.academic)[lang]};
+ return {name,title,example:!!site.example,college,department,description,lang,photo:profile?site.photo||'':'',photoCredit:site.photo&&site.photoCredit?.data===site.photo?`${site.photoCredit.author} · ${site.photoCredit.license} · ${site.photoCredit.note}`:'',topics:topics.length?topics:sections.slice(0,2),theme:themes[site.theme]||themes.forest,font:(fonts[site.font]||fonts.academic)[lang]};
 }
 export function shareHead(info,image=''){
  const e=escapeMeta;

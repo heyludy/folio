@@ -186,3 +186,4 @@
 .site-section[data-kind=contact]{border-left:3px solid var(--site-detail)}
 .site-researchitem{border-top-color:var(--site-detail)}
 .site-languages button[aria-pressed=true]{background:var(--site-accent);color:#fff}
+.site-example-note{display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;font:11px/1.6 var(--site-ui);color:var(--site-muted);padding:0 0 16px}.site-example-note a,.site-photo-credit a{color:var(--site-accent);text-underline-offset:3px}.site-photo-credit{flex-basis:100%;font-size:10px}

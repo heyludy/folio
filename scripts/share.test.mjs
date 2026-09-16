@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {shareInfo,shareHead,wrapCardText} from '../src/share.js';
+import {shareInfo,shareHead,wrapCardText,shareUrl} from '../src/share.js';
 import {newSite} from '../src/model.js';
 import {sampleContent} from '../src/sample.js';
 import {exportSite} from '../.test-build/export.js';
@@ -17,8 +17,14 @@ test('share metadata uses public identity and intro, excludes hidden content and
 });
 test('exported metadata escapes text and provides description without requiring a portrait',()=>{
  const site=sample();site.sections[0].text.en.title='"/><script>bad()</script>';site.sections[0].text.en.body='  A\n short description.  ';
- const html=exportSite(site);assert.match(html,/property="og:title" content="&quot;\/&gt;&lt;script&gt;/);assert.doesNotMatch(html,/<script>bad\(\)/);assert.match(html,/property="og:description" content="A short description\."/);
+ const html=exportSite(site);assert.match(html,/property="og:title" content="&quot;\/&gt;&lt;script&gt;/);assert.doesNotMatch(html,/<script>bad\(\)/);assert.match(html,/property="og:description" content="Seoul National University · Department of Energy Resources Engineering"/);
+ site.sections[0].text.en.college='';site.sections[0].text.en.department='';assert.equal(shareInfo(site).description,'A short description.');
  site.sections[0].text.en.body='';assert.ok(shareInfo(site).description.length);assert.ok(shareInfo(sample()).description.length<=190);
+});
+test('share links follow the published version and discard section fragments',()=>{
+ assert.equal(shareUrl('https://example.com/#en-section-contact','123456789012abcdef'),'https://example.com/?share=123456789012');
+ assert.equal(shareUrl('https://example.com/?share=old','abcdefghijklmnop'),'https://example.com/?share=abcdefghijkl');
+ assert.equal(shareUrl('https://example.com/',''),'');assert.equal(shareUrl('javascript:alert(1)','hash'),'');
 });
 test('publishing separates the PNG and resolves absolute social URLs without changing body content',async()=>{
  const image='data:image/png;base64,iVBORw0KGgo=',html=exportSite(sample(),{shareImage:image});

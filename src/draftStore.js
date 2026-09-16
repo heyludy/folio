@@ -1,4 +1,5 @@
 import {mergeDrafts} from './draftMerge.js';
+import {EXAMPLE_MIGRATION,addExampleOnce,validateDrafts} from './exampleMigration.js';
 const DATABASE='folio-projects',STORE='workspace',KEY='projects';
 function openDatabase(){
  return new Promise((resolve,reject)=>{
@@ -11,6 +12,34 @@ function openDatabase(){
 export async function readDrafts(){
  const db=await openDatabase();
  try{return await new Promise((resolve,reject)=>{const request=db.transaction(STORE).objectStore(STORE).get(KEY);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}finally{db.close()}
+}
+// Read again inside one write transaction: a second tab may finish the migration
+// while the first is loading the portrait. The marker also survives deletion.
+export async function initializeDrafts(fallback,makeExample){
+ const db=await openDatabase();
+ try{
+  const snapshot=await new Promise((resolve,reject)=>{
+   const tx=db.transaction(STORE),store=tx.objectStore(STORE),projects=store.get(KEY),marker=store.get(EXAMPLE_MIGRATION);
+   tx.oncomplete=()=>resolve({sites:projects.result,applied:marker.result});tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+  if(snapshot.applied)return validateDrafts(snapshot.sites);
+  if(snapshot.sites!==undefined)validateDrafts(snapshot.sites);
+  let example;
+  try{example=await makeExample()}catch{
+   // A failed optional download must not lock someone out of existing work.
+   // Leave the marker unset so the next visit can retry.
+   return validateDrafts(snapshot.sites??fallback);
+  }
+  return await new Promise((resolve,reject)=>{
+   const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),projects=store.get(KEY),marker=store.get(EXAMPLE_MIGRATION);
+   let saved,error;
+   marker.onsuccess=()=>{try{
+    saved=addExampleOnce(projects.result??fallback,example,marker.result);
+    store.put(saved,KEY);store.put(true,EXAMPLE_MIGRATION);
+   }catch(cause){error=cause;tx.abort()}};
+   tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(error||tx.error);tx.onabort=()=>reject(error||tx.error);
+  });
+ }finally{db.close()}
 }
 export async function writeDrafts(sites,base){
  const db=await openDatabase();

@@ -19,7 +19,7 @@ import {beginSectionDrag} from './sectionDrag';
 import {addKoreanPage,removeKoreanPage,restoreKoreanPage,koreanSnapshot} from './languages';
 import {themes,fonts,catalog,newSite,newSection,reorder,siteLanguages,siteTitle} from './model';
 import {loadSites} from './storage';
-import {readDrafts,writeDrafts} from './draftStore';
+import {readDrafts,writeDrafts,initializeDrafts} from './draftStore';
 import {readAsset,setAsset} from './assets';
 import {downloadSite} from './export';
 import {revealSections} from './motion';
@@ -61,9 +61,9 @@ function App(){
  useEffect(()=>{
   let active=true;
   (async()=>{try{
-   const saved=await readDrafts();
-   if(saved!==undefined&&(!Array.isArray(saved)||saved.some(s=>!s.id||!Array.isArray(s.sections))))throw new Error('invalid drafts');
-   const initial=saved||await writeDrafts(loadSites());
+   const initial=await initializeDrafts(loadSites(),async()=>{
+    const {loadHintonSite}=await import('./examples/hinton.js');return loadHintonSite();
+   });
    if(active){lastSaved.current=initial;queuedBase.current=initial;setSites(initial);setSiteId(activeProjects(initial)[0]?.id??null);setReady(true);}
   }catch{if(active)setLoadError('저장된 프로젝트를 열지 못했어요. 브라우저의 사이트 저장 권한을 확인하고 다시 열어 주세요.')}})();
   return()=>{active=false};

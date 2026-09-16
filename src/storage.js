@@ -11,7 +11,7 @@ export function sampleSite(){
 export function loadSites(){
  try{
   const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
-  if(Array.isArray(saved)&&saved.length&&saved.every(s=>s.id&&themes[s.theme]&&fonts[s.font]&&Array.isArray(s.sections)&&s.sections.every(item=>item.text?.en&&item.text?.ko&&item.defaults)))return saved;
+  if(Array.isArray(saved)&&saved.every(s=>s.id&&themes[s.theme]&&fonts[s.font]&&Array.isArray(s.sections)&&s.sections.every(item=>item.text?.en&&item.text?.ko&&item.defaults)))return saved;
  }catch{}
  return [sampleSite()];
 }
