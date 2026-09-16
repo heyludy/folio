@@ -91,5 +91,3 @@
 .theme-label{min-width:0;word-break:keep-all}
 .theme-label strong{display:block;font-size:12px;font-weight:500;color:#333}
 .theme-label small{display:block;font-size:10px;color:#737373;margin-top:3px;line-height:1.4}
-.theme-reference{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 7px 4px;margin-top:8px;border-top:1px solid #e8e8e8;font-size:11px;color:#737373}
-.theme-reference a{color:#444;text-underline-offset:3px}
