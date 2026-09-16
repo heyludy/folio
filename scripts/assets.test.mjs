@@ -62,9 +62,7 @@ test('standalone PDF controls create a PDF Blob once and reuse it for the downlo
  assert.equal(created,1);assert.equal(download.download,'CV.pdf');assert.equal(download.href,link.href);assert.ok(download.clicked);
 });
 test('new theme tokens and font roles reach exports, while explicit resource links reject unsafe protocols',()=>{
- assert.equal(new Set(Object.values(themes).map(theme=>theme.paper)).size,5);
- assert.equal(new Set(Object.values(themes).map(theme=>theme.wash)).size,5);
- for(const [id,theme] of Object.entries(themes)){const sample=newSite();sample.theme=id;sample.sections[0].text.en.title='Professor';const html=exportSite(sample);for(const key of ['paper','wash','accent'])assert.ok(html.includes(`--site-${key}:${theme[key]}`));}
+ for(const [id,theme] of Object.entries(themes)){const sample=newSite();sample.theme=id;sample.sections[0].text.en.title='Professor';const html=exportSite(sample);for(const key of ['paper','wash','accent','title','detail'])assert.ok(html.includes(`--site-${key}:${theme[key]}`));}
  let site=newSite();site.font='academic';assert.match(themeStyle(site,'en')['--site-body'],/Source Sans 3/);
  site.font='journal';assert.match(themeStyle(site,'en')['--site-ui'],/Hanken Grotesk/);
  site.font='lora';site.sections[0].text.en.title='Professor';assert.match(exportSite(site),/Lora/);

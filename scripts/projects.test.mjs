@@ -32,7 +32,7 @@ const luminance=hex=>hex.slice(1).match(/../g).map(c=>parseInt(c,16)/255).map(v=
 const contrast=(a,b)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);
 test('all themes keep body, accent text and active language buttons readable on tinted backgrounds',()=>{
  for(const theme of Object.values(themes)){
-  for(const background of [theme.paper,theme.wash])for(const foreground of [theme.ink,theme.muted,theme.accent])assert.ok(contrast(foreground,background)>=4.5,`${theme.name}: ${foreground} on ${background}`);
+  for(const background of [theme.paper,theme.wash])for(const foreground of [theme.ink,theme.muted,theme.accent,theme.title])assert.ok(contrast(foreground,background)>=4.5,`${theme.name}: ${foreground} on ${background}`);
   assert.ok(contrast('#ffffff',theme.accent)>=4.5);
  }
 });

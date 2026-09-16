@@ -1,13 +1,14 @@
 import {DEFAULT_TEMPLATE} from './templates.js';
 import {validAsset} from './assets.js';
 
-const neutral={ink:'#25292c',muted:'#62686e'};
+// Reference colors and their Folio roles are documented in docs/theme-references.md.
+// Keep the existing IDs so saved projects receive the corresponding updated palette.
 export const themes = {
- forest:{...neutral,name:'그린',paper:'#f7faf8',wash:'#e4eee7',line:'#cddbd1',accent:'#355b49'},
- navy:{...neutral,name:'네이비',paper:'#f7f9fc',wash:'#e3ebf5',line:'#ccd7e6',accent:'#344e70'},
- burgundy:{...neutral,name:'버건디',paper:'#fcf9fa',wash:'#f0e5e9',line:'#e2cfd6',accent:'#724552'},
- plum:{...neutral,name:'플럼',paper:'#faf9fc',wash:'#ece6f2',line:'#dad0e3',accent:'#62506e'},
- charcoal:{...neutral,name:'차콜',paper:'#f8f9fa',wash:'#e7eaed',line:'#d1d6da',accent:'#414141'}
+ forest:{name:'세이지',description:'회녹색 · 그린 · 테라코타',paper:'#eef1ea',wash:'#d7dfd6',line:'#d4dbcc',ink:'#1a231d',muted:'#566158',accent:'#264a37',title:'#1a231d',detail:'#bd5f37',reference:{name:'Dasom Lee',url:'https://dasomlee.com/'}},
+ navy:{name:'네이비',description:'화이트 · 네이비',paper:'#ffffff',wash:'#f9f9f9',line:'#dddddd',ink:'#222222',muted:'#4a4a4a',accent:'#00356b',title:'#00356b',detail:'#00356b',reference:{name:'Yale',url:'https://yaleidentity.yale.edu/guidelines/websites'}},
+ burgundy:{name:'딥레드',description:'화이트 · 쿨그레이 · 딥레드',paper:'#ffffff',wash:'#eaeaea',line:'#d5d5d4',ink:'#2e2d29',muted:'#53565a',accent:'#8c1515',title:'#8c1515',detail:'#8c1515',reference:{name:'Stanford',url:'https://identity.stanford.edu/design-elements/color/primary-colors/'}},
+ plum:{name:'퍼플',description:'화이트 · 퍼플',paper:'#ffffff',wash:'#ffffff',line:'#d8d6d6',ink:'#342f2e',muted:'#716c6b',accent:'#4e2a84',title:'#4e2a84',detail:'#4e2a84',reference:{name:'Northwestern',url:'https://www.northwestern.edu/brand/visual-identity/color-palettes/'}},
+ charcoal:{name:'차콜',description:'화이트 · 차콜 · 블루 링크',paper:'#ffffff',wash:'#fbfbfb',line:'#d6d6d6',ink:'#333333',muted:'#585858',accent:'#057aad',title:'#48505c',detail:'#48505c',reference:{name:'Michael Greenstone',url:'https://michaelgreenstone.com/'}}
 };
 export const fonts={
  academic:{name:'Source Serif 4 / Source Sans 3',en:['Source Serif 4','Source Sans 3','Source Sans 3'],ko:['Noto Serif KR','Pretendard']},
@@ -54,5 +55,5 @@ export function reorder(sections,id,beforeId){
 }
 export function themeStyle(site,lang){
  const colors=themes[site.theme]||themes.forest,pair=(fonts[site.font]||fonts.academic)[lang];
- return {...Object.fromEntries(['paper','accent','ink','muted','line','wash'].map(k=>['--site-'+k,colors[k]])),'--site-heading':`"${pair[0]}", "Noto Serif KR", serif`,'--site-body':`"${pair[1]}", Pretendard, sans-serif`,'--site-ui':`"${pair[2]||'Pretendard'}", Pretendard, sans-serif`};
+ return {...Object.fromEntries(['paper','accent','ink','muted','line','wash','title','detail'].map(k=>['--site-'+k,colors[k]])),'--site-heading':`"${pair[0]}", "Noto Serif KR", serif`,'--site-body':`"${pair[1]}", Pretendard, sans-serif`,'--site-ui':`"${pair[2]||'Pretendard'}", Pretendard, sans-serif`};
 }

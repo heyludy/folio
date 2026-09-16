@@ -180,8 +180,9 @@
 .site-add-section button>span{font-size:20px;line-height:1}
 
 /* Carry each palette through the full page and the standalone HTML. */
-.faculty-site{border-top:3px solid var(--site-accent)}
-.site-section[data-kind=profile]{background:var(--site-wash);margin-inline:calc(-1 * var(--site-gutter));padding-inline:var(--site-gutter)}
-.faculty-site .site-name,.faculty-site .site-heading{color:var(--site-accent)}
-.site-section[data-kind=contact]{border-left:3px solid var(--site-accent)}
+.faculty-site{border-top:3px solid var(--site-detail)}
+.site-section[data-kind=profile]{background:var(--site-paper);margin-inline:calc(-1 * var(--site-gutter));padding-inline:var(--site-gutter)}
+.faculty-site .site-name,.faculty-site .site-heading{color:var(--site-title)}
+.site-section[data-kind=contact]{border-left:3px solid var(--site-detail)}
+.site-researchitem{border-top-color:var(--site-detail)}
 .site-languages button[aria-pressed=true]{background:var(--site-accent);color:#fff}
