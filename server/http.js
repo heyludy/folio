@@ -1,4 +1,5 @@
 import {PublishError,fail,MAX_REQUEST_BYTES} from '../src/publishing.js';
+import {publicationSummary} from '../src/publicationLinks.js';
 export async function authorized(request,secret){
  if(!secret||secret.length<32)return false;
  const token=request.headers.get('Authorization')?.replace(/^Bearer /,'')||'';
@@ -24,8 +25,15 @@ export async function handleRequest(request,env){
   if(origin&&!allowed)fail('허용되지 않은 관리 페이지예요.',403);
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
   if(!env.ADMIN_KEY||!env.CLOUDFLARE_ACCOUNT_ID||!env.CLOUDFLARE_API_TOKEN)fail('게시 서버 연결을 마치지 않았어요. 관리자에게 연결을 요청해 주세요.',503);
-  if(!await authorized(request,env.ADMIN_KEY))fail('게시 관리 키를 확인해 주세요.',401);
   const path=new URL(request.url).pathname;
+  // A stored, unguessable publication ID can recover its public address after
+  // the management session expires. Never return DNS data, errors or payloads.
+  const link=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})\/link$/);
+  if(link&&request.method==='GET'){
+   const state=await env.PUBLICATIONS.getByName(link[1]).execute('get',null,null);
+   return Response.json(publicationSummary(state),{headers});
+  }
+  if(!await authorized(request,env.ADMIN_KEY))fail('게시 관리 키를 확인해 주세요.',401);
   if(path==='/v1/session'&&request.method==='GET')return Response.json({service:'folio-publisher',version:1},{headers});
   const match=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})(\/unpublish|\/domain)?$/);
   if(!match)fail('주소를 찾지 못했어요.',404);

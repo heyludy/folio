@@ -27,6 +27,8 @@ describe('publisher in the Workers runtime',()=>{
   expect((await exports.default.fetch(route(a))).status).toBe(401);
   for(const id of [a,b]){const res=await exports.default.fetch(route(id),{headers});expect(res.status).toBe(200);expect((await res.json()).revision).toBe(0)}
   const denied=await exports.default.fetch(route(a),{headers:{...headers,Origin:'https://untrusted.test'}});expect(denied.status).toBe(403);
+  const link=await exports.default.fetch(route(a,'/link'),{headers:{Origin:origin}});expect(link.status).toBe(200);expect(await link.json()).toEqual({revision:0,status:'draft',url:'',liveHash:null,pending:false,publishedAt:null});
+  for(const [suffix,method] of [['','PUT'],['/unpublish','POST'],['/domain','POST'],['/domain','DELETE'],['/link','PUT']])expect((await exports.default.fetch(route(a,suffix),{method,headers:{Origin:origin}})).status).toBe(401);
  });
  it('publishes through real RPC, persists state, rejects stale updates, and unpublishes',async()=>{
   const id=crypto.randomUUID(),bundle=await publishBundle('<!doctype html><title>Folio QA</title><h1>Test</h1>');
@@ -42,7 +44,7 @@ describe('publisher in the Workers runtime',()=>{
   expect(result.status).toBe(202);let state=await result.json();expect(state.liveHash).toBe(null);expect(state.pending.phase).toBe('verifying');
   publicStatus=200;
   cf('GET',/\/deployments\/d1$/,{id:'d1',latest_stage:{name:'deploy',status:'success'}});
-  const ready=await exports.default.fetch(route(id),{headers});expect(ready.status).toBe(200);state=await ready.json();expect(state.liveHash).toBe(bundle.hash);
+  const ready=await exports.default.fetch(route(id,'/link'),{headers:{Origin:origin}});expect(ready.status).toBe(200);state=await ready.json();expect(state.liveHash).toBe(bundle.hash);expect(state.url).toMatch(/^https:\/\/folio-/);expect(state.pending).toBe(false);expect(state.projectName).toBeUndefined();
   const stub=env.PUBLICATIONS.getByName(id);
   await runInDurableObject(stub,async(instance,ctx)=>{
    expect((await ctx.storage.get('publication')).liveHash).toBe(bundle.hash);
@@ -55,5 +57,6 @@ describe('publisher in the Workers runtime',()=>{
   cf('DELETE',/\/pages\/projects\/folio-[a-f0-9]+$/,{});
   cf('GET',/\/pages\/projects\/folio-[a-f0-9]+$/,null);
   const removed=await exports.default.fetch(route(id,'/unpublish'),{method:'POST',headers:{...headers,'If-Match':String(state.revision)},body:JSON.stringify({confirm:'unpublish'})});expect(removed.status).toBe(200);expect((await removed.json()).status).toBe('unpublished');
+  const unavailable=await exports.default.fetch(route(id,'/link'),{headers:{Origin:origin}});expect((await unavailable.json()).url).toBe('');
  });
 });

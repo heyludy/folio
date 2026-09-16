@@ -102,6 +102,19 @@ test('streaming body limits also cover requests with no Content-Length',async()=
  await assert.rejects(readJson(new Request('https://api.test',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"a":"0123456789"}'}),10),e=>e.status===413);
  await assert.rejects(readJson(new Request('https://api.test',{method:'POST',headers:{'Content-Type':'application/json'},body:'broken'})),e=>e.status===400);
 });
+test('public address recovery returns only public metadata and cannot authorize private reads or mutations',async()=>{
+ let calls=0;
+ let state={revision:7,status:'published',url:'https://professor.pages.dev',liveHash:'public-content-hash',publishedAt:'2026-09-16T07:00:00Z',domain:{name:'www.professor.org',status:'active',txtValue:'PRIVATE_DNS'},pending:{kind:'publish',payload:'PRIVATE_HTML'},error:'PRIVATE_PROVIDER_ERROR'};
+ const env={ADMIN_KEY:key,CLOUDFLARE_ACCOUNT_ID:'id',CLOUDFLARE_API_TOKEN:'PRIVATE_TOKEN',ALLOWED_ORIGINS:'https://heyludy.github.io',PUBLICATIONS:{getByName(name){assert.equal(name,id);return {execute:async(action,payload,revision)=>{calls++;assert.equal(action,'get');assert.equal(payload,null);assert.equal(revision,null);return state}}}}};
+ const request=(suffix='/link',method='GET',headers={Origin:'https://heyludy.github.io'})=>new Request(`https://api.test/v1/sites/${id}${suffix}`,{method,headers});
+ const response=await handleRequest(request(),env);
+ assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
+ assert.deepEqual(await response.json(),{revision:7,status:'published',url:'https://www.professor.org',liveHash:'public-content-hash',pending:true,publishedAt:'2026-09-16T07:00:00Z'});
+ for(const [suffix,method] of [['','GET'],['','PUT'],['/unpublish','POST'],['/domain','POST'],['/domain','DELETE'],['/link','PUT']])assert.equal((await handleRequest(request(suffix,method),env)).status,401);
+ assert.equal((await handleRequest(request('/link','GET',{Origin:'https://evil.test'}),env)).status,403);assert.equal(calls,1);
+ state={...state,status:'publishing',liveHash:null};assert.equal((await (await handleRequest(request(),env)).json()).url,'');
+ state={...state,status:'unpublished',pending:null};assert.equal((await (await handleRequest(request(),env)).json()).url,'');
+});
 test('Pages asset hash matches the installed Wrangler implementation',()=>{
  const require=createRequire(import.meta.url),wranglerRequire=createRequire(require.resolve('wrangler/package.json')),blake=wranglerRequire('blake3-wasm');
  const file={path:'index.html',content:Buffer.from('Hello 교수님').toString('base64')};assert.equal(pagesHash(file),blake.hash(file.content+'html').toString('hex').slice(0,32));

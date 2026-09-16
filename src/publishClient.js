@@ -18,7 +18,7 @@ export function publicationId(endpoint,siteId){
  return id;
 }
 export async function publishRequest(config,path,{method='GET',body,revision}={}){
- const endpoint=publishingEndpoint(config.endpoint),headers={Authorization:`Bearer ${config.key}`};
+ const endpoint=publishingEndpoint(config.endpoint),headers=config.key?{Authorization:`Bearer ${config.key}`}:{ };
  if(body)headers['Content-Type']='application/json';
  if(revision!==undefined)headers['If-Match']=String(revision);
  let response;try{response=await fetch(endpoint+path,{method,headers,body:body?JSON.stringify(body):undefined,credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(method==='PUT'?180000:45000)})}catch{throw new Error('게시 서버에 연결하지 못했어요. 인터넷 연결을 확인한 뒤 상태를 새로고침해 주세요.')}
@@ -26,3 +26,4 @@ export async function publishRequest(config,path,{method='GET',body,revision}={}
  if(!response.ok)throw new PublishError(data.error||'게시 요청을 처리하지 못했어요.',response.status);
  return data;
 }
+export const publicationLinkRequest=(endpoint,id)=>publishRequest({endpoint},`/v1/sites/${encodeURIComponent(id)}/link`);

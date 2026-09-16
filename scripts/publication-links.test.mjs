@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {publishedUrl,publicationSummary,readPublicationLink,rememberPublicationLink,existingPublicationId} from '../src/publicationLinks.js';
+import {publishedUrl,publicationSummary,readPublicationLink,rememberPublicationLink,existingPublicationId,projectWebsite} from '../src/publicationLinks.js';
+import {publicationLinkRequest} from '../src/publishClient.js';
 
 const endpoint='https://publisher.example.com',siteId='professor';
 const storage=()=>{const values=new Map([[`folio-publication:${endpoint}:${siteId}`,'publication-1']]);return {getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,String(value))}};
@@ -40,4 +41,23 @@ test('legacy publication IDs remain discoverable without allocating new IDs or m
  rememberPublicationLink(endpoint,siteId,live,store);
  assert.equal(readPublicationLink('https://another.example.com',siteId,store),null);
  store.setItem(`folio-publication:${endpoint}:${siteId}`,'new-identity');assert.deepEqual(readPublicationLink(endpoint,siteId,store),{id:'new-identity',url:''});
+});
+test('existing website shortcuts accept only web addresses and yield to verified publication state',()=>{
+ const site={linkedWebsite:'https://existing.professor.org'};
+ assert.equal(projectWebsite(site,null),'https://existing.professor.org/');
+ assert.equal(projectWebsite(site,{status:'draft',url:''}),'https://existing.professor.org/');
+ assert.equal(projectWebsite(site,live),'https://professor.pages.dev/');
+ assert.equal(projectWebsite(site,{...live,status:'unpublished'}),'');
+ for(const linkedWebsite of ['mailto:person@example.com','javascript:alert(1)','https://user:password@example.com','bad'])assert.equal(projectWebsite({linkedWebsite},null),'');
+});
+test('address recovery works without a management session and sends no credentials',async t=>{
+ t.mock.method(globalThis,'fetch',async(url,options)=>{
+  assert.equal(url,endpoint+'/v1/sites/legacy-id/link');
+  assert.equal(options.method,'GET');assert.equal(options.headers.Authorization,undefined);
+  assert.equal(options.credentials,'omit');assert.equal(options.body,undefined);
+  return Response.json(publicationSummary(live));
+ });
+ const state=await publicationLinkRequest(endpoint,'legacy-id'),store=storage();
+ rememberPublicationLink(endpoint,siteId,state,store);
+ assert.equal(readPublicationLink(endpoint,siteId,store).url,'https://professor.pages.dev/');
 });

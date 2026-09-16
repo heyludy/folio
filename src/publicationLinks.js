@@ -3,13 +3,20 @@ import {domainName} from './publishing.js';
 
 const idKey=(endpoint,siteId)=>`folio-publication:${endpoint}:${siteId}`;
 const stateKey=(endpoint,id)=>`folio-publication-state:${endpoint}:${id}`;
+export function websiteUrl(value){
+ const url=safeLink(value);return url&&/^https?:\/\//.test(url)?url:'';
+}
+export function projectWebsite(site,publication){
+ if(publication?.status==='unpublished')return '';
+ return websiteUrl(publication?.url)||websiteUrl(site.linkedWebsite);
+}
 export function existingPublicationId(endpoint,siteId,storage=localStorage){
  try{return storage.getItem(idKey(endpoint,siteId))||null}catch{return null}
 }
 export function publishedUrl(state){
  if(!state?.liveHash||state.status==='unpublished')return '';
  if(state.domain?.status==='active')try{return 'https://'+domainName(state.domain.name)}catch{}
- return safeLink(state.url)||'';
+ return websiteUrl(state.url);
 }
 export function publicationSummary(state){
  return {revision:state.revision,status:state.status,url:publishedUrl(state),liveHash:state.liveHash||null,pending:!!state.pending,publishedAt:state.publishedAt||null};
