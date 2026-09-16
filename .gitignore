@@ -3,3 +3,6 @@ dist/
 .test-build/
 .env*
 !.env.example
+.wrangler/
+.dev.vars*
+!.dev.vars.example

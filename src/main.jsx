@@ -1,9 +1,10 @@
 import React,{useState,useRef,useEffect,useLayoutEffect} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Plus,Eye,ArrowLeft,Download,Check,GripVertical,X,Palette,ContactRound,Monitor,Tablet,Smartphone,FileText} from 'lucide-react';
+import {Plus,Eye,ArrowLeft,Download,Check,GripVertical,X,Palette,ContactRound,Monitor,Tablet,Smartphone,FileText,Globe} from 'lucide-react';
 import {SitePage} from './SitePage';
 import {ProjectHome} from './ProjectHome';
 import {activeProjects,deletedProjects,deleteProject,restoreProject} from './projects';
+import {PublishDialog} from './PublishDialog';
 import {BasicInfoDialog} from './BasicInfoDialog';
 import {PreparationDialog} from './PreparationDialog';
 import {undoPreparation} from './preparation';
@@ -39,6 +40,7 @@ function App(){
  const [pendingNavigation,setPendingNavigation]=useState(null);
  const [homeRequested,setHome]=useState(true),[basicsModal,setBasicsModal]=useState(null);
  const home=homeRequested||!availableSites.length;
+ const [publishing,setPublishing]=useState(false);
  const [preparing,setPreparing]=useState(false),[importUndo,setImportUndo]=useState(null),[importProblem,setImportProblem]=useState('');
  const [preview,setPreview]=useState(false),[selected,setSelected]=useState(null),[paletteOpen,setPaletteOpen]=useState(false),[insertAfter,setInsertAfter]=useState(null),[saveMessage,setSaveMessage]=useState('이 브라우저에 저장됨');
  const pendingAssets=useRef(new Map());
@@ -89,11 +91,11 @@ function App(){
   try{
    const latest=await readDrafts();if(!Array.isArray(latest))throw new Error();
    lastSaved.current=latest;queuedBase.current=latest;setSites(latest);setSiteId(id=>activeProjects(latest).some(s=>s.id===id)?id:activeProjects(latest)[0]?.id??null);setHome(true);
-   setPreparing(false);setImportUndo(null);setSelected(null);setSelectedElement(null);setPendingNavigation(null);setRemovedSection(null);setRemovedLanguage(null);setRemovedProject(null);setBasicsModal(null);setInsertAfter(null);
+   setPreparing(false);setPublishing(false);setImportUndo(null);setSelected(null);setSelectedElement(null);setPendingNavigation(null);setRemovedSection(null);setRemovedLanguage(null);setRemovedProject(null);setBasicsModal(null);setInsertAfter(null);
    saveStopped.current=false;setSaveProblem(null);setSaveMessage('최신 저장 내용을 불러왔어요');
   }catch{setSaveMessage('최신 내용을 열지 못했어요. 다시 시도해 주세요.');}
  };
- useEffect(()=>{if(ready&&!availableSites.some(s=>s.id===siteId)){setHome(true);setPreparing(false);setBasicsModal(null);setPreview(false);setSiteId(availableSites[0]?.id??null)}},[ready,sites,siteId]);
+ useEffect(()=>{if(ready&&!availableSites.some(s=>s.id===siteId)){setHome(true);setPreparing(false);setPublishing(false);setBasicsModal(null);setPreview(false);setSiteId(availableSites[0]?.id??null)}},[ready,sites,siteId]);
  useEffect(()=>{if(!preview||home)return;return revealSections(canvas.current,canvas.current)},[preview,home,lang,site.id]);
  useEffect(()=>{if(insertAfter!==null)catalogClose.current?.focus();},[insertAfter]);
  useEffect(()=>{
@@ -154,8 +156,8 @@ function App(){
  };
  const togglePreview=()=>{endDrag();if(!preview){editorScroll.current=canvas.current.scrollTop;if(!languageAvailable)setLang('en')}setPreview(v=>!v);setSelected(null);setPaletteOpen(false);requestAnimationFrame(()=>canvas.current.scrollTo({top:preview?editorScroll.current:0,behavior:'instant'}))};
  const changeLanguage=code=>{endDrag();setPendingNavigation(null);if(!['en','ko'].includes(code)||(preview&&!siteLanguages(site).includes(code)))return;setLang(code);setSelected(null);canvas.current.scrollTo({top:0,behavior:'instant'})};
- const changeSite=id=>{setPreparing(false);setPendingNavigation(null);endDrag(false);setSiteId(id);setLang('en');setHome(false);setPreview(false);setSelected(null);setInsertAfter(null);setPaletteOpen(false);canvas.current?.scrollTo({top:0,behavior:'instant'})};
- const goHome=()=>{setPreparing(false);setPendingNavigation(null);endDrag(false);setHome(true);setPreview(false);setPaletteOpen(false);setSelected(null);setInsertAfter(null);history.replaceState(null,'',location.pathname+location.search)};
+ const changeSite=id=>{setPreparing(false);setPublishing(false);setPendingNavigation(null);endDrag(false);setSiteId(id);setLang('en');setHome(false);setPreview(false);setSelected(null);setInsertAfter(null);setPaletteOpen(false);canvas.current?.scrollTo({top:0,behavior:'instant'})};
+ const goHome=()=>{setPreparing(false);setPublishing(false);setPendingNavigation(null);endDrag(false);setHome(true);setPreview(false);setPaletteOpen(false);setSelected(null);setInsertAfter(null);history.replaceState(null,'',location.pathname+location.search)};
  const removeProject=id=>{
   const target=availableSites.find(s=>s.id===id);if(!target)return;
   goHome();setRemovedSection(null);setRemovedLanguage(null);setImportUndo(null);setSelectedElement(null);
@@ -175,7 +177,7 @@ function App(){
   if(!current)return false;
   let merged;try{merged=mergeDrafts(site,next,current)}catch{return false;}
   setImportUndo({siteId:site.id,before:current,after:merged});setImportProblem('');setRemovedSection(null);setRemovedLanguage(null);
-  update(()=>merged);setPreparing(false);setSelected(null);setSelectedElement(null);setPreview(false);
+  update(()=>merged);setPreparing(false);setPublishing(false);setSelected(null);setSelectedElement(null);setPreview(false);
   setPendingNavigation({siteId:site.id,lang,sectionId:merged.sections[0]?.id,focus:false});
   return true;
  };
@@ -223,8 +225,8 @@ function App(){
  });
 
  if(!ready)return <div className="studio-loading" role="status">{loadError||'프로젝트를 불러오는 중…'}</div>;
- return <div className="studio"><div className="studio-background" inert={preparing||undefined} aria-hidden={preparing||undefined}>
-  <header className="studio-top"><div className="studio-brand"><button className="folio-brand" onClick={goHome} aria-label="Folio 홈"><strong>Folio</strong></button>{!home&&<button className="home-link" onClick={goHome}><ArrowLeft size={13}/>프로젝트</button>}</div><div className="studio-actions"><span className="studio-save" role="status">{saveMessage}</span>{!home&&<><button className="studio-button" onClick={()=>{downloadSite(site);setSaveMessage('HTML 파일을 내려받았어요')}}><Download size={15}/><span>HTML 내보내기</span></button><button className="studio-button primary" onClick={togglePreview}>{preview?<ArrowLeft size={15}/>:<Eye size={15}/>}<span>{preview?'편집으로 돌아가기':'미리보기'}</span></button></>}</div></header>
+ return <div className="studio"><div className="studio-background" inert={preparing||publishing||undefined} aria-hidden={preparing||publishing||undefined}>
+  <header className="studio-top"><div className="studio-brand"><button className="folio-brand" onClick={goHome} aria-label="Folio 홈"><strong>Folio</strong></button>{!home&&<button className="home-link" onClick={goHome}><ArrowLeft size={13}/>프로젝트</button>}</div><div className="studio-actions"><span className="studio-save" role="status">{saveMessage}</span>{!home&&<><button className="studio-button" onClick={()=>{downloadSite(site);setSaveMessage('HTML 파일을 내려받았어요')}}><Download size={15}/><span>HTML 내보내기</span></button><button className="studio-button primary" onClick={togglePreview}>{preview?<ArrowLeft size={15}/>:<Eye size={15}/>}<span>{preview?'편집으로 돌아가기':'미리보기'}</span></button><button className="studio-button publish-trigger" onClick={()=>{endDrag();setPaletteOpen(false);setPublishing(true)}}><Globe size={15}/>게시</button></>}</div></header>
   {saveProblem&&<div className="studio-save-problem" role="alert"><div><strong>{saveProblem==='conflict'?'다른 탭에서 같은 내용을 수정했어요.':'브라우저에 저장하지 못했어요.'}</strong><p>이 탭의 수정은 아직 저장되지 않았어요. 필요한 페이지를 HTML로 보관할 수 있어요.</p></div><button type="button" onClick={()=>downloadSite(site)}>현재 페이지 HTML 보관</button>{saveProblem==='storage'&&<button type="button" onClick={retrySave}>다시 저장</button>}<button type="button" onClick={loadLatest}>이 탭 변경 버리고 최신 내용 열기</button></div>}
   {home?<ProjectHome sites={availableSites} deleted={trash} onOpen={changeSite} onCreate={createSite} onDelete={removeProject} onRestore={restoreDeletedProject}/>:<div className="studio-workspace" data-preview={preview}>
    {!preview&&<aside className="studio-sidebar" ref={sidebar}><div className="site-picker"><label htmlFor="site-picker">사이트</label><div><select id="site-picker" value={site.id} onChange={e=>changeSite(e.target.value)}>{availableSites.map(s=><option value={s.id} key={s.id}>{siteTitle(s)}</option>)}</select><button onClick={createSite} aria-label="새 사이트 만들기"><Plus size={17}/></button></div></div>{languageAvailable&&<><div className="studio-sideheading"><span>페이지 구성</span><button ref={addButton} onClick={()=>setInsertAfter(selected||site.sections.at(-1)?.id||'')} aria-label="섹션 추가"><Plus size={16}/></button></div><ol className="studio-sectionlist">{site.sections.map(s=><li key={s.id} data-sort-id={s.id} data-active={selected===s.id} data-hidden={s.hidden}><button onPointerDown={e=>beginDrag(e,s,'sidebar',true)} onClick={()=>{selectSection(s.id);scrollToSection(s.id)}}>{s.name}</button><button type="button" className="section-sort" aria-label={`${s.name} 순서 이동`} title="끌어서 이동 · ↑↓" onPointerDown={e=>beginDrag(e,s,'sidebar',true)} onKeyDown={e=>moveKey(e,s.id)}><GripVertical size={13}/></button>{s.hidden&&<button className="restore" onClick={()=>hide(s.id)}>표시</button>}<button type="button" className="section-remove" aria-label={`${s.name} 섹션 삭제`} title="섹션 삭제" onClick={()=>remove(s.id)}><X size={13}/></button></li>)}</ol><div className="studio-sidefoot">{site.sections.length}개 섹션</div></>}</aside>}
@@ -239,6 +241,6 @@ function App(){
   {removedLanguage&&<div className="studio-undo" role="status"><span>{removedLanguage.title} · 한글 페이지 삭제됨</span><button onClick={undoRemoveLanguage}>되돌리기</button><button aria-label="알림 닫기" onClick={()=>setRemovedLanguage(null)}><X size={15}/></button></div>}
   {basicsModal&&<BasicInfoDialog key={basicsModal.site.id} {...basicsModal} onSave={saveBasics} onClose={()=>setBasicsModal(null)}/>}
   {insertAfter!==null&&<div className="studio-overlay" onClick={e=>{if(e.target===e.currentTarget)setInsertAfter(null)}}><div className="studio-catalog" role="dialog" aria-modal="true" aria-labelledby="catalog-title" onKeyDown={e=>{if(e.key==='Tab'){const nodes=[...e.currentTarget.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}}}><header><h2 id="catalog-title">섹션 추가</h2><button ref={catalogClose} onClick={()=>{setInsertAfter(null);addButton.current?.focus()}} aria-label="추가 창 닫기"><X size={19}/></button></header><div className="catalog-grid">{catalog.map(([kind,name])=><button key={kind} disabled={kind!=='custom'&&site.sections.some(s=>s.kind===kind)} onClick={()=>add(kind)}><Plus size={14}/>{name}</button>)}</div></div></div>}
- </div>{preparing&&<PreparationDialog key={site.id} site={site} onApply={applyPrepared} onClose={()=>setPreparing(false)}/>}</div>;
+ </div>{publishing&&<PublishDialog key={site.id} site={site} onClose={()=>setPublishing(false)}/>} {preparing&&<PreparationDialog key={site.id} site={site} onApply={applyPrepared} onClose={()=>setPreparing(false)}/>}</div>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
