@@ -29,7 +29,7 @@ test('share links follow the published version and discard section fragments',()
 test('publishing separates the PNG and resolves absolute social URLs without changing body content',async()=>{
  const image='data:image/png;base64,iVBORw0KGgo=',html=exportSite(sample(),{shareImage:image});
  const bundle=await publishBundle(html),published=await publishedBundle(bundle,'https://folio-example.pages.dev/');
- assert.equal(bundle.files.length,2);const imageFile=bundle.files.find(file=>file.path.endsWith('.png'));assert.ok(imageFile);
+ assert.equal(bundle.files.length,3);const imageFile=bundle.files.find(file=>file.path.endsWith('.png'));assert.ok(imageFile);assert.ok(bundle.files.some(file=>file.path.endsWith('.svg')));
  const output=Buffer.from(published.files[0].content,'base64').toString();
  assert.match(output,new RegExp('property="og:image" content="https://folio-example.pages.dev/'+imageFile.path+'"'));assert.match(output,/property="og:image:width" content="1200"/);assert.match(output,/property="og:image:height" content="630"/);
  assert.match(output,/name="twitter:image" content="https:\/\/folio-example.pages.dev\/assets\//);assert.match(output,/rel="canonical" href="https:\/\/folio-example.pages.dev\/"/);assert.doesNotMatch(output,/data:image|folio:public-url/);

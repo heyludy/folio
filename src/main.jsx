@@ -205,9 +205,9 @@ function App({account,onLogout}){
  const restoreDeletedProject=id=>{setSites(all=>restoreProject(all,id));setRemovedProject(current=>current?.id===id?null:current)};
  const openBasics=()=>{setPaletteOpen(false);setBasicsModal({site,initialLanguage:lang})};
  const createSite=()=>setBasicsModal({site:newSite(),creating:true,initialLanguage:'en'});
- const saveBasics=(draft,languages,templateId)=>{
-  if(basicsModal.creating){const next={...applyBasicInfo(basicsModal.site,draft),languages,template:resolveTemplate(templateId).id};setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
-  else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages}:s));if(!languages.includes(lang))setLang('en')}
+ const saveBasics=(draft,languages,templateId,icon)=>{
+  if(basicsModal.creating){const next={...applyBasicInfo(basicsModal.site,draft),languages,icon,template:resolveTemplate(templateId).id};setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
+  else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages,icon}:s));if(!languages.includes(lang))setLang('en')}
   setBasicsModal(null);
  };
  const openPreparation=()=>{endDrag();setPaletteOpen(false);setSelected(null);setSelectedElement(null);setPreparing(true)};

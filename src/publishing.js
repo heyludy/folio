@@ -19,13 +19,19 @@ export function domainName(value){
 export const sha256=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',typeof value==='string'?new TextEncoder().encode(value):value)),b=>b.toString(16).padStart(2,'0')).join('');
 export function toBase64(bytes){let text='';for(let i=0;i<bytes.length;i+=8192)text+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(text)}
 export function fromBase64(value){return Uint8Array.from(atob(value),c=>c.charCodeAt(0))}
-const types={html:'text/html; charset=utf-8',pdf:'application/pdf',png:'image/png',jpeg:'image/jpeg',webp:'image/webp'};
+const types={html:'text/html; charset=utf-8',pdf:'application/pdf',png:'image/png',jpeg:'image/jpeg',webp:'image/webp',svg:'image/svg+xml'};
 export async function publishBundle(html){
  const assets=new Map();
  for(const match of html.matchAll(/data:(image\/(?:png|jpeg|webp)|application\/pdf);base64,([A-Za-z0-9+/]+={0,2})/g)){
   const data=match[0];if(assets.has(data))continue;
   const ext=match[1].split('/')[1],hash=await sha256(fromBase64(match[2]));
   assets.set(data,{path:`assets/${hash}.${ext}`,content:match[2]});
+ }
+ // Server-generated monograms use a portable SVG data URL instead of canvas.
+ for(const match of html.matchAll(/data:image\/svg\+xml,(?:%[A-Fa-f0-9]{2}|[A-Za-z0-9_.!~*'()-])+/g)){
+  const data=match[0];if(assets.has(data))continue;
+  const bytes=new TextEncoder().encode(decodeURIComponent(data.slice(data.indexOf(',')+1))),hash=await sha256(bytes);
+  assets.set(data,{path:`assets/${hash}.svg`,content:toBase64(bytes)});
  }
  for(const [data,file] of assets)html=html.split(data).join('/'+file.path);
  const files=[{path:'index.html',content:toBase64(new TextEncoder().encode(html))},...assets.values()];
@@ -36,7 +42,7 @@ export async function validateBundle(input){
  if(!Array.isArray(files)||!files.length||files.length>100)fail('게시할 파일은 1~100개여야 해요.');
  let total=0;const paths=new Set(),fingerprints=[];
  for(const file of files){
-  if(!file||typeof file.path!=='string'||!(file.path==='index.html'||/^assets\/[a-f0-9]{64}\.(pdf|png|jpeg|webp)$/.test(file.path))||paths.has(file.path))fail('게시 파일 경로가 올바르지 않아요.');
+  if(!file||typeof file.path!=='string'||!(file.path==='index.html'||/^assets\/[a-f0-9]{64}\.(pdf|png|jpeg|webp|svg)$/.test(file.path))||paths.has(file.path))fail('게시 파일 경로가 올바르지 않아요.');
   paths.add(file.path);
   if(typeof file.content!=='string'||file.content.length>15*1024*1024||!file.content||file.content.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(file.content))fail('게시 파일을 읽지 못했어요.');
   const bytes=fromBase64(file.content),ext=file.path.split('.').at(-1),limit=ext==='pdf'?10*1024*1024:2*1024*1024;
