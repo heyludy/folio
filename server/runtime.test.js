@@ -37,6 +37,21 @@ describe('publisher in the Workers runtime',()=>{
   const link=await exports.default.fetch(route(a,'/link'),{headers:{Origin:origin}});expect(link.status).toBe(200);expect(await link.json()).toEqual({revision:0,status:'draft',url:'',liveHash:null,pending:false,publishedAt:null});
   for(const [suffix,method] of [['','PUT'],['/unpublish','POST'],['/domain','POST'],['/domain','DELETE'],['/link','PUT']])expect((await exports.default.fetch(route(a,suffix),{method,headers:{Origin:origin}})).status).toBe(401);
  });
+ it('registers apex DNS through authenticated RPC and keeps nameservers out of public link responses',async()=>{
+  const id=crypto.randomUUID(),name='professor.info',projectName='folio-123abc',target=projectName+'.pages.dev';
+  const zone={id:'zone-qa',name,type:'full',status:'pending',account:{id:env.CLOUDFLARE_ACCOUNT_ID},name_servers:['alpha.ns.cloudflare.com','bravo.ns.cloudflare.com']};
+  const stub=env.PUBLICATIONS.getByName(id);
+  await runInDurableObject(stub,async(instance,ctx)=>{await ctx.storage.put('publication',{revision:1,status:'published',projectName,url:'https://'+target,liveHash:'qa-hash',pending:null,domain:null})});
+  cf('GET','/client/v4/zones',[]);cf('POST','/client/v4/zones',zone);
+  cf('GET',/\/domains\/professor\.info$/,null);cf('POST',/\/domains$/,{name,status:'pending'});
+  cf('GET','/client/v4/zones',[zone]);cf('GET','/client/v4/zones/zone-qa/dns_records',[]);cf('POST','/client/v4/zones/zone-qa/dns_records',{id:'dns-qa'});
+  const connected=await exports.default.fetch(route(id,'/domain'),{method:'POST',headers:{...headers,'If-Match':'1'},body:JSON.stringify({name})});
+  expect(connected.status).toBe(200);const state=await connected.json();expect(state.domain.zone.nameservers).toEqual(zone.name_servers);expect(state.domain.zone.dnsStatus).toBe('ready');expect(state.domain.status).toBe('pending');
+  cf('GET',/\/pages\/projects\/folio-123abc$/,{name:projectName});cf('GET',/\/domains\/professor\.info$/,{name,status:'active'});
+  cf('GET','/client/v4/zones',[{...zone,status:'active'}]);cf('GET','/client/v4/zones/zone-qa/dns_records',[{id:'dns-qa',type:'CNAME',name,content:target}]);
+  const publicLink=await exports.default.fetch(route(id,'/link'),{headers:{Origin:origin}});expect(publicLink.status).toBe(200);
+  const summary=await publicLink.json();expect(summary.url).toBe('https://'+name);expect(JSON.stringify(summary)).not.toMatch(/nameservers|alpha|zone-qa|test-dns-token/);
+ });
  it('publishes through real RPC, persists state, rejects stale updates, and unpublishes',async()=>{
   const id=crypto.randomUUID(),bundle=await publishBundle('<!doctype html><title>Folio QA</title><h1>Test</h1>');
   publicHtml=atob(bundle.files[0].content);publicStatus=522;

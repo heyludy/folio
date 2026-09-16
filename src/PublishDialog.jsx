@@ -38,16 +38,16 @@ export function PublishDialog({site,onClose,initialView='publish'}){
  const refresh=async()=>{const next=await publishRequest(config,path.current);if(alive.current)receive(next)};
  useEffect(()=>{
   if(!connected||(!state?.pending&&(!state?.domain||state.domain.status==='active'))){polls.current=0;return;}
-  if(busy||polls.current>=30)return;
-  const timer=setTimeout(()=>{polls.current++;perform('게시 상태 확인 중',refresh)},4000);return()=>clearTimeout(timer);
+  if(busy||polls.current>=30||(!state?.pending&&(state?.domain?.needsRetry||state?.domain?.setupError)))return;
+  const timer=setTimeout(()=>{polls.current++;perform('게시 상태 확인 중',refresh)},state?.pending?4000:15000);return()=>clearTimeout(timer);
  },[connected,state,busy]);
  const publish=()=>perform('게시 중',async()=>{
   if(!bundle)return;
   const next=await publishRequest(config,path.current,{method:'PUT',body:{files:bundle.files},revision:state.revision});
   if(alive.current){setNotice(next.pending?'완료되면 공개 주소가 표시돼요. 창을 다시 열어도 확인할 수 있어요.':'페이지가 게시됐어요.');receive(next)}
  });
- const mutate=async(suffix,method,body)=>{const next=await publishRequest(config,path.current+suffix,{method,body,revision:state.revision});if(alive.current){receive(next);setConfirm(null)}};
- const copy=value=>perform('복사 중',async()=>{try{await navigator.clipboard.writeText(value);setNotice('주소를 복사했어요.')}catch{throw new Error('복사하지 못했어요. 표시된 주소를 직접 복사해 주세요.')}});
+ const mutate=async(suffix,method,body)=>{const next=await publishRequest(config,path.current+suffix,{method,body,revision:state.revision});if(alive.current){receive(next);setConfirm(null);dialog.current?.scrollTo({top:0,behavior:'smooth'})}};
+ const copy=value=>perform('복사 중',async()=>{try{await navigator.clipboard.writeText(value);setNotice('복사했어요.')}catch{throw new Error('복사하지 못했어요. 표시된 주소를 직접 복사해 주세요.')}});
  const publicUrl=publishedUrl(state),isLive=!!publicUrl,label=publicationLabel(state,bundle?.hash),disabled=!!busy||!!state?.pending;
  const sharingUrl=shareUrl(publicUrl,state?.liveHash);
  return <div className="studio-overlay publish-overlay" onClick={e=>{if(e.target===e.currentTarget&&!busyRef.current)onClose()}}><section className="publish-dialog" ref={dialog} role="dialog" aria-modal="true" aria-labelledby="publish-title" onKeyDown={e=>{
@@ -67,7 +67,7 @@ export function PublishDialog({site,onClose,initialView='publish'}){
    <section className="publish-share"><h3>링크 미리보기</h3>{shareImage?<img src={shareImage} width="1200" height="630" alt="이름과 소속, 테마 색을 담은 공유 이미지"/>:<p className="publish-note" role="status">미리보기를 준비하고 있어요.</p>}<p className="publish-note">현재 편집 내용의 미리보기예요. 변경사항을 게시하면 공유 이미지도 바뀌어요.</p>{sharingUrl&&<><button className="studio-button" disabled={!!busy||!!state.pending} onClick={()=>copy(sharingUrl)}><Copy size={14}/>공유 링크 복사</button><p className="publish-note">마지막 게시 버전의 주소를 복사해요. 카카오톡에서 이전 카드가 보이면 이 링크를 새로 보내주세요. 이미 보낸 메시지는 그대로 남을 수 있어요.</p></>}</section>
    </>}
    {view==='domain'&&<DomainSettings state={state} busy={busy} domain={domain} setDomain={setDomain} onAdd={value=>perform('도메인 연결 중',async()=>mutate('/domain','POST',{name:domainName(value)}))} onRefresh={()=>perform('도메인 확인 중',refresh)} onCopy={copy} onRemove={()=>setConfirm('domain')} onPublish={()=>setView('publish')}/>}
-   {confirm&&<div className="publish-confirm" role="alert"><strong>{confirm==='domain'?'도메인 연결을 해제할까요?':'홈페이지 게시를 중단할까요?'}</strong><p>{confirm==='domain'?'도메인 관리 화면에서 이 사이트를 가리키는 DNS 레코드도 삭제해 주세요. 기본 주소는 계속 열려요.':'공개 사이트와 이전 배포 주소가 삭제돼요. 다시 게시하면 새 기본 주소가 발급돼요. 이 브라우저의 편집 내용은 남아요.'}</p><div><button className="studio-button" disabled={!!busy} onClick={()=>setConfirm(null)}>취소</button><button className="studio-button danger" disabled={disabled} onClick={()=>perform('처리 중',async()=>{await mutate(confirm==='domain'?'/domain':'/unpublish',confirm==='domain'?'DELETE':'POST',{confirm:confirm==='domain'?'disconnect':'unpublish'});setNotice(confirm==='domain'?'연결을 해제했어요. 도메인 관리 화면에서도 DNS 레코드를 삭제해 주세요.':'게시를 중단했어요.')} )}>{confirm==='domain'?'연결 해제':'게시 중단'}</button></div></div>}
+   {confirm&&<div className="publish-confirm" role="alert"><strong>{confirm==='domain'?'도메인 연결을 해제할까요?':'홈페이지 게시를 중단할까요?'}</strong><p>{confirm==='domain'?'이 사이트를 가리키는 DNS 레코드는 DNS 관리 화면에서 정리해 주세요. 도메인·네임서버·이메일 설정은 유지되고, 기본 주소는 계속 열려요.':'공개 사이트와 이전 배포 주소가 삭제돼요. 다시 게시하면 새 기본 주소가 발급돼요. 이 브라우저의 편집 내용은 남아요.'}</p><div><button className="studio-button" disabled={!!busy} onClick={()=>setConfirm(null)}>취소</button><button className="studio-button danger" disabled={disabled} onClick={()=>perform('처리 중',async()=>{await mutate(confirm==='domain'?'/domain':'/unpublish',confirm==='domain'?'DELETE':'POST',{confirm:confirm==='domain'?'disconnect':'unpublish'});setNotice(confirm==='domain'?'연결을 해제했어요. 도메인 관리 화면에서도 DNS 레코드를 삭제해 주세요.':'게시를 중단했어요.')} )}>{confirm==='domain'?'연결 해제':'게시 중단'}</button></div></div>}
    <footer className="publish-footer"><button className="publish-text-button" disabled={!!busy||!!state.pending} onClick={()=>{disconnectPublisher();setConfig({...config,key:''});setConnected(false);setState(null)}}>게시 잠금</button>{view==='publish'&&state.projectName&&!confirm&&<button className="publish-text-button danger" disabled={disabled||!!state.domain} title={state.domain?'도메인을 먼저 해제해 주세요.':undefined} onClick={()=>setConfirm('unpublish')}>게시 중단</button>}</footer>
   </>}
   {(error||state?.error)&&<div className="publish-error" role="alert">{error||state.error}{connected&&<button className="publish-text-button" disabled={!!busy} onClick={()=>perform('상태 확인 중',refresh)}>상태 다시 확인</button>}</div>}

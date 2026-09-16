@@ -1,5 +1,6 @@
-import {fail,validateBundle,domainName,sha256,fromBase64} from '../src/publishing.js';
+import {fail,validateBundle,sha256,fromBase64} from '../src/publishing.js';
 import {publishedBundle} from './shareMetadata.js';
+import {domainDetails} from '../src/domains.js';
 export const emptyPublication=()=>({revision:0,status:'draft',url:null,liveHash:null,publishedAt:null,pending:null,domain:null,error:null});
 const domainView=data=>data?{name:data.name,status:data.status,verification:data.verification_data?.status,validation:data.validation_data?.status,error:data.validation_data?.error_message||data.verification_data?.error_message||null,txtName:data.validation_data?.txt_name||null,txtValue:data.validation_data?.txt_value||null}:null;
 
@@ -9,6 +10,20 @@ export class Publication{
  constructor(storage,provider,now=()=>Date.now()){this.storage=storage;this.provider=provider;this.now=now;this.busy=false;}
  async load(){return await this.storage.get('publication')||emptyPublication()}
  async save(state){const next={...state,revision:state.revision+1};await this.storage.put('publication',next);return next}
+ async refreshDomain(state){
+  const current=state.domain,mode=current.mode||domainDetails(current.name).mode;
+  const data=await this.provider.domain(state.projectName,current.name);
+  let domain={...current,...domainView(data),mode,associated:!!data,status:data?.status||'pending',needsRetry:!data,setupError:null};
+  if(mode==='apex'){
+   try{
+    domain.zone=await this.provider.dns.inspect(current.name,new URL(state.url).hostname);
+    domain.needsRetry=!data||!domain.zone||domain.zone.dnsStatus!=='ready';
+    if(domain.zone?.status!=='active'||domain.zone?.dnsStatus!=='ready')domain.status='pending';
+   }catch(error){domain.setupError=error.message;domain.needsRetry=true;domain.status='pending';}
+  }
+  if(JSON.stringify(domain)!==JSON.stringify(current))return this.save({...state,domain});
+  return state;
+ }
  async refresh(state){
   if(state.pending){
    if(state.pending.kind==='unpublish'){
@@ -27,7 +42,7 @@ export class Publication{
    }
   }
   if(!state.pending&&state.projectName&&!await this.provider.project(state.projectName))return this.save({...state,status:'unpublished',projectName:null,url:null,liveHash:null,domain:null,error:'Cloudflare에서 공개 사이트가 삭제되었어요. 다시 게시하면 새 주소가 발급돼요.'});
-  if(state.domain&&state.projectName){const domain=domainView(await this.provider.domain(state.projectName,state.domain.name));if(JSON.stringify(domain)!==JSON.stringify(state.domain))state=await this.save({...state,domain})}
+  if(state.domain&&state.projectName)state=await this.refreshDomain(state);
   return state;
  }
  async run(action,body,revision){
@@ -62,12 +77,23 @@ export class Publication{
    }
    if(!state.liveHash)fail('기본 주소로 먼저 게시한 뒤 도메인을 연결해 주세요.',409);
    if(action==='domain-add'){
-    const name=domainName(body?.name);
+    const {name,mode}=domainDetails(body?.name);
     if(state.domain&&state.domain.name!==name)fail('기존 도메인을 먼저 해제해 주세요.',409);
     // Save the requested name so an interrupted request can be reconciled on refresh.
-    state=await this.save({...state,domain:{name,status:'pending'},error:null});
-    const data=await this.provider.domain(state.projectName,name)||await this.provider.addDomain(state.projectName,name);
-    return this.save({...state,domain:domainView(data)});
+    state=await this.save({...state,domain:{...state.domain,name,mode,status:'pending',setupError:null,needsRetry:true},error:null});
+    try{
+     if(mode==='apex')state=await this.save({...state,domain:{...state.domain,zone:await this.provider.dns.prepare(name)}});
+     const data=await this.provider.domain(state.projectName,name)||await this.provider.addDomain(state.projectName,name);
+     state=await this.save({...state,domain:{...state.domain,...domainView(data),associated:true}});
+     // Register with Pages before pointing DNS at it (avoids Pages error 522).
+     if(mode==='apex')state=await this.save({...state,domain:{...state.domain,zone:await this.provider.dns.ensureRecord(name,new URL(state.url).hostname)}});
+     const ready=mode!=='apex'||state.domain.zone?.dnsStatus==='ready';
+     return this.save({...state,domain:{...state.domain,status:mode==='apex'&&(state.domain.zone?.status!=='active'||!ready)?'pending':state.domain.status,needsRetry:!ready,setupError:null}});
+    }catch(error){
+     // Keep the name and assigned nameservers after a partial failure. Retrying
+     // reuses the zone, Pages association and any matching DNS record.
+     return this.save({...state,domain:{...state.domain,status:'pending',needsRetry:true,setupError:error.message}});
+    }
    }
    if(action==='domain-remove'){
     if(body?.confirm!=='disconnect')fail('도메인 연결 해제 확인이 필요해요.');

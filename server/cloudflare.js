@@ -1,12 +1,13 @@
 import {blake3} from '@noble/hashes/blake3.js';
 import {bytesToHex,utf8ToBytes} from '@noble/hashes/utils.js';
 import {PublishError,fileType,sha256} from '../src/publishing.js';
+import {CloudflareDNS} from './domains.js';
 
 // Same Pages asset hash used by Cloudflare's Wrangler deploy-helpers.
 export const pagesHash=file=>bytesToHex(blake3(utf8ToBytes(file.content+file.path.split('.').at(-1)))).slice(0,32);
 export class CloudflarePages{
  // Native Workers fetch rejects the provider instance as its receiver.
- constructor(env,fetcher=fetch){this.env=env;this.fetcher=(...args)=>fetcher(...args);this.root=`/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/pages/projects`;}
+ constructor(env,fetcher=fetch){this.env=env;this.fetcher=(...args)=>fetcher(...args);this.root=`/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/pages/projects`;this.dns=new CloudflareDNS(this);}
  async request(path,{method='GET',body,token=this.env.CLOUDFLARE_API_TOKEN,missing=false}={}){
   const headers={Authorization:`Bearer ${token}`};
   if(body&&!(body instanceof FormData)){headers['Content-Type']='application/json';body=JSON.stringify(body)}
@@ -16,7 +17,7 @@ export class CloudflarePages{
   if(!response.ok||!data.success){
    const code=data.errors?.[0]?.code;
    const message=response.status===429?'게시 요청이 많아요. 잠시 후 다시 시도해 주세요.':response.status===401||response.status===403?'게시 서버의 Cloudflare 권한을 확인해 주세요.':`게시 서비스에서 처리하지 못했어요${code?` (오류 ${code})`:''}. 상태를 새로고침해 주세요.`;
-   throw new PublishError(message,502);
+   const error=new PublishError(message,502);error.providerStatus=response.status;throw error;
   }
   return data.result;
  }
