@@ -142,6 +142,20 @@
 .site-entry-extras:empty{display:none}
 .site-extra-value,.site-abstract{flex-basis:100%;min-width:0}
 .site-extra-value>span{font:11px/1.5 var(--site-ui);color:var(--site-muted)}
+/* Each course adapts to its own available width, including resized editor rows. */
+.site-section[data-kind=teaching] .site-entry-body{container:course-entry / inline-size;display:block;flex:1}
+.site-course-summary{min-width:0}
+.site-course-layout>.site-entry-extras{margin-top:14px;gap:10px 20px}
+.site-course-layout>.site-entry-extras:empty{margin:0}
+.site-course-layout .site-extra-value{display:flex;align-items:baseline;gap:6px 10px;flex-wrap:wrap;flex-basis:auto}
+.site-course-layout .site-extra-value>.site-meta{font-size:12px}
+@container course-entry (min-width:580px){
+ .site-course-layout:has(>.site-entry-extras:not(:empty)),.site-course-layout:has(>.entry-details){display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,24%);column-gap:36px;align-items:start}
+ .site-course-layout>.site-entry-extras,.site-course-layout>.entry-details{margin-top:0;border-left:1px solid var(--site-line);padding-left:24px;min-width:0}
+ .site-course-layout>.site-entry-extras{flex-direction:column;align-items:flex-start;gap:10px}
+ .site-course-layout .site-extra-value{display:grid;gap:3px}
+ .site-course-layout .entry-detail-fields{border:0;padding-left:0}
+}
 .site-abstract{font:13px/1.65 var(--site-body)}
 .site-abstract>summary{color:var(--site-accent)}
 .site-abstract[open]>.site-element{padding-top:10px}

@@ -32,7 +32,7 @@ function ExtraFields({section:s,lang,id,editing,onEdit,fields}){
  });
 }
 function EntryList({section:s,lang,editing,onEdit,onEntry,onAsset}){
- const type=entryTypes[s.kind],rows=visibleEntries(s,lang,editing),research=s.kind==='research',cards=['people','gallery'].includes(s.kind);
+ const type=entryTypes[s.kind],rows=visibleEntries(s,lang,editing),research=s.kind==='research',teaching=s.kind==='teaching',cards=['people','gallery'].includes(s.kind);
  const hints={year:type.yearLabel||['Year / period','연도·기간'],topic:type.topic||['Title','제목'],text:type.text||['Organization and details','기관·상세 내용']};
  return <>
   {filled(s.text[lang].body)&&<Field section={s} lang={lang} name="body" className="site-copy site-list-intro" editing={editing} onEdit={onEdit}/>}
@@ -40,13 +40,14 @@ function EntryList({section:s,lang,editing,onEdit,onEntry,onAsset}){
    {rows.map((id,index)=>{
     const label=`${s.name} 항목 ${index+1}`;
     const f=(part,as,className)=><Field section={s} lang={lang} name={part+id} as={as} className={className} editing={editing} onEdit={onEdit} label={`${s.name} ${index+1} ${hints[part][1]}`} hint={hints[part][lang==='en'?0:1]}/>;
+    const summary=<>{f('topic','h3','site-subtitle')}{f('text','p',research?'site-copy':'site-meta')}</>;
     const details=<><ExtraFields section={s} lang={lang} id={id} editing={editing} onEdit={onEdit} fields={type.extras||[]}/>{type.pdf&&<Attachment section={s} lang={lang} name={'pdf'+id} type="pdf" label="PDF" editing={editing} onAsset={onAsset}/>}</>;
     return <ElementFrame key={id} sectionId={s.id} elementKey={entryGroup(s,id)} kind="group" label={label} layout={s.elements?.[lang]?.[entryGroup(s,id)]} className={`site-entry ${research?'site-researchitem':'site-record'}`} data-entry-id={id} data-entry-edit={editing||undefined} data-reveal={!editing?'':undefined} data-year={type.year!==false&&(editing||filled(s.text[lang]['year'+id]))}>
      {editing&&<button type="button" className="entry-remove" aria-label={`${label} 삭제`} title="항목 삭제" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();onEntry?.(s.id,'remove',id)}}>×</button>}
      {type.year!==false&&f('year','div','site-year')}
      <div className="site-entry-body">
       {type.image&&<Attachment section={s} lang={lang} name={'image'+id} type="image" label={type.image} editing={editing} onAsset={onAsset}/>}
-      <div className="site-entry-text">{f('topic','h3','site-subtitle')}{f('text','p',research?'site-copy':'site-meta')}
+      <div className={`site-entry-text${teaching?' site-course-layout':''}`}>{teaching?<div className="site-course-summary">{summary}</div>:summary}
        {(type.extras?.length||type.pdf)?(editing?<details className="entry-details"><summary>세부 정보</summary><div className="entry-detail-fields">{details}</div></details>:<div className="site-entry-extras">{details}</div>):null}
       </div>
      </div>
