@@ -24,15 +24,15 @@ function ExtraFields({section:s,lang,id,editing,onEdit,fields}){
  return fields.map(field=>{
   const name=field.key+id,value=s.text[lang][name]||'',title=lang==='en'?field.en:field.ko;
   const input=<Field section={s} lang={lang} name={name} className="site-meta" editing={editing} onEdit={onEdit} label={`${s.name} ${field.ko}`} hint={title}/>;
-  if(editing)return <div className="site-extra-input" key={name}><span>{field.ko}</span>{input}{field.link&&value.trim()&&!safeLink(value,field.key==='doi')&&<small role="status">https:// 주소{field.key==='doi'?' 또는 DOI':''}를 입력해 주세요.</small>}</div>;
+  if(editing)return <div className="site-extra-input" data-extra={field.key} key={name}><span>{field.ko}</span>{input}{field.link&&value.trim()&&!safeLink(value,field.key==='doi')&&<small role="status">https:// 주소{field.key==='doi'?' 또는 DOI':''}를 입력해 주세요.</small>}</div>;
   if(!filled(value))return null;
   if(field.link){const href=safeLink(value,field.key==='doi');return href?<a key={name} className="site-resource-link" href={href} target={href.startsWith('mailto:')?undefined:'_blank'} rel="noopener noreferrer">{title}</a>:null;}
   if(field.key==='abstract')return <details className="site-abstract" key={name}><summary>{title}</summary>{input}</details>;
-  return <div className="site-extra-value" key={name}><span>{title}</span>{input}</div>;
+  return <div className="site-extra-value" data-extra={field.key} key={name}><span>{title}</span>{input}</div>;
  });
 }
 function EntryList({section:s,lang,editing,onEdit,onEntry,onAsset}){
- const type=entryTypes[s.kind],rows=visibleEntries(s,lang,editing),research=s.kind==='research',teaching=s.kind==='teaching',cards=['people','gallery'].includes(s.kind);
+ const type=entryTypes[s.kind],rows=visibleEntries(s,lang,editing),research=s.kind==='research',sideDetails=['teaching','talks','resources'].includes(s.kind),cards=['people','gallery'].includes(s.kind);
  const hints={year:type.yearLabel||['Year / period','연도·기간'],topic:type.topic||['Title','제목'],text:type.text||['Organization and details','기관·상세 내용']};
  return <>
   {filled(s.text[lang].body)&&<Field section={s} lang={lang} name="body" className="site-copy site-list-intro" editing={editing} onEdit={onEdit}/>}
@@ -47,7 +47,7 @@ function EntryList({section:s,lang,editing,onEdit,onEntry,onAsset}){
      {type.year!==false&&f('year','div','site-year')}
      <div className="site-entry-body">
       {type.image&&<Attachment section={s} lang={lang} name={'image'+id} type="image" label={type.image} editing={editing} onAsset={onAsset}/>}
-      <div className={`site-entry-text${teaching?' site-course-layout':''}`}>{teaching?<div className="site-course-summary">{summary}</div>:summary}
+      <div className={`site-entry-text${sideDetails?' site-details-layout':''}`}>{sideDetails?<div className="site-entry-summary">{summary}</div>:summary}
        {(type.extras?.length||type.pdf)?(editing?<details className="entry-details"><summary>세부 정보</summary><div className="entry-detail-fields">{details}</div></details>:<div className="site-entry-extras">{details}</div>):null}
       </div>
      </div>
