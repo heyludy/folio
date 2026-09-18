@@ -1,15 +1,14 @@
 import React,{useState,useEffect,useRef} from 'react';
 import {X,Globe,ExternalLink,Copy,RefreshCw,Check,ArrowRight} from 'lucide-react';
-import {exportSite} from './export';
-import {publishBundle,domainName,publicationLabel} from './publishing';
-import {createShareCard} from './shareCard';
+import {domainName} from './publishing';
+import {preparePublication} from './publicationPreview';
+import {publicationStatus} from './publicationStatus';
 import {shareUrl} from './share';
 import {publishedUrl,rememberPublicationLink,websiteUrl} from './publicationLinks';
 import {DomainSettings} from './DomainSettings';
 import {PUBLICATION_CHANGED} from './usePublicationLinks';
 import {publisherSettings,rememberPublisher,disconnectPublisher,connectPublication,publishRequest,unlockPublisher} from './publishClient';
 import './publish.css';
-import {siteFingerprint} from './projectHistory';
 import {ReviewSummary} from './SiteReview';
 
 export function PublishDialog({site,onClose,initialView='publish',onCheckpoint,onReview}){
@@ -23,7 +22,7 @@ export function PublishDialog({site,onClose,initialView='publish',onCheckpoint,o
  };
  const restoreFocus=()=>{if(previousFocus.current?.isConnected)previousFocus.current.focus({preventScroll:true})};
  useEffect(()=>{alive.current=true;close.current?.focus();const escape=e=>{if(e.key==='Escape'){e.stopImmediatePropagation();if(!busyRef.current)onClose()}};document.addEventListener('keydown',escape,true);return()=>{alive.current=false;document.removeEventListener('keydown',escape,true);restoreFocus()}},[]);
- useEffect(()=>{if(view!=='publish')return;let active=true;setBundle(null);setShareImage('');createShareCard(site).then(async image=>({image,bundle:{...await publishBundle(exportSite(site,{shareImage:image})),sourceHash:await siteFingerprint(site)}})).then(value=>{if(active){setShareImage(value.image);setBundle(value.bundle)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[site,view]);
+ useEffect(()=>{if(view!=='publish')return;let active=true;setBundle(null);setShareImage('');preparePublication(site).then(value=>{if(active){setShareImage(value.image);setBundle(value.bundle)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[site,view]);
  const perform=async(label,work)=>{
   if(busyRef.current)return;busyRef.current=true;setBusy(label);setError('');setNotice('');
   try{await work()}catch(e){if(alive.current){setError(e.message);if(e.status===401)setConnected(false)}}finally{busyRef.current=false;if(alive.current)setBusy('')}
@@ -52,7 +51,7 @@ export function PublishDialog({site,onClose,initialView='publish',onCheckpoint,o
  });
  const mutate=async(suffix,method,body)=>{const next=await publishRequest(config,path.current+suffix,{method,body,revision:state.revision});if(alive.current){receive(next);setConfirm(null);dialog.current?.scrollTo({top:0,behavior:'smooth'})}};
  const copy=value=>perform('복사 중',async()=>{try{await navigator.clipboard.writeText(value);setNotice('복사했어요.')}catch{throw new Error('복사하지 못했어요. 표시된 주소를 직접 복사해 주세요.')}});
- const publicUrl=publishedUrl(state),isLive=!!publicUrl,label=publicationLabel(state,bundle?.hash),disabled=!!busy||!!state?.pending;
+ const publicUrl=publishedUrl(state),isLive=!!publicUrl,status=publicationStatus(state,bundle,site),label=status.label,disabled=!!busy||!!state?.pending;
  const sharingUrl=shareUrl(publicUrl,state?.liveHash);
  return <div className="studio-overlay publish-overlay" onClick={e=>{if(e.target===e.currentTarget&&!busyRef.current)onClose()}}><section className="publish-dialog" ref={dialog} role="dialog" aria-modal="true" aria-labelledby="publish-title" onKeyDown={e=>{
   if(e.key!=='Tab')return;const nodes=[...dialog.current.querySelectorAll('button:not(:disabled),input:not(:disabled),a[href],summary')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
@@ -63,9 +62,10 @@ export function PublishDialog({site,onClose,initialView='publish',onCheckpoint,o
    {view==='publish'&&<>
    <section className="publish-card"><div className="publish-status"><span data-live={isLive&&!state.pending}>{isLive&&!state.pending?<Check size={14}/>:<Globe size={14}/>} {label}</span><button type="button" className="publish-text-button" disabled={!!busy} onClick={()=>perform('상태 확인 중',refresh)}><RefreshCw size={13}/>새로고침</button></div>
     {isLive?<><div className="publish-url"><a href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}<ExternalLink size={14}/></a><button className="publish-icon" aria-label="게시 주소 복사" onClick={()=>copy(publicUrl)} disabled={!!busy}><Copy size={16}/></button></div>{state.domain?.status==='active'&&<p className="publish-note">기본 주소 <a href={state.url} target="_blank" rel="noreferrer">{state.url}</a></p>}<p className="publish-note">마지막 게시 · {new Date(state.publishedAt).toLocaleString('ko-KR')}</p></>:<div className="publish-empty"><h3>{state.pending?'홈페이지를 게시하고 있어요.':'도메인 없이도 시작할 수 있어요.'}</h3><p>게시하면 기본 주소가 발급돼요.<br/>구매한 도메인은 나중에 연결할 수 있어요.</p></div>}
+    {status.detail&&<p className="publish-note">{status.detail}</p>}
     {state.pending?.phase==='verifying'&&<p className="publish-note" role="status">공개 주소에서 새 페이지가 열리는지 확인하고 있어요. 처음 게시할 때는 잠시 걸릴 수 있어요. 확인이 오래 걸리면 새로고침을 눌러주세요.</p>}
    {onReview&&<ReviewSummary site={site} onOpen={onReview} disabled={!!busy}/>}
-    <button type="button" className="studio-button primary publish-main" disabled={disabled||!bundle||label==='게시됨'} onClick={publish}>{state.pending?.phase==='verifying'?'공개 주소 확인 중…':state.pending?'게시 처리 중…':isLive?'변경사항 게시':'게시하기'}<ArrowRight size={15}/></button>
+    <button type="button" className="studio-button primary publish-main" disabled={disabled||!bundle||!status.needsPublish} onClick={publish}>{state.pending?.phase==='verifying'?'공개 주소 확인 중…':state.pending?'게시 처리 중…':isLive?'변경사항 게시':'게시하기'}<ArrowRight size={15}/></button>
     <p className="publish-note">현재 페이지와 첨부한 사진·PDF가 공개돼요. AI 확인 메모와 출처 검토 기록은 포함되지 않아요.</p>
     {isLive&&<a className="studio-button publish-visit" href={publicUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>게시된 사이트 열기</a>}
    </section>

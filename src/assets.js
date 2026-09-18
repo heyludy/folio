@@ -1,3 +1,4 @@
+import {readImageAsset} from './imageUpload.js';
 const pdfPattern=/^data:application\/pdf;base64,JVBERi0[A-Za-z0-9+/]*={0,2}$/;
 const imagePattern=/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
 export function validAsset(asset){return !!asset&&typeof asset.data==='string'&&(asset.type==='pdf'?pdfPattern:imagePattern).test(asset.data);}
@@ -11,12 +12,13 @@ export function setAsset(site,sectionId,lang,key,asset){
  })};
 }
 export async function readAsset(file,type){
- const limit=type==='pdf'?10:2;
+ if(type==='image')return readImageAsset(file);
+ const limit=10;
  if(file.size>limit*1024*1024)throw new Error(`${type==='pdf'?'PDF':'사진'}은 ${limit}MB 이하로 선택해 주세요.`);
- if(type==='pdf'){
+ {
   const header=new TextDecoder().decode(await file.slice(0,5).arrayBuffer());
   if(header!=='%PDF-')throw new Error('PDF 파일을 선택해 주세요.');
- }else if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('JPG, PNG, WebP 사진을 선택해 주세요.');
+ }
  const blob=type==='pdf'?new Blob([file],{type:'application/pdf'}):file;
  const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽지 못했어요. 다시 선택해 주세요.'));reader.readAsDataURL(blob)});
  return {type,name:file.name,size:file.size,data,updated:new Date().toISOString().slice(0,10)};

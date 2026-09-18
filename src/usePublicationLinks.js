@@ -15,7 +15,7 @@ export function usePublicationLinks(sites,home,ready){
   }catch{setLinks(current=>({...current,[siteId]:{...current[siteId],checking:false,error:'주소 확인에 실패했어요. 다시 눌러주세요.'}}))}
  };
  useEffect(()=>{
-  if(!ready||!home)return;
+  if(!ready)return;
   let active=true;
   const reload=()=>{const config=publisherSettings();if(active)setLinks(Object.fromEntries(sites.map(site=>[site.id,readPublicationLink(config.endpoint,site.id)])))};
   reload();window.addEventListener('storage',reload);window.addEventListener(PUBLICATION_CHANGED,reload);

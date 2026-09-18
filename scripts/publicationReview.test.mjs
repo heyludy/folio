@@ -10,7 +10,7 @@ const ready=()=>{const site=newSite();site.sections[0].text.en.title='Professor'
 test('optional blanks are omitted normally and inactive languages are not flagged',()=>{
  const site=ready();site.sections[0].text.ko.title='';
  const result=inspectSite(site);assert.deepEqual(result.issues,[]);
- assert.deepEqual(result.languages,[{lang:'en',visible:1,omitted:4}]);
+ assert.deepEqual(result.languages.map(({excluded,...page})=>page),[{lang:'en',visible:1,omitted:4}]);
  site.languages=['en','ko'];assert.deepEqual(inspectSite(site).issues.map(i=>[i.code,i.lang]),[['empty-page','ko']]);
 });
 test('malformed visible links point to the right entry, while correct DOI and optional links pass',()=>{

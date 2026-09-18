@@ -10,6 +10,7 @@ const names=Object.fromEntries(catalog.map(([kind,name])=>[kind,name]));
 const plainFields={profile:['name','college','department','position','body'],contact:['email','organization','office'],curriculum:['body'],custom:['body','url']};
 const metadata=['source','checked','notes','review','image','pdf'];
 const labels={name:'이름',title:'제목',college:'대학',department:'학과',position:'직함',body:'소개문',email:'이메일',organization:'소속',office:'연구실 위치',year:'연도·기간',topic:'제목',text:'설명',url:'관련 링크',doi:'DOI',venue:'학술지·학회',status:'상태',abstract:'초록',description:'상세 소개',role:'역할',funding:'지원기관',collaborators:'공동연구자',level:'과정',location:'장소',type:'유형',research:'연구 주제',requirements:'지원 대상',version:'버전',license:'이용 조건'};
+export const importFieldLabels=labels;
 const normalize=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,'');
 const nonempty=object=>Object.fromEntries(Object.entries(object).filter(([,v])=>typeof v==='string'&&v.trim()));
 const fieldKeys=kind=>entryTypes[kind]?entryParts({kind}):plainFields[kind]||['body'];
@@ -199,7 +200,41 @@ export function buildImportPlan(site,parsed){
   return {...g,sectionId:section.id,section,existing:!!existing,hidden:section.hidden,name:names[g.kind],meta,changes};
  });
 }
-export function chosenChange(change,choices){return change.status!=='same'&&(choices[change.key]??change.checked);}
+export function chosenChange(change,choices){return change.status!=='same'&&!change.empty&&(choices[change.key]??change.checked);}
+export function editImportPlan(plan,edits={}){
+ return plan.map(g=>({...g,changes:g.changes.map(c=>{
+  const edit=edits[c.key];if(!edit||c.type==='file'||c.status==='same')return c;
+  if(c.type==='field'){
+   const value=typeof edit[c.field]==='string'?edit[c.field]:c.value;
+   return {...c,value,empty:!value.trim()};
+  }
+  const fields={...c.fields};
+  for(const key of Object.keys(fields))if(typeof edit[key]==='string')fields[key]=edit[key];
+  const clean=nonempty(fields);
+  return {...c,editValues:fields,fields:clean,label:clean.topic||clean.text||'파일 연결',empty:!Object.keys(clean).length&&!c.meta.image&&!c.meta.pdf};
+ })}));
+}
+export function importCounts(plan,choices={},groups={}){
+ const counts={added:0,replaced:0,deferred:0,same:0};
+ for(const g of plan)for(const c of g.changes){
+  if(c.status==='same'){counts.same++;continue;}
+  if(groups[g.key]===false||!chosenChange(c,choices))counts.deferred++;
+  else counts[c.status==='change'?'replaced':'added']++;
+ }
+ return counts;
+}
+export function serializeImportPlan(plan){
+ const lines=['# Folio',''];
+ const record=values=>{for(const [key,value] of Object.entries(values)){if(typeof value!=='string')continue;lines.push(value.includes('\n')?`${key}: |\n${value.split('\n').map(line=>'  '+line).join('\n')}`:`${key}: ${value}`);}lines.push('');};
+ for(const g of plan){
+  lines.push(`## ${g.lang.toUpperCase()} / ${g.kind}`);
+  const values={...g.fields};
+  for(const c of g.changes)if(c.type==='field')values[g.kind==='profile'&&c.field==='title'?'name':c.field]=c.value;
+  record(values);
+  g.entries.forEach((item,i)=>{const c=g.changes.find(c=>c.key===`${g.key}/${item.key}`);lines.push(`### item-${i+1}`);record(c?{...c.fields,...provenance(item.fields)}:item.fields)});
+ }
+ return lines.join('\n');
+}
 export function applyImportPlan(site,plan,choices={},groups={}){
  let result=structuredClone(site);
  for(const g of plan){

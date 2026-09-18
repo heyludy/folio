@@ -59,3 +59,22 @@ export function removeEntry(site,sectionId,lang,id){
   ...(elements?{elements:{...s.elements,[lang]:Object.fromEntries(Object.entries(elements).filter(([key])=>!keys.has(key)))}}:{})
  })};
 }
+
+export function entrySnapshot(site,sectionId,lang,id){
+ const section=site.sections.find(s=>s.id===sectionId),order=section&&entryIds(section,lang);
+ if(!order?.includes(id))return null;
+ const keys=entryParts(section).map(part=>part+id),pick=(value,names)=>Object.fromEntries(names.filter(key=>value?.[key]!==undefined).map(key=>[key,structuredClone(value[key])]));
+ const index=order.indexOf(id);
+ return {sectionId,kind:section.kind,lang,id,index,beforeId:order[index+1],afterId:order[index-1],label:section.text[lang]['topic'+id]||entryTypes[section.kind].label,
+  text:pick(section.text[lang],keys),attachments:pick(section.attachments?.[lang],['image'+id,'pdf'+id]),elements:pick(section.elements?.[lang],[...keys,entryGroup(section,id),'image'+id]),provenance:pick(section.provenance?.[lang],[id])};
+}
+export function restoreEntry(site,snapshot){
+ const {sectionId,kind,lang,id}=snapshot,section=site.sections.find(s=>s.id===sectionId);
+ if(!section||section.kind!==kind||(lang==='ko'&&site.languages&&!site.languages.includes('ko')))throw new Error('섹션이나 언어가 삭제되어 항목을 복원할 수 없어요. 먼저 해당 섹션을 복원해 주세요.');
+ const order=entryIds(section,lang);if(order.includes(id))throw new Error('같은 항목이 이미 있어요. 현재 내용을 확인해 주세요.');
+ const before=order.indexOf(snapshot.beforeId),after=order.indexOf(snapshot.afterId);
+ order.splice(before>=0?before:after>=0?after+1:Math.min(snapshot.index,order.length),0,id);
+ const patch={entryOrder:{...section.entryOrder,[lang]:order}};
+ for(const key of ['text','attachments','elements','provenance'])patch[key]={...section[key],[lang]:{...section[key]?.[lang],...structuredClone(snapshot[key])}};
+ return {...site,sections:site.sections.map(s=>s===section?{...s,...patch}:s)};
+}

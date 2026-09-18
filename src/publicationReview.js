@@ -4,13 +4,18 @@ import {entryTypes,entryIds} from './entries.js';
 import {safeLink,emailHref,linkedText} from './links.js';
 import {assetAt,validAsset} from './assets.js';
 
+function contentField(section,lang){
+ if(entryTypes[section.kind]){const id=entryIds(section,lang)[0];return id?'topic'+id:'entry-add';}
+ return section.kind==='curriculum'?'pdf':section.kind==='contact'?'email':section.kind==='profile'?'title':'body';
+}
+
 // Only inspect content that can appear on an enabled page. Empty optional fields
 // are valid; network availability and factual accuracy require human review.
 export function inspectSite(site){
  const issues=[],languages=[],basic=getBasicInfo(site);
  for(const lang of siteLanguages(site)){
   const sections=site.sections.filter(s=>!s.hidden),visible=visibleSections(site,lang),visibleIds=new Set(visible.map(s=>s.id));
-  languages.push({lang,visible:visible.length,omitted:sections.length-visible.length});
+  languages.push({lang,visible:visible.length,omitted:sections.length-visible.length,excluded:site.sections.filter(s=>s.hidden||!visibleIds.has(s.id)).map(s=>({sectionId:s.id,name:s.name,field:contentField(s,lang),reason:s.hidden?'페이지에서 숨김으로 설정되어 있어요.':s.kind==='curriculum'?'CV 파일·링크와 내용이 없어 공개되지 않아요.':'내용이 비어 있어 공개되지 않아요.',hidden:!!s.hidden}))});
   const add=(code,section,field,title,message,entryId)=>issues.push({id:[lang,section?.id||'page',code,field||'',entryId||''].join(':'),code,lang,sectionId:section?.id,field,title,message,entryId});
   if(!visible.length)add('empty-page',null,null,'공개할 내용이 없어요','이 언어의 페이지는 현재 빈 화면으로 보여요. 내용을 넣거나 기본 정보에서 사용할 언어를 변경할 수 있어요.');
   else if(!filled(basic[lang].name))add('missing-name',sections.find(s=>s.kind==='profile'),'title','교수님 이름이 비어 있어요','페이지와 공유 카드에 표시할 이름을 확인해 주세요.');
