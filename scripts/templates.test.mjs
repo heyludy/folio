@@ -5,7 +5,7 @@ import {templates,resolveTemplate} from '../src/templates.js';
 import {exportSite} from '../.test-build/export.js';
 
 test('template presets add useful empty sections without duplicating existing content',()=>{
- for(const id of ['classic','sidebar','research','editorial']){
+ for(const id of ['classic','portrait','color','sidebar','research','editorial']){
   const source=newSite();source.sections[0].text.en.title='Template professor';
   const before=structuredClone(source),site=prepareTemplate(source,id);
   assert.deepEqual(source,before);assert.equal(site.sections[0].text.en.title,'Template professor');
@@ -26,7 +26,6 @@ test('switching the layout preserves bilingual content, section order and attach
  site.sections.find(s=>s.kind==='contact').text.en.email='professor@example.com';
  site.sections.reverse();const original=structuredClone(site);
  for(const template of templates){
-  assert.equal(template.status,'ready');
   const html=exportSite({...site,template:template.id});
   assert.match(html,/English profile/);assert.match(html,/한글 소개/);assert.match(html,/mailto:professor@example.com/);
   assert.ok(html.indexOf('id="en-section-contact"')<html.indexOf('id="en-section-profile"'));
@@ -41,4 +40,10 @@ test('unknown or missing template settings keep the existing classic layout',()=
  assert.equal(resolveTemplate(undefined).id,'classic');
  assert.match(exportSite({...site,template:'missing'}),/data-template="classic"/);
  assert.equal(prepareTemplate(site,'missing').template,'classic');
+});
+
+test('the catalogue presents the three approved designs and keeps a planned option unavailable',()=>{
+ assert.deepEqual(templates.filter(t=>t.status==='ready').map(t=>t.id),['classic','portrait','color']);
+ assert.equal(templates.find(t=>t.id==='research').status,'planned');
+ for(const id of ['sidebar','editorial'])assert.equal(resolveTemplate(id).id,id);
 });

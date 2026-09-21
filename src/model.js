@@ -22,6 +22,7 @@ const defaultFields={profile:{college:'',department:'',position:'',body:''},rese
 export const catalog=[...defaultSections,['curriculum','CV · 이력서 PDF','CV'],['news','새 소식','News'],['allworks','전체 논문','Publications'],['books','저서','Books'],['projects','연구 프로젝트','Projects'],['teaching','강의','Teaching'],['people','연구실·지도학생','People'],['openings','모집 안내','Opportunities'],['talks','발표·강연','Talks'],['press','언론·인터뷰','In the press'],['awards','수상','Awards'],['service','학회·사회 활동','Service'],['career','학력·경력','Background'],['resources','자료·도구','Resources'],['gallery','작품·전시','Works'],['custom','자유 소개','A little more']];
 export const filled=v=>typeof v==='string'&&v.trim().length>0;
 export function navigationLabel(section,lang){
+ if(section.menuLabel?.[lang]?.trim())return section.menuLabel[lang].trim();
  const fallback=lang==='en'?section.enName:section.name;
  return section.kind==='profile'?fallback:section.text[lang].title?.trim()||fallback;
 }
@@ -64,5 +65,6 @@ export function reorder(sections,id,beforeId){
 }
 export function themeStyle(site,lang){
  const colors=themes[site.theme]||themes.forest,pair=(fonts[site.font]||fonts.academic)[lang];
- return {...Object.fromEntries(['paper','accent','ink','muted','line','wash','title','detail'].map(k=>['--site-'+k,colors[k]])),'--site-heading':`"${pair[0]}", "Noto Serif KR", serif`,'--site-body':`"${pair[1]}", Pretendard, sans-serif`,'--site-ui':`"${pair[2]||'Pretendard'}", Pretendard, sans-serif`};
+ const hero={navy:'#00356b',charcoal:'#30373e',burgundy:'#671a20',plum:'#402367',forest:'#0c382e'};
+ return {...Object.fromEntries(['paper','accent','ink','muted','line','wash','title','detail'].map(k=>['--site-'+k,colors[k]])),...(site.template==='color'?{'--site-hero':hero[site.theme]||hero.forest,'--site-hero-title':site.theme==='forest'?'#ecb499':'#ffffff'}:{}),'--site-heading':`"${pair[0]}", "Noto Serif KR", serif`,'--site-body':`"${pair[1]}", Pretendard, sans-serif`,'--site-ui':`"${pair[2]||'Pretendard'}", Pretendard, sans-serif`};
 }

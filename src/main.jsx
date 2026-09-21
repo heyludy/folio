@@ -242,7 +242,7 @@ function App({account,onLogout}){
  const openBasics=()=>{setPaletteOpen(false);setBasicsModal({site,initialLanguage:lang})};
  const createSite=()=>setBasicsModal({site:newSite(),creating:true,initialLanguage:'en'});
  const saveBasics=(draft,languages,templateId,icon)=>{
-  if(basicsModal.creating){const next=prepareTemplate({...applyBasicInfo(basicsModal.site,draft),languages,icon},resolveTemplate(templateId).id);setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
+  if(basicsModal.creating){const next=prepareTemplate({...applyBasicInfo(basicsModal.site,draft),...resolveTemplate(templateId).defaults,languages,icon},resolveTemplate(templateId).id);setSites(all=>[...all,next]);changeSite(next.id);setLang(languages.includes('ko')&&!draft.en.name&&draft.ko.name?'ko':'en');setPreparing(true)}
   else {setSites(all=>all.map(s=>s.id===basicsModal.site.id?{...applyBasicInfo(s,draft),languages,icon,template:resolveTemplate(templateId).id}:s));if(!languages.includes(lang))setLang('en')}
   setBasicsModal(null);
  };

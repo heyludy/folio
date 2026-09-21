@@ -1,10 +1,12 @@
 export const DEFAULT_TEMPLATE='classic';
 export const templates=[
- {id:'classic',name:'기본형',status:'ready',description:'사진과 소개, 연구·논문을 한 페이지에.'},
- {id:'sidebar',name:'사이드바형',status:'ready',description:'왼쪽 이름·메뉴와 여유 있는 본문.'},
- {id:'research',name:'연구 중심형',status:'ready',description:'카드와 이미지로 소개하는 연구·프로젝트.'},
- {id:'editorial',name:'저서·미디어형',status:'ready',description:'큰 제목과 책 표지, 강연·인터뷰를 중심으로.'}
+ {id:'classic',name:'기본형',status:'ready',description:'소개부터 연구와 이력까지, 한 페이지에서 차례로.',reference:{name:'이다솜',url:'https://dasomlee.com/'}},
+ {id:'portrait',name:'소개형',status:'ready',description:'큰 이름과 사진으로 시작하고, 메뉴별로 자세히.',defaults:{theme:'charcoal',font:'modern'},reference:{name:'김현진',url:'https://www.kimhyunjin.com/'}},
+ {id:'color',name:'컬러형',status:'ready',description:'짙은 색 배경에 사진과 이름을 크게 담은 구성.',defaults:{theme:'forest',font:'academic'},reference:{name:'Katherine · Wix',url:'https://www.wix.com/website-template/view/html/2377'}},
+ {id:'research',name:'연구 중심형',status:'planned',description:'연구 이미지와 프로젝트를 중심으로 구성할 예정이에요.'}
 ];
+// Retain saved layouts without keeping them in the new-project catalogue.
+const legacy=[{id:'sidebar',name:'사이드바형',status:'legacy'},{id:'editorial',name:'저서·미디어형',status:'legacy'}];
 export function resolveTemplate(id){
- return templates.find(template=>template.id===id&&template.status==='ready')||templates.find(template=>template.id===DEFAULT_TEMPLATE);
+ return [...templates,...legacy].find(template=>template.id===id)||templates.find(template=>template.id===DEFAULT_TEMPLATE);
 }

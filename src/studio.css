@@ -107,3 +107,11 @@
 .template-miniature[data-template=editorial] .template-mini-profile strong{font-size:17px;letter-spacing:-.5px}
 .template-miniature[data-template=editorial] .template-mini-photo{height:37px;background:#ded6d0}
 .template-miniature[data-template=editorial] .template-mini-columns>div{border-top:0}
+.template-option .template-reference{display:inline-block;margin-top:9px;color:#808782;font-size:11px;text-decoration:none}
+.template-option .template-reference:hover{text-decoration:underline;color:#405d4a}
+.template-planned-preview{height:150px;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:24px;background:#f4f5f4;border-radius:4px}
+.template-planned-preview>div{background:#e7ebe8;border:1px solid #dce2dd;border-radius:2px}
+.template-planned-preview>div:first-child{grid-column:1/-1;height:35px}
+.project-heading-actions{display:flex;gap:10px;align-items:center}
+.project-heading-actions a{text-decoration:none;color:inherit}
+@media(max-width:680px){.project-heading-actions{flex-wrap:wrap;justify-content:flex-end}.project-heading-actions .studio-button{font-size:11px}}
