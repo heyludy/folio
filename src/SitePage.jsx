@@ -1,4 +1,5 @@
 import React,{useRef,useLayoutEffect,useState} from 'react';
+import {Mail} from 'lucide-react';
 import {filled,visibleSections,themeStyle,siteLanguages,navigationLabel} from './model';
 import {footerInfo} from './basics';
 import {ElementEditor,ElementFrame} from './ElementFrame';
@@ -62,6 +63,10 @@ function Portrait({section,lang,photo,editing,onPhoto,photoLayout}){
  if(!photo&&!editing)return null;
  return <ElementFrame sectionId={section.id} elementKey="photo" kind="image" label="프로필 사진" className="site-photo" layout={photoLayout}>{photo?<img data-image-surface src={photo} alt={lang==='en'?'Professor portrait':'교수님 프로필 사진'} width="400" height="600" referrerPolicy="no-referrer"/>:<div data-image-surface className="site-photoempty">{lang==='en'?'Portrait':'프로필 사진'}</div>}{editing&&<div className="site-phototools"><button type="button" onClick={()=>onPhoto('upload')}>{photo?'사진 변경':'사진 추가'}</button>{photo&&<button type="button" onClick={()=>onPhoto('remove')}>삭제</button>}</div>}</ElementFrame>;
 }
+function ProfileLinks({links,lang,editing}){
+ if(!links.length)return null;
+ return <div className="site-profile-links" aria-label={lang==='en'?'Profile links':'프로필 바로가기'}>{links.map(link=><a key={link.label} href={link.href} title={link.href.startsWith('mailto:')?(lang==='en'?'Send email':'메일 보내기'):undefined} onClick={editing?event=>event.preventDefault():undefined}><span className="site-profile-link-label">{link.label}</span>{link.href.startsWith('mailto:')?<Mail size={14} aria-hidden="true" focusable="false"/>:<span aria-hidden="true">{link.href.startsWith('#')?'↓':'↗'}</span>}</a>)}</div>;
+}
 function Content({section:s,lang,editing,onEdit,onEntry,onAsset,photo,onPhoto,photoLayout,profileLinks,template}){
  const f=(name,as='p',className='site-copy')=><Field key={name} section={s} lang={lang} name={name} as={as} className={className} editing={editing} onEdit={onEdit}/>;
  if(s.kind==='profile'){
@@ -71,11 +76,11 @@ function Content({section:s,lang,editing,onEdit,onEntry,onAsset,photo,onPhoto,ph
     <Portrait section={s} {...{lang,photo,editing,onPhoto,photoLayout}}/>
     {f('title','h1','site-name')}
     {keys.length>0&&<div className="site-color-affiliation">{keys.map(k=>f(k,'p',`site-color-${k}`))}</div>}
-    {profileLinks.length>0&&<div className="site-profile-links">{profileLinks.map(link=><a key={link.label} href={link.href} onClick={editing?event=>event.preventDefault():undefined}>{link.label}</a>)}</div>}
+    <ProfileLinks links={profileLinks} lang={lang} editing={editing}/>
    </div>
    {(editing||filled(s.text[lang].body))&&<div className="site-color-about"><h2 className="site-heading">{lang==='en'?'About':'소개'}</h2>{f('body','p','site-copy site-intro')}</div>}
   </div>;
-  return <div className={`site-profile ${photo||editing?'':'no-photo'}`}><div className="site-profiletext">{f('title','h1','site-name')}{keys.length>0&&<div className="site-affiliation">{keys.map((k,i)=><React.Fragment key={k}>{i>0&&<span aria-hidden="true" className="site-dot">·</span>}{f(k,'span','')}</React.Fragment>)}</div>}{f('body','p','site-copy site-intro')}{profileLinks.length>0&&<div className="site-profile-links" aria-label={lang==='en'?'Profile links':'프로필 바로가기'}>{profileLinks.map(link=><a key={link.label} href={link.href} onClick={editing?event=>event.preventDefault():undefined}>{link.label}<span aria-hidden="true">{link.href.startsWith('#')?'↓':'↗'}</span></a>)}</div>}</div><Portrait section={s} {...{lang,photo,editing,onPhoto,photoLayout}}/></div>;
+  return <div className={`site-profile ${photo||editing?'':'no-photo'}`}><div className="site-profiletext">{f('title','h1','site-name')}{keys.length>0&&<div className="site-affiliation">{keys.map((k,i)=><React.Fragment key={k}>{i>0&&<span aria-hidden="true" className="site-dot">·</span>}{f(k,'span','')}</React.Fragment>)}</div>}{f('body','p','site-copy site-intro')}<ProfileLinks links={profileLinks} lang={lang} editing={editing}/></div><Portrait section={s} {...{lang,photo,editing,onPhoto,photoLayout}}/></div>;
  }
  if(entryTypes[s.kind])return <>{f('title','h2','site-heading')}<EntryList section={s} lang={lang} editing={editing} onEdit={onEdit} onEntry={onEntry} onAsset={onAsset}/></>;
  if(s.kind==='curriculum')return <>{f('title','h2','site-heading')}{f('body')}<Attachment section={s} lang={lang} name="pdf" type="pdf" label="CV PDF" cv editing={editing} onAsset={onAsset}/>{(editing||s.text[lang].url)&&<ExtraFields section={s} lang={lang} id="" editing={editing} onEdit={onEdit} fields={[{key:'url',en:'Official CV (PDF) ↗',ko:'공식 CV 보기 (PDF) ↗',link:true}]}/>}</>;
@@ -91,7 +96,7 @@ export function SitePage({site,lang='en',editing=false,thumbnail=false,selected,
  const navSections=sections.filter(s=>s.nav);
  const profile=sections.find(s=>s.kind==='profile');
  const publicSections=visibleSections(site,lang),contact=publicSections.find(s=>s.kind==='contact'&&emailHref(s.text[lang].email)),cv=publicSections.find(s=>s.kind==='curriculum'&&(assetAt(s,lang,'pdf')||safeLink(s.text[lang].url)));
- const profileLinks=[...(contact?[{label:lang==='en'?'Email':'이메일',href:emailHref(contact.text[lang].email)}]:[]),...(cv?[{label:'CV',href:`#${lang}-section-${cv.id}`}]:[])];
+ const profileLinks=[...(contact?[{label:contact.text[lang].email.trim(),href:emailHref(contact.text[lang].email)}]:[]),...(cv?[{label:'CV',href:`#${lang}-section-${cv.id}`}]:[])];
  const footer=footerInfo(site,lang),affiliation=[footer.department,footer.college].filter(filled),showFooter=filled(footer.name)||affiliation.length>0;
  return <ElementEditor.Provider value={{editing,selected:selectedElement?.section===selected?selectedElement:null,onSelect:onSelectElement,onResize:onElementResize}}><div className="faculty-site" lang={lang} style={themeStyle(site,lang)} data-template={template} data-editing={editing}>
   {site.example&&<aside className="site-example-note"><span>{lang==='en'?'Folio example · Unofficial demo':'Folio 예시 프로젝트 · 공식 홈페이지가 아닙니다'}</span>{safeLink(site.example.official)&&<a href={safeLink(site.example.official)} target="_blank" rel="noopener noreferrer">{lang==='en'?'Official website ↗':'공식 홈페이지 ↗'}</a>}</aside>}

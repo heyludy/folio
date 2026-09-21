@@ -332,9 +332,11 @@
 .site-publications[data-periods=true],.site-awards[data-periods=true]{--record-year-width:108px}
 .site-year{font-variant-numeric:tabular-nums;overflow-wrap:break-word;word-break:normal}
 .site-profile-links{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:22px}
-.site-profile-links a{display:inline-flex;align-items:center;gap:9px;min-height:36px;font:500 13px/1.5 var(--site-ui);text-decoration:none;border-bottom:1px solid var(--site-line)}
+.site-profile-links a{display:inline-flex;align-items:center;gap:9px;min-height:36px;max-width:100%;font:500 13px/1.5 var(--site-ui);text-decoration:none;border-bottom:1px solid var(--site-line)}
 .site-profile-links a:hover{border-color:var(--site-accent)}
 .site-profile-links span{font-size:15px}
+.site-profile-links .site-profile-link-label{font:inherit;min-width:0;overflow-wrap:anywhere}
+.site-profile-links svg{flex-shrink:0}
 .site-profile.no-photo .site-intro{max-width:68ch}
 .faculty-site a:focus-visible,.faculty-site summary:focus-visible{outline:2px solid var(--site-accent);outline-offset:4px;border-radius:2px}
 .site-section:is([data-kind=publications],[data-kind=allworks]) .site-subtitle{font-size:17px;line-height:1.55;margin-bottom:6px;max-width:72ch}
