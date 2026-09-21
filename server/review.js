@@ -55,7 +55,13 @@ export class ReviewSnapshot{
   if(head)return new Response(null,{headers});
   const chunks=[];for(let i=0;i<file.chunks;i++){const chunk=await this.storage.get(`review:file:${token}:${filename}:${i}`);if(typeof chunk!=='string')return unavailableReview();chunks.push(chunk);}
   let bytes=fromBase64(chunks.join(''));
-  if(path==='page')bytes=new TextEncoder().encode(new TextDecoder().decode(bytes).replaceAll('/assets/',base+'assets/'));
+  if(path==='page'){
+   let html=new TextDecoder().decode(bytes);
+   // Rewrite only bundled asset attributes. External /assets/ links must remain
+   // unchanged, as must text that happens to mention that directory.
+   for(const asset of r.files.filter(f=>f.path!=='index.html'))for(const quote of ['"',"'"])html=html.replaceAll(quote+'/'+asset.path+quote,quote+base+asset.path+quote);
+   bytes=new TextEncoder().encode(html);
+  }
   // Response bodies are streamed across the RPC boundary (PDFs may exceed 1MB).
   return new Response(bytes,{headers});
  }

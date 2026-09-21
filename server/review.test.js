@@ -7,7 +7,7 @@ const headers={Origin:'https://heyludy.github.io',Authorization:'Bearer test-key
 const route=id=>`https://publisher.test/v1/sites/${id}/review`;
 const request=(id,method,body,revision='none')=>exports.default.fetch(route(id),{method,headers:{...headers,'If-Match':revision},...(body?{body:JSON.stringify(body)}:{})});
 const publicUrl=(id,token,suffix='')=>`https://publisher.test/review/${id}/${token}/${suffix}`;
-const bundle=()=>publishBundle('<!doctype html><html><head></head><body><h1>Review professor</h1><img src="data:image/png;base64,aGk="><script>document.body.dataset.works="yes"</script></body></html>');
+const bundle=()=>publishBundle('<!doctype html><html><head></head><body><h1>Review professor</h1><img src="data:image/png;base64,aGk="><a href="https://university.example/assets/cv.pdf">External CV</a><script>document.body.dataset.works="yes"</script></body></html>');
 
 it('shares a snapshot without publishing, serves sandboxed HTML/assets and excludes private data',async()=>{
  const id=crypto.randomUUID(),b=await bundle();
@@ -15,6 +15,7 @@ it('shares a snapshot without publishing, serves sandboxed HTML/assets and exclu
  expect(record.expiresAt-record.createdAt).toBe(REVIEW_TTL);expect(record.token).toMatch(/^[a-f0-9]{64}$/);expect(record.files).toBeUndefined();
  const wrapper=await exports.default.fetch(publicUrl(id,record.token));expect(wrapper.status).toBe(200);expect(wrapper.headers.get('X-Robots-Tag')).toContain('noindex');expect(wrapper.headers.get('Cache-Control')).toContain('no-store');expect(wrapper.headers.get('Referrer-Policy')).toBe('no-referrer');expect(await wrapper.text()).toContain('검토용 초안');
  const page=await exports.default.fetch(publicUrl(id,record.token,'page'));expect(page.status).toBe(200);expect(page.headers.get('Content-Security-Policy')).toContain('sandbox allow-scripts');expect(page.headers.get('Content-Security-Policy')).not.toContain('allow-same-origin');expect(page.headers.get('Access-Control-Allow-Origin')).toBeNull();const html=await page.text();expect(html).toContain(`/review/${id}/${record.token}/assets/`);
+ expect(html).toContain('href="https://university.example/assets/cv.pdf"');
  const asset=await exports.default.fetch(publicUrl(id,record.token,b.files[1].path),{headers:{Origin:'null'}});expect(asset.status).toBe(200);expect(new TextDecoder().decode(await asset.arrayBuffer())).toBe('hi');
  expect((await exports.default.fetch(publicUrl(id,'0'.repeat(64)))).status).toBe(404);
  const other=crypto.randomUUID();expect((await exports.default.fetch(publicUrl(other,record.token))).status).toBe(404);
