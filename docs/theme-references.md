@@ -4,6 +4,7 @@
 
 | 선택명 | 배경 | 제목 | 링크·선택 버튼 | 장식 선 | 참고 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| 흑백 | `#FFFFFF` | `#222222` | `#222222` | `#444444` | 2026-09-21 사용자 요청으로 추가한 기본형 배색 |
 | 세이지 | `#EEF1EA` | `#1A231D` | `#264A37` | `#BD5F37` | [Dasom Lee](https://dasomlee.com/) |
 | 네이비 | `#FFFFFF` | `#00356B` | `#00356B` | `#00356B` | [Yale 웹 가이드](https://yaleidentity.yale.edu/guidelines/websites) |
 | 딥레드 | `#FFFFFF` | `#8C1515` | `#8C1515` | `#8C1515` | [Stanford 공식 색상](https://identity.stanford.edu/design-elements/color/primary-colors/) |

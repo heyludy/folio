@@ -7,7 +7,8 @@ bilingual detail data and local portrait. The real heoe.info publication is sepa
 ## Design plan
 
 - Basic: preserve the existing one-page design, Source Serif 4 / Source Sans 3,
-  white #ffffff, purple #4e2a84, ink #342f2e, muted #716c6b, rule #d8d6d6.
+  white #ffffff, black titles/links #222222, gray details #444444,
+  muted #626262, rule #d9d9d9. Monochrome is the Classic creation preset.
 - Introduction: white #ffffff, charcoal #333333, muted #585858, blue #057aad,
   pale gray #fbfbfb. Jost name/headings and Libre Franklin body, Pretendard Korean.
   Right-aligned navigation; a full-width name above equal photo and biography

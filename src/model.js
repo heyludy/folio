@@ -5,6 +5,7 @@ import {validAsset} from './assets.js';
 // Keep the existing IDs so saved projects receive the corresponding updated palette.
 export const themes = {
  navy:{name:'네이비',description:'화이트 · 네이비',paper:'#ffffff',wash:'#f9f9f9',line:'#dddddd',ink:'#222222',muted:'#4a4a4a',accent:'#00356b',title:'#00356b',detail:'#00356b',reference:{name:'Yale',url:'https://yaleidentity.yale.edu/guidelines/websites'}},
+ monochrome:{name:'흑백',description:'화이트 · 블랙 · 그레이',paper:'#ffffff',wash:'#f7f7f7',line:'#d9d9d9',ink:'#222222',muted:'#626262',accent:'#222222',title:'#222222',detail:'#444444'},
  charcoal:{name:'차콜',description:'화이트 · 차콜 · 블루 링크',paper:'#ffffff',wash:'#fbfbfb',line:'#d6d6d6',ink:'#333333',muted:'#585858',accent:'#057aad',title:'#48505c',detail:'#48505c',reference:{name:'Michael Greenstone',url:'https://michaelgreenstone.com/'}},
  burgundy:{name:'딥레드',description:'화이트 · 쿨그레이 · 딥레드',paper:'#ffffff',wash:'#eaeaea',line:'#d5d5d4',ink:'#2e2d29',muted:'#53565a',accent:'#8c1515',title:'#8c1515',detail:'#8c1515',reference:{name:'Stanford',url:'https://identity.stanford.edu/design-elements/color/primary-colors/'}},
  plum:{name:'퍼플',description:'화이트 · 퍼플',paper:'#ffffff',wash:'#ffffff',line:'#d8d6d6',ink:'#342f2e',muted:'#716c6b',accent:'#4e2a84',title:'#4e2a84',detail:'#4e2a84',reference:{name:'Northwestern',url:'https://www.northwestern.edu/brand/visual-identity/color-palettes/'}},
@@ -65,6 +66,6 @@ export function reorder(sections,id,beforeId){
 }
 export function themeStyle(site,lang){
  const colors=themes[site.theme]||themes.forest,pair=(fonts[site.font]||fonts.academic)[lang];
- const hero={navy:'#00356b',charcoal:'#30373e',burgundy:'#671a20',plum:'#402367',forest:'#0c382e'};
+ const hero={navy:'#00356b',monochrome:'#222222',charcoal:'#30373e',burgundy:'#671a20',plum:'#402367',forest:'#0c382e'};
  return {...Object.fromEntries(['paper','accent','ink','muted','line','wash','title','detail'].map(k=>['--site-'+k,colors[k]])),...(site.template==='color'?{'--site-hero':hero[site.theme]||hero.forest,'--site-hero-title':site.theme==='forest'?'#ecb499':'#ffffff'}:{}),'--site-heading':`"${pair[0]}", "Noto Serif KR", serif`,'--site-body':`"${pair[1]}", Pretendard, sans-serif`,'--site-ui':`"${pair[2]||'Pretendard'}", Pretendard, sans-serif`};
 }
