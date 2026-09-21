@@ -14,8 +14,8 @@ bilingual detail data and local portrait. The real heoe.info publication is sepa
   Right-aligned navigation; a full-width name above equal photo and biography
   columns. The public page switches between About, Research, Publications,
   Background, Teaching, Books/media and Contact. Long groups still scroll.
-- Color: white #ffffff, pale sage #eef1ea, forest #0c382e, warm title #ecb499,
-  light text #f7f7f2, muted text #dbe6de. Source Serif 4 / Source Sans 3 with
+- Color: ice blue #e7f1f2, deep teal #15616d, light gold name #f3dda6,
+  light text #f7f7f2, muted hero text #e7edef. Source Serif 4 / Source Sans 3 with
   Korean Noto Serif KR / Pretendard. A large left portrait rises across the pale
   header and dark hero; the large name slightly overlaps its right edge. Below,
   section headings sit in a left column with content on the right. Wide section
@@ -31,9 +31,8 @@ bilingual detail data and local portrait. The real heoe.info publication is sepa
 
 ## Review against the brief
 
-The three are structurally distinct. Color intentionally uses the green and warm
-name treatment requested in the reference, without importing its placeholder
-profile or decorative archaeology images. Keep the real Heo portrait and all
+The three are structurally distinct. Color uses the selected deep teal and ice-blue
+palette, with a separately accented light-gold name. Keep the real Heo portrait and all
 verified existing content. Long biography goes into a readable About section in
 Color, so the hero remains composed without cutting any information. On mobile,
 photo/title/biography stack; no overlapping text. All fields remain directly

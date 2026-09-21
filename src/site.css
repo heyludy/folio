@@ -430,7 +430,7 @@
 .faculty-site[data-template=color] .site-color-hero>.site-name{grid-column:2;grid-row:1;z-index:1;margin:112px 0 26px -30px;font-size:clamp(44px,6.8cqw,74px);line-height:1.04;letter-spacing:-2px;color:var(--site-hero-title);width:calc(100% + 30px);max-width:none;text-wrap:balance}
 .site-color-affiliation{grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:7px;color:#f7f7f2;font:14px/1.7 var(--site-ui)}
 .site-color-affiliation .site-color-college{font-weight:600;font-size:17px}
-.site-color-affiliation .site-color-position{order:-1;font-size:13px;color:#dbe6de}
+.site-color-affiliation .site-color-position{order:-1;font-size:13px;color:var(--site-hero-muted,#dbe6de)}
 .faculty-site[data-template=color] .site-color-hero>.site-profile-links{grid-column:2;grid-row:3;margin-top:23px;margin-bottom:40px;align-self:start}
 .site-color-hero .site-profile-links a{color:#f7f7f2;border-color:#ffffff60;min-height:42px}
 .site-color-hero .site-profile-links a:hover{border-color:#ffffff}
@@ -449,7 +449,7 @@
 .faculty-site[data-template=color] .site-section[data-kind=contact]{margin:0 calc(-1 * var(--site-gutter));padding:46px var(--site-gutter);border-radius:0;background:var(--site-hero);color:#f7f7f2}
 .faculty-site[data-template=color] .site-section[data-kind=contact] :is(.site-heading,.site-copy,.site-email,a){color:#f7f7f2}
 .faculty-site[data-template=color] .site-section[data-kind=contact] .site-email{margin:0;font-size:22px}
-.faculty-site[data-template=color] .site-section[data-kind=contact] .site-copy{color:#dbe6de}
+.faculty-site[data-template=color] .site-section[data-kind=contact] .site-copy{color:var(--site-hero-muted,#dbe6de)}
 .faculty-site[data-template=color] .site-rule{height:1px}
 .site-color-profile.no-photo .site-color-hero{display:flex;flex-direction:column;gap:20px;padding:42px 0}
 .site-color-profile.no-photo .site-color-hero::before{top:0}
