@@ -22,7 +22,6 @@ export function TemplatePicker({value,onChange,firstChoice,onPreviewChange}){
     {ready?<SiteThumbnail site={templateSamples[template.id]}/>:<div className="template-planned-preview" aria-hidden="true"><div/><div/><div/></div>}
     <div className="template-option-title"><strong>{template.name}</strong><span className="template-status">{ready?(value===template.id?'선택됨':'선택 가능'):'추가 예정'}</span></div>
     <p id={`template-description-${template.id}`}>{template.description}</p></label>
-    {template.reference&&<a className="template-reference" href={template.reference.url} target="_blank" rel="noopener noreferrer">참고 · {template.reference.name} ↗</a>}
     {ready&&<button type="button" className="template-preview-button" aria-label={`${template.name} 예시 크게 보기`} onClick={()=>setPreview(template.id)}><Eye size={14}/>예시 크게 보기</button>}
    </div>;
   })}
