@@ -5,7 +5,7 @@ export const colorOptions=[
  {id:'wine',name:'와인 · 펄그레이',description:'펄그레이 바탕 · 깊은 와인색',colors:{paper:'#f0ebed',wash:'#e7dfe3',line:'#d8cdd2',ink:'#30282b',muted:'#65585d',accent:'#651c32',title:'#651c32',detail:'#946776',hero:'#651c32','hero-title':'#f4f4f4'}}
 ];
 
-export function buildColorOptions(){
+export function buildColorOptions(previewUrl='color.html'){
  const initial=colorOptions.findIndex(option=>option.selected);
  const buttons=colorOptions.map((option,i)=>`<button type="button" class="palette" data-palette="${option.id}" aria-pressed="${i===initial}" style="--band:${option.colors.hero};--name:${option.colors['hero-title']};--paper:${option.colors.paper}"><span class="palette-picture" aria-hidden="true"><span>Eunnyeong Heo</span></span><span class="palette-label"><span class="palette-number">0${i+1}</span><strong>${option.name}</strong>${option.selected?'<span class="recommended">선택한 조합</span>':''}</span><span class="palette-description">${option.description}</span></button>`).join('');
  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>컬러형 · 색상 비교</title><link rel="icon" href="../favicon.svg" type="image/svg+xml"><style>
@@ -16,6 +16,6 @@ const palettes=${JSON.stringify(colorOptions)},frame=document.getElementById('pr
 function applyPalette(){const doc=frame.contentDocument;if(!doc?.querySelector('.faculty-site'))return;doc.body.style.setProperty('--public-paper',selected.colors.paper);doc.querySelectorAll('.faculty-site').forEach(site=>{for(const [key,value] of Object.entries(selected.colors))site.style.setProperty('--site-'+key,value)});if(!doc.getElementById('palette-review-style')){const style=doc.createElement('style');style.id='palette-review-style';style.textContent='.site-color-affiliation .site-color-position,.faculty-site[data-template=color] .site-section[data-kind=contact] .site-copy{color:#e7edef}';doc.head.append(style)}}
 document.querySelectorAll('[data-palette]').forEach(button=>button.addEventListener('click',()=>{selected=palettes.find(p=>p.id===button.dataset.palette);document.querySelectorAll('[data-palette]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));document.getElementById('preview-label').textContent='0'+(palettes.indexOf(selected)+1)+' · '+selected.name;applyPalette()}));
 document.querySelectorAll('[data-device]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('.preview-frame').dataset.mobile=String(button.dataset.device==='mobile');document.querySelectorAll('[data-device]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)))}));
-frame.addEventListener('load',applyPalette);frame.src='color.html';
+frame.addEventListener('load',applyPalette);frame.src=${JSON.stringify(previewUrl)};
 </script></body></html>`;
 }
