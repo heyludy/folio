@@ -4,7 +4,7 @@ import {templates,resolveTemplate} from './templates';
 import {templateExample} from './templateExample';
 import {SitePreview} from './SitePreview';
 import {SiteThumbnail} from './SiteThumbnail';
-import portrait from './sample-portrait.jpg';
+import portrait from './sample-portrait-cutout.png';
 
 const templateSamples=Object.fromEntries(templates.filter(template=>template.status==='ready').map(template=>[template.id,templateExample(template.id,portrait)]));
 

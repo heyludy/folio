@@ -364,6 +364,15 @@
  .site-section:is([data-kind=publications],[data-kind=allworks]) .site-resource-link{min-height:36px;padding-inline:12px}
 }
 
+/* A larger default portrait still respects each project's manual sizing. */
+.faculty-site[data-template=classic] .site-photo{width:min(var(--portrait-width,250px),42cqw);background:transparent}
+@container site-viewport (max-width:900px){
+ .faculty-site[data-template=classic] .site-photo{width:min(var(--portrait-width,200px),42cqw)}
+}
+@container site-viewport (max-width:600px){
+ .faculty-site[data-template=classic] .site-photo{width:min(var(--portrait-width,128px),32cqw)}
+}
+
 /* Portrait: the name spans the page, then a generous photo and biography. */
 .faculty-site[data-template=portrait]{border-top:0;--site-gutter:52px;padding-top:10px}
 .faculty-site[data-template=portrait] .site-nav{border-bottom:0;padding-block:25px;gap:16px}
@@ -412,15 +421,15 @@
 .faculty-site[data-template=color] .site-navlinks{gap:12px 20px}
 .faculty-site[data-template=color] .site-navlinks a{font-size:12px}
 .faculty-site[data-template=color] .site-section[data-kind=profile]{margin-inline:0;padding:35px 0 0}
-.site-color-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(180px,.92fr) minmax(0,1.15fr);grid-template-rows:auto auto 1fr;gap:0 42px;padding-bottom:50px;align-items:start}
+.site-color-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(180px,.92fr) minmax(0,1.15fr);grid-template-rows:auto auto 1fr;gap:0 42px;align-items:start}
 .site-color-hero::before{content:'';position:absolute;z-index:-1;inset:74px calc(-1 * var(--site-gutter)) 0;background:var(--site-hero)}
-.faculty-site[data-template=color] .site-color-hero>.site-photo{grid-column:1;grid-row:1/4;width:min(var(--portrait-width,400px),100%);justify-self:start;border-radius:0;background:#fff;margin:0}
+.faculty-site[data-template=color] .site-color-hero>.site-photo{grid-column:1;grid-row:1/4;width:min(var(--portrait-width,400px),100%);justify-self:start;align-self:end;border-radius:0;background:transparent;margin:0}
 .faculty-site[data-template=color] .site-color-hero>.site-photo img{aspect-ratio:var(--portrait-ratio,4/5);object-fit:cover;object-position:50% 9%;border-radius:0}
 .faculty-site[data-template=color] .site-color-hero>.site-name{grid-column:2;grid-row:1;z-index:1;margin:112px 0 26px -30px;font-size:clamp(44px,6.8cqw,74px);line-height:1.04;letter-spacing:-2px;color:var(--site-hero-title);width:calc(100% + 30px);max-width:none;text-wrap:balance}
 .site-color-affiliation{grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:7px;color:#f7f7f2;font:14px/1.7 var(--site-ui)}
 .site-color-affiliation .site-color-college{font-weight:600;font-size:17px}
 .site-color-affiliation .site-color-position{order:-1;font-size:13px;color:#dbe6de}
-.faculty-site[data-template=color] .site-color-hero>.site-profile-links{grid-column:2;grid-row:3;margin-top:23px;align-self:start}
+.faculty-site[data-template=color] .site-color-hero>.site-profile-links{grid-column:2;grid-row:3;margin-top:23px;margin-bottom:40px;align-self:start}
 .site-color-hero .site-profile-links a{color:#f7f7f2;border-color:#ffffff60;min-height:42px}
 .site-color-hero .site-profile-links a:hover{border-color:#ffffff}
 .site-color-hero .site-name [contenteditable]:hover,.site-color-affiliation [contenteditable]:hover{background:#ffffff15}
@@ -462,7 +471,7 @@
  .faculty-site[data-template=color] .site-color-hero>.site-name{font-size:clamp(36px,10cqw,48px);width:100%;max-width:100%;margin:0 0 23px;letter-spacing:-1px}
  .site-color-affiliation{font-size:13px;gap:5px}
  .site-color-affiliation .site-color-college{font-size:16px}
- .faculty-site[data-template=color] .site-color-hero>.site-profile-links{margin-top:18px}
+ .faculty-site[data-template=color] .site-color-hero>.site-profile-links{margin-top:18px;margin-bottom:0}
  .site-color-about,.faculty-site[data-template=color] .site-section:not([data-kind=profile]){display:block;padding-block:32px}
  .faculty-site[data-template=color] .site-heading{font-size:28px;margin-bottom:23px}
  .faculty-site[data-template=color] .site-color-about>.site-intro{font-size:16px}

@@ -6,7 +6,7 @@ import {templates} from '../src/templates.js';
 
 await build({configFile:false,logLevel:'error',build:{ssr:'src/export.jsx',outDir:'.example-build'}});
 const {exportSite}=await import('../.example-build/export.js');
-const photo='data:image/jpeg;base64,'+readFileSync(new URL('../src/sample-portrait.jpg',import.meta.url)).toString('base64');
+const photo='data:image/png;base64,'+readFileSync(new URL('../src/sample-portrait-cutout.png',import.meta.url)).toString('base64');
 const target=resolve(process.argv[2]||'dist/examples');mkdirSync(target,{recursive:true});
 const ready=templates.filter(t=>t.status==='ready');
 for(const template of ready)writeFileSync(resolve(target,template.id+'.html'),exportSite(templateExample(template.id,photo)));
