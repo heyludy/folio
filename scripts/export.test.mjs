@@ -68,3 +68,19 @@ test('navigation follows edited section titles in each language and retains the 
  assert.match(html,/<a href="#en-section-profile">About<\/a>/);
  research.text.en.title='';assert.match(exportSite(site),/<a href="#en-section-research">Research<\/a>/);
 });
+
+test('profile shortcuts only expose visible, valid contact and CV content in their own language',()=>{
+ const site=example(),cv=section('curriculum','CV','CV');cv.id='resume';cv.text.en={url:'https://example.edu/resume.pdf'};cv.text.ko={url:''};site.sections.push(cv);
+ const links=html=>[...html.matchAll(/<div class="site-profile-links"[^>]*>([\s\S]*?)<\/div>/g)].map(m=>m[1]);
+ let result=links(exportSite(site));assert.equal(result.length,2);assert.match(result[0],/mailto:/);assert.match(result[0],/#en-section-resume/);assert.doesNotMatch(result[1],/#ko-section-resume/);
+ cv.hidden=true;site.sections.find(s=>s.kind==='contact').hidden=true;assert.equal(links(exportSite(site)).length,0);
+ cv.hidden=false;cv.text.en.url='javascript:alert(1)';assert.equal(links(exportSite(site)).length,0);
+});
+
+test('thumbnail uses the selected template and public content without scripts, hidden sections or PDFs',async()=>{
+ const {exportThumbnail}=await import('../.test-build/export.js');
+ const site=example();site.template='sidebar';site.sections[1].hidden=true;site.sections[1].text.en.topic1='HIDDEN_RESEARCH_CANARY';
+ site.sections[2].attachments={en:{pdf1:{type:'pdf',data:'data:application/pdf;base64,JVBERi0xLjQ=',name:'SECRET.pdf',updated:'2026-01-01'}}};
+ const before=structuredClone(site),html=exportThumbnail(site);
+ assert.match(html,/data-template="sidebar"/);assert.match(html,/Eunnyeong Heo/);assert.doesNotMatch(html,/<script|data:application\/pdf|HIDDEN_RESEARCH_CANARY|contenteditable=|data-language-page="ko"/);assert.deepEqual(site,before);
+});

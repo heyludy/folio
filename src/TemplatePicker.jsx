@@ -3,6 +3,9 @@ import {ArrowLeft,Eye} from 'lucide-react';
 import {templates,resolveTemplate} from './templates';
 import {templateExample} from './templateExample';
 import {SitePreview} from './SitePreview';
+import {SiteThumbnail} from './SiteThumbnail';
+
+const templateSamples=Object.fromEntries(templates.map(template=>[template.id,templateExample(template.id)]));
 
 export function TemplatePicker({value,onChange,firstChoice,onPreviewChange}){
  const [preview,setPreview]=useState(null),[width,setWidth]=useState('1440');
@@ -15,7 +18,7 @@ export function TemplatePicker({value,onChange,firstChoice,onPreviewChange}){
    const ready=template.status==='ready';
    return <div className="template-option" key={template.id} data-selected={ready&&value===template.id} data-planned={!ready}>
     <label className="template-option-choice"><input ref={ready&&value===template.id?firstChoice:undefined} type="radio" name="project-template" value={template.id} checked={ready&&value===template.id} disabled={!ready} onChange={()=>onChange(template.id)} aria-label={template.name} aria-describedby={`template-description-${template.id}`}/>
-    <div className="template-miniature" data-template={template.id} aria-hidden="true"><div className="template-mini-nav"><i/><i/><i/></div><div className="template-mini-profile"><div><strong>Professor Name</strong><span/><span/></div><div className="template-mini-photo"/></div><div className="template-mini-columns"><div><i/><span/><span/></div><div><i/><span/><span/></div></div></div>
+    <SiteThumbnail site={templateSamples[template.id]}/>
     <div className="template-option-title"><strong>{template.name}</strong><span className="template-status">{ready?(value===template.id?'선택됨':'선택 가능'):'추가 예정'}</span></div>
     <p id={`template-description-${template.id}`}>{template.description}</p></label>
     {ready&&<button type="button" className="template-preview-button" aria-label={`${template.name} 예시 크게 보기`} onClick={()=>setPreview(template.id)}><Eye size={14}/>예시 크게 보기</button>}

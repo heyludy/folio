@@ -22,3 +22,10 @@ export function downloadSite(site){
  const url=URL.createObjectURL(blob),link=document.createElement('a');
  link.href=url;link.download='professor-site.html';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+
+export function exportThumbnail(site){
+ // Thumbnails never run scripts or include large, nonvisual PDF payloads.
+ const compact={...site,sections:site.sections.map(section=>({...section,attachments:Object.fromEntries(Object.entries(section.attachments||{}).map(([lang,assets])=>[lang,Object.fromEntries(Object.entries(assets).filter(([,asset])=>asset.type==='image'))]))}))};
+ const content=renderToStaticMarkup(<div className="public-shell"><SitePage site={compact} thumbnail/></div>);
+ return `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${siteCss}\nhtml,body{overflow:clip;height:100%}body{position:fixed;inset:0}*{animation:none!important;transition:none!important}</style></head><body class="public-body" style="--public-paper:${(themes[site.theme]||themes.forest).paper}">${content}</body></html>`;
+}

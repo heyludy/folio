@@ -3,7 +3,8 @@ import {filled,visibleSections,themeStyle,siteLanguages,navigationLabel} from '.
 import {footerInfo} from './basics';
 import {ElementEditor,ElementFrame} from './ElementFrame';
 import {entryTypes,visibleEntries,entryGroup} from './entries';
-import {linkedText,mapHref,safeLink} from './links';
+import {linkedText,mapHref,safeLink,emailHref} from './links';
+import {assetAt} from './assets';
 import {resolveTemplate} from './templates';
 import {Attachment} from './Attachments';
 
@@ -36,7 +37,7 @@ function EntryList({section:s,lang,editing,onEdit,onEntry,onAsset}){
  const hints={year:type.yearLabel||['Year / period','연도·기간'],topic:type.topic||['Title','제목'],text:type.text||['Organization and details','기관·상세 내용']};
  return <>
   {filled(s.text[lang].body)&&<Field section={s} lang={lang} name="body" className="site-copy site-list-intro" editing={editing} onEdit={onEdit}/>}
-  <div className={research?'site-research':cards?'site-cards':s.kind==='awards'?'site-awards':'site-publications'} data-count={rows.length}>
+  <div className={research?'site-research':cards?'site-cards':s.kind==='awards'?'site-awards':'site-publications'} data-count={rows.length} data-periods={rows.some(id=>(s.text[lang]['year'+id]||'').trim().length>6)}>
    {rows.map((id,index)=>{
     const label=`${s.name} 항목 ${index+1}`;
     const f=(part,as,className)=><Field section={s} lang={lang} name={part+id} as={as} className={className} editing={editing} onEdit={onEdit} label={`${s.name} ${index+1} ${hints[part][1]}`} hint={hints[part][lang==='en'?0:1]}/>;
@@ -57,11 +58,11 @@ function EntryList({section:s,lang,editing,onEdit,onEntry,onAsset}){
   {editing&&<button type="button" className="entry-add" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();onEntry?.(s.id,'add')}}><span aria-hidden="true">+</span>{type.label} 추가</button>}
  </>;
 }
-function Content({section:s,lang,editing,onEdit,onEntry,onAsset,photo,onPhoto,photoLayout}){
+function Content({section:s,lang,editing,onEdit,onEntry,onAsset,photo,onPhoto,photoLayout,profileLinks}){
  const f=(name,as='p',className='site-copy')=><Field key={name} section={s} lang={lang} name={name} as={as} className={className} editing={editing} onEdit={onEdit}/>;
  if(s.kind==='profile'){
   const keys=['college','department','position'].filter(k=>editing||filled(s.text[lang][k]));
-  return <div className={`site-profile ${photo||editing?'':'no-photo'}`}><div className="site-profiletext">{f('title','h1','site-name')}{keys.length>0&&<div className="site-affiliation">{keys.map((k,i)=><React.Fragment key={k}>{i>0&&<span aria-hidden="true" className="site-dot">·</span>}{f(k,'span','')}</React.Fragment>)}</div>}{f('body','p','site-copy site-intro')}</div>{(photo||editing)&&<ElementFrame sectionId={s.id} elementKey="photo" kind="image" label="프로필 사진" className="site-photo" layout={photoLayout}>{photo?<img data-image-surface src={photo} alt={lang==='en'?'Professor portrait':'교수님 프로필 사진'} width="400" height="600" referrerPolicy="no-referrer"/>:<div data-image-surface className="site-photoempty">{lang==='en'?'Portrait':'프로필 사진'}</div>}{editing&&<div className="site-phototools"><button type="button" onClick={()=>onPhoto('upload')}>{photo?'사진 변경':'사진 추가'}</button>{photo&&<button type="button" onClick={()=>onPhoto('remove')}>삭제</button>}</div>}</ElementFrame>}</div>;
+  return <div className={`site-profile ${photo||editing?'':'no-photo'}`}><div className="site-profiletext">{f('title','h1','site-name')}{keys.length>0&&<div className="site-affiliation">{keys.map((k,i)=><React.Fragment key={k}>{i>0&&<span aria-hidden="true" className="site-dot">·</span>}{f(k,'span','')}</React.Fragment>)}</div>}{f('body','p','site-copy site-intro')}{profileLinks.length>0&&<div className="site-profile-links" aria-label={lang==='en'?'Profile links':'프로필 바로가기'}>{profileLinks.map(link=><a key={link.label} href={link.href} onClick={editing?event=>event.preventDefault():undefined}>{link.label}<span aria-hidden="true">{link.href.startsWith('#')?'↓':'↗'}</span></a>)}</div>}</div>{(photo||editing)&&<ElementFrame sectionId={s.id} elementKey="photo" kind="image" label="프로필 사진" className="site-photo" layout={photoLayout}>{photo?<img data-image-surface src={photo} alt={lang==='en'?'Professor portrait':'교수님 프로필 사진'} width="400" height="600" referrerPolicy="no-referrer"/>:<div data-image-surface className="site-photoempty">{lang==='en'?'Portrait':'프로필 사진'}</div>}{editing&&<div className="site-phototools"><button type="button" onClick={()=>onPhoto('upload')}>{photo?'사진 변경':'사진 추가'}</button>{photo&&<button type="button" onClick={()=>onPhoto('remove')}>삭제</button>}</div>}</ElementFrame>}</div>;
  }
  if(entryTypes[s.kind])return <>{f('title','h2','site-heading')}<EntryList section={s} lang={lang} editing={editing} onEdit={onEdit} onEntry={onEntry} onAsset={onAsset}/></>;
  if(s.kind==='curriculum')return <>{f('title','h2','site-heading')}{f('body')}<Attachment section={s} lang={lang} name="pdf" type="pdf" label="CV PDF" cv editing={editing} onAsset={onAsset}/>{(editing||s.text[lang].url)&&<ExtraFields section={s} lang={lang} id="" editing={editing} onEdit={onEdit} fields={[{key:'url',en:'Official CV (PDF) ↗',ko:'공식 CV 보기 (PDF) ↗',link:true}]}/>}</>;
@@ -70,9 +71,11 @@ function Content({section:s,lang,editing,onEdit,onEntry,onAsset,photo,onPhoto,ph
  return <>{f('title','h2','site-heading')}{f('body')}</>;
 }
 
-export function SitePage({site,lang='en',editing=false,selected,selectedElement,onSelectElement,onElementResize,onEdit,onEntry,onSelect,onLanguage,onAddLanguage,onRemoveLanguage,onAdd,onMove,onHide,onDelete,onMenu,onPhoto,onAsset,onBasics,dragProps=()=>({})}){
+export function SitePage({site,lang='en',editing=false,thumbnail=false,selected,selectedElement,onSelectElement,onElementResize,onEdit,onEntry,onSelect,onLanguage,onAddLanguage,onRemoveLanguage,onAdd,onMove,onHide,onDelete,onMenu,onPhoto,onAsset,onBasics,dragProps=()=>({})}){
  const [menuOpen,setMenuOpen]=useState(false),menuButton=useRef(null);
  const languages=siteLanguages(site),available=languages.includes(lang),sections=available?visibleSections(site,lang,editing):[];
+ const publicSections=visibleSections(site,lang),contact=publicSections.find(s=>s.kind==='contact'&&emailHref(s.text[lang].email)),cv=publicSections.find(s=>s.kind==='curriculum'&&(assetAt(s,lang,'pdf')||safeLink(s.text[lang].url)));
+ const profileLinks=[...(contact?[{label:lang==='en'?'Email':'이메일',href:emailHref(contact.text[lang].email)}]:[]),...(cv?[{label:'CV',href:`#${lang}-section-${cv.id}`}]:[])];
  const footer=footerInfo(site,lang),affiliation=[footer.department,footer.college].filter(filled),showFooter=filled(footer.name)||affiliation.length>0;
  return <ElementEditor.Provider value={{editing,selected:selectedElement?.section===selected?selectedElement:null,onSelect:onSelectElement,onResize:onElementResize}}><div className="faculty-site" lang={lang} style={themeStyle(site,lang)} data-template={resolveTemplate(site.template).id} data-editing={editing}>
   {site.example&&<aside className="site-example-note"><span>{lang==='en'?'Folio example · Unofficial demo':'Folio 예시 프로젝트 · 공식 홈페이지가 아닙니다'}</span>{safeLink(site.example.official)&&<a href={safeLink(site.example.official)} target="_blank" rel="noopener noreferrer">{lang==='en'?'Official website ↗':'공식 홈페이지 ↗'}</a>}</aside>}
@@ -83,12 +86,12 @@ export function SitePage({site,lang='en',editing=false,selected,selectedElement,
    {(editing||languages.length>1)&&<div className="site-languages" aria-label="홈페이지 언어">{[['en','EN','English'],['ko','KOR','한국어']].map(([code,text,label])=><div className="site-language-item" data-uncreated={!languages.includes(code)} key={code}><button type="button" data-language={code} aria-label={label} aria-pressed={code===lang} onClick={()=>{setMenuOpen(false);onLanguage?.(code)}}>{text}</button>{editing&&code==='ko'&&languages.includes('ko')&&<button type="button" className="site-language-remove" aria-label="한글 페이지 삭제" title="한글 페이지 삭제" onClick={()=>onRemoveLanguage?.('ko')}>×</button>}</div>)}</div>}
   </nav>
   {editing&&!available&&<div className="site-language-empty"><button type="button" className="site-language-add" aria-label="한글 페이지 추가" onClick={()=>onAddLanguage?.('ko')}><span aria-hidden="true">+</span></button><h2>한글 페이지</h2><p>+ 버튼을 눌러 한글 버전을 추가하세요.</p></div>}
-  <div className="site-sections">{sections.map((s,index)=><React.Fragment key={s.id}><section id={`${lang}-section-${s.id}`} className="site-section" data-section={s.id} data-kind={s.kind} data-active={editing&&s.id===selected&&selectedElement?.section!==s.id} data-reveal={!editing?'':undefined} {...(editing?dragProps(s):{})} onFocus={e=>{if(editing&&!e.target.closest('[data-element-edit]'))onSelect(s.id)}} onClick={e=>{if(editing&&!e.target.closest('[data-element-edit]'))onSelect(s.id)}}>
+  <div className="site-sections">{(thumbnail?sections.slice(0,3):sections).map((s,index)=><React.Fragment key={s.id}><section id={`${lang}-section-${s.id}`} className="site-section" data-section={s.id} data-kind={s.kind} data-active={editing&&s.id===selected&&selectedElement?.section!==s.id} data-reveal={!editing?'':undefined} {...(editing?dragProps(s):{})} onFocus={e=>{if(editing&&!e.target.closest('[data-element-edit]'))onSelect(s.id)}} onClick={e=>{if(editing&&!e.target.closest('[data-element-edit]'))onSelect(s.id)}}>
     {editing&&<div className="site-tools"><label><input type="checkbox" checked={s.nav} onChange={e=>onMenu(s.id,e.target.checked)}/>상단 메뉴에 표시</label><button type="button" aria-label={`${s.name} 위로 이동`} disabled={index===0} onClick={()=>onMove(s.id,-1)}>↑</button><button type="button" aria-label={`${s.name} 아래로 이동`} disabled={index===sections.length-1} onClick={()=>onMove(s.id,1)}>↓</button><button type="button" onClick={()=>onHide(s.id)}>페이지에서 숨기기</button><button type="button" aria-label={`${s.name} 삭제`} onClick={()=>onDelete?.(s.id)}>삭제</button></div>}
     {editing&&<button className="site-grip" type="button" aria-label={`${s.name} 끌어서 이동`} data-grip={s.id}>⠿</button>}
-    <Content section={s} lang={lang} editing={editing} onEdit={onEdit} onEntry={onEntry} onAsset={onAsset} photo={site.photo} onPhoto={onPhoto} photoLayout={site.photoLayout}/>
+    <Content section={s} lang={lang} editing={editing} onEdit={onEdit} onEntry={onEntry} onAsset={onAsset} photo={site.photo} onPhoto={onPhoto} photoLayout={site.photoLayout} profileLinks={profileLinks}/>
    </section>{index<sections.length-1&&(editing?<div className="site-between"><button type="button" onClick={()=>onAdd(s.id)} aria-label={`${s.name} 다음에 섹션 추가`}>+</button></div>:<div className="site-rule"/>)}</React.Fragment>)}{editing&&available&&<div className="site-add-section" data-empty={!sections.length}><button type="button" onClick={()=>onAdd(sections.at(-1)?.id||'')} aria-label={!sections.length?'첫 섹션 추가':'맨 아래에 섹션 추가'}><span aria-hidden="true">+</span>섹션 추가</button></div>}</div>
-  {available&&(showFooter||editing)&&<footer className="site-footer" aria-label={lang==='en'?'Website footer':'홈페이지 푸터'}>
+  {!thumbnail&&available&&(showFooter||editing)&&<footer className="site-footer" aria-label={lang==='en'?'Website footer':'홈페이지 푸터'}>
    {filled(footer.name)&&<p className="site-copyright">{site.example?(lang==='en'?'Folio example · Public-source biography':'Folio 예시 · 공개 자료로 구성'):`© ${new Date().getFullYear()} ${footer.name}. All rights reserved.`}</p>}
    {affiliation.length>0&&<p className="site-footer-affiliation">{affiliation.map((part,index)=><React.Fragment key={index}>{index>0&&<span aria-hidden="true"> · </span>}<span>{part}</span></React.Fragment>)}</p>}
    {site.photo&&site.photoCredit?.data===site.photo&&sections.some(s=>s.kind==='profile')&&<p className="site-photo-credit">Photo: <a href={safeLink(site.photoCredit.source)} target="_blank" rel="noopener noreferrer">{site.photoCredit.author}</a> · <a href={safeLink(site.photoCredit.licenseUrl)} target="_blank" rel="noopener noreferrer">{site.photoCredit.license}</a> · {site.photoCredit.note}</p>}
