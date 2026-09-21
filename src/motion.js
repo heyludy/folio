@@ -18,22 +18,68 @@ export function revealSections(root=document,scrollRoot=null){
 
 export function publicRuntime(reveal,initialLanguage='en'){
  const pages=[...document.querySelectorAll('[data-language-page]')];
- let cleanup=()=>{},activeLanguage,frame;
+ let cleanup=()=>{},activeLanguage,frame,navFrame;
+ const navigation=pages.map(page=>{
+  const nav=page.querySelector?.('.site-nav');
+  const items=[...(nav?.querySelectorAll?.('.site-navlinks a')||[])].map(link=>({link,target:document.getElementById((link.getAttribute('href')||'').slice(1))})).filter(item=>item.target);
+  const paged=page.querySelector?.('.faculty-site')?.dataset.template==='portrait'&&items.length>0;
+  const sections=paged?[...page.querySelectorAll('.site-section')]:[],groups=new Map();
+  // Sections omitted from the menu stay with the preceding menu item.
+  let group=items[0];
+  for(const section of sections){group=items.find(item=>item.target===section)||group;groups.set(section,group)}
+  return {page,nav,items,paged,sections,groups,currentGroup:items[0]};
+ });
+ const markSection=(entry,current)=>{
+  if(entry.marked===current)return;
+  entry.marked=current;
+  entry.items.forEach(item=>{if(item===current)item.link.setAttribute('aria-current','location');else item.link.removeAttribute('aria-current')});
+  const label=entry.nav?.querySelector('.site-menu-current');
+  if(label&&current)label.textContent=current.link.textContent;
+ };
+ const showGroup=(entry,target)=>{
+  if(!entry?.paged)return false;
+  const current=entry.groups.get(target?.closest('.site-section'))||entry.items[0],changed=current!==entry.currentGroup;
+  entry.currentGroup=current;
+  entry.sections.forEach((section,index)=>{
+   section.hidden=entry.groups.get(section)!==current;
+   const rule=section.nextElementSibling;
+   if(rule?.classList.contains('site-rule'))rule.hidden=section.hidden||entry.groups.get(entry.sections[index+1])!==current;
+  });
+  markSection(entry,current);
+  return changed;
+ };
+ const updateNavigation=()=>{
+  navFrame=null;
+  const entry=navigation.find(item=>!item.page.hidden);
+  if(!entry?.items.length)return;
+  if(entry.paged){markSection(entry,entry.currentGroup);return;}
+  if(entry.nav.querySelector('.site-navlinks')?.dataset.open==='true')return;
+  const line=(entry.nav?.getBoundingClientRect().bottom||0)+48;
+  let current=entry.items[0];
+  for(const item of entry.items)if(item.target.getBoundingClientRect().top<=line)current=item;
+  // A short final section may never reach the header before the page ends.
+  if(window.scrollY>0&&window.scrollY+window.innerHeight>=document.documentElement.scrollHeight-2)current=entry.items.at(-1);
+  markSection(entry,current);
+ };
+ const scheduleNavigation=()=>{if(navFrame==null)navFrame=requestAnimationFrame(updateNavigation)};
+ window.addEventListener('scroll',scheduleNavigation,{passive:true});
+ window.addEventListener('resize',scheduleNavigation);
+ window.addEventListener('load',scheduleNavigation);
  const measureHeader=page=>{
-  const nav=page?.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"]) > .site-nav');
+  const nav=page?.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"],[data-template="color"]) > .site-nav');
   if(!nav)return;
   const height=Math.ceil(nav.getBoundingClientRect().height);
   if(height)nav.parentElement.style.setProperty('--site-nav-height',`${height}px`);
  };
  if('ResizeObserver' in window){
-  const observer=new ResizeObserver(()=>pages.forEach(measureHeader));
-  pages.forEach(page=>{const nav=page.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"]) > .site-nav');if(nav)observer.observe(nav)});
+  const observer=new ResizeObserver(()=>{pages.forEach(measureHeader);scheduleNavigation()});
+  pages.forEach(page=>{const nav=page.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"],[data-template="color"]) > .site-nav');if(nav)observer.observe(nav)});
  }
  const activate=lang=>{
   if(!pages.some(p=>p.dataset.languagePage===lang))return;
   cleanup();pages.forEach(p=>p.hidden=p.dataset.languagePage!==lang);
   document.documentElement.lang=lang;activeLanguage=lang;
-  const active=pages.find(p=>!p.hidden);cleanup=reveal(active);
+  const active=pages.find(p=>!p.hidden);showGroup(navigation.find(entry=>entry.page===active));cleanup=reveal(active);scheduleNavigation();
  };
  const followAddress=(initial=false,address=window.location.hash)=>{
   let hash;try{hash=decodeURIComponent(address.slice(1))}catch{hash='';}
@@ -41,16 +87,19 @@ export function publicRuntime(reveal,initialLanguage='en'){
   const language=page?.dataset.languagePage||(pages.some(p=>p.dataset.languagePage===hash)?hash:initialLanguage);
   if(language!==activeLanguage)activate(language);
   const active=pages.find(p=>!p.hidden);
+  const entry=navigation.find(entry=>entry.page===active);
+  if(showGroup(entry,target)){cleanup();cleanup=reveal(active)}
   cancelAnimationFrame(frame);
   if(language)frame=requestAnimationFrame(()=>{
    // Measure after a mobile menu closes or a language becomes visible.
    measureHeader(active);
-   const behavior=initial||window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+   const behavior=initial||entry?.paged||window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
    if(page){
     // Anchor destinations must settle before measuring their scroll position.
     target.classList.remove('will-reveal');target.classList.add('is-revealed');
     target.scrollIntoView({block:'start',behavior});
    }else window.scrollTo({top:0,behavior});
+   scheduleNavigation();
   });
  };
  const closeMenu=nav=>{

@@ -83,3 +83,61 @@ test('Korean editor previews open Korean directly and unsupported languages fall
  assert.match(html,/<html lang="ko">/);assert.match(html,/data-language-page="en" hidden/);assert.doesNotMatch(html,/data-language-page="ko" hidden/);
  site.languages=['en'];assert.match(exportSite(site,{initialLanguage:'ko'}),/<html lang="en">/);
 });
+
+function readerEnvironment(template='classic',hash=''){
+ const frames=new Map(),events={},clicks={},targets=new Map();let frameId=0;
+ const win={scrollY:0,innerHeight:700,location:{hash},history:{pushState:(_s,_t,value)=>win.location.hash=value},matchMedia:()=>({matches:true}),addEventListener:(name,fn)=>events[name]=fn,scrollTo:({top})=>{win.scrollY=top}};
+ const pages=['en','ko'].map(lang=>{
+  const page={hidden:lang!=='en',dataset:{languagePage:lang}};
+  const sections=['profile','research','projects','publications','contact'].map((kind,index)=>{
+   const section={id:`${lang}-section-${kind}`,hidden:false,offset:index*1000,classList:{add(){},remove(){}},getBoundingClientRect:()=>({top:section.offset-win.scrollY}),closest:selector=>selector==='.site-section'?section:page,scrollIntoView:()=>{win.scrollY=section.offset-96}};
+   section.nextElementSibling={hidden:false,classList:{contains:()=>true}};targets.set(section.id,section);return section;
+  });
+  const links=sections.filter(s=>!s.id.endsWith('projects')).map(section=>({textContent:section.id,attributes:{href:'#'+section.id},getAttribute(name){return this.attributes[name]},setAttribute(name,value){this.attributes[name]=value},removeAttribute(name){delete this.attributes[name]}}));
+  const menu={dataset:{open:'false'}},label={textContent:'Menu'};
+  const nav={parentElement:{style:{setProperty(){}}},getBoundingClientRect:()=>({bottom:menu.dataset.open==='true'?450:80,height:80}),querySelectorAll:()=>links,querySelector:selector=>selector==='.site-menu-current'?label:selector==='.site-navlinks'?menu:null};
+  links.forEach(link=>link.closest=()=>nav);
+  Object.assign(page,{sections,links,menu,label,querySelector:selector=>selector==='.faculty-site'?{dataset:{template}}:nav,querySelectorAll:()=>sections});return page;
+ });
+ const doc={documentElement:{lang:'en',scrollHeight:4700},querySelectorAll:()=>pages,getElementById:id=>targets.get(id),addEventListener:(name,fn)=>clicks[name]=fn};
+ const paint=()=>{for(let limit=0;frames.size&&limit<10;limit++){const work=[...frames.values()];frames.clear();work.forEach(fn=>fn())}};
+ vm.runInNewContext(`(${publicRuntime.toString()})(()=>()=>{})`,{window:win,document:doc,requestAnimationFrame:fn=>{frames.set(++frameId,fn);return frameId},cancelAnimationFrame:id=>frames.delete(id)});paint();
+ const current=page=>page.links.find(link=>link.attributes['aria-current']==='location')?.textContent;
+ const scroll=top=>{win.scrollY=top;events.scroll();paint()};
+ const route=value=>{win.location.hash=value;events.hashchange();paint()};
+ return {pages,win,doc,events,clicks,paint,current,scroll,route};
+}
+test('reading updates the current menu in either direction, including the short final section',()=>{
+ for(const template of ['classic','color']){
+  const env=readerEnvironment(template),page=env.pages[0];
+  assert.equal(env.current(page),'en-section-profile');
+  env.scroll(910);assert.equal(env.current(page),'en-section-research');assert.equal(page.label.textContent,'en-section-research');
+  env.scroll(2940);assert.equal(env.current(page),'en-section-publications');
+  env.scroll(500);assert.equal(env.current(page),'en-section-profile');
+  env.scroll(4000);assert.equal(env.current(page),'en-section-contact');
+  assert.equal(page.links.filter(link=>link.attributes['aria-current']).length,1);
+ }
+});
+test('opening the mobile menu does not change the reading position; deep links and languages do',()=>{
+ const env=readerEnvironment('color'),page=env.pages[0];
+ env.scroll(700);page.menu.dataset.open='true';env.events.resize();env.paint();
+ assert.equal(env.current(page),'en-section-profile');
+ page.menu.dataset.open='false';env.route('#ko-section-publications');
+ assert.equal(env.pages[1].hidden,false);assert.equal(env.current(env.pages[1]),'ko-section-publications');
+ env.route('#en');assert.equal(env.current(page),'en-section-profile');
+});
+test('portrait menus show one group, retain unlisted details, and restore deep links and history',()=>{
+ const env=readerEnvironment('portrait'),page=env.pages[0];
+ const visible=p=>p.sections.filter(section=>!section.hidden).map(section=>section.id);
+ assert.deepEqual(visible(page),['en-section-profile']);
+ env.route('#en-section-research');
+ assert.deepEqual(visible(page),['en-section-research','en-section-projects']);
+ assert.equal(page.sections[1].nextElementSibling.hidden,false);assert.equal(page.sections[2].nextElementSibling.hidden,true);
+ env.scroll(4000);assert.equal(env.current(page),'en-section-research');
+ env.route('#ko-section-projects');
+ assert.deepEqual(visible(env.pages[1]),['ko-section-research','ko-section-projects']);
+ assert.equal(env.current(env.pages[1]),'ko-section-research');
+ env.win.location.hash='#en-section-publications';env.events.popstate();env.paint();
+ assert.deepEqual(visible(page),['en-section-publications']);assert.equal(env.current(page),'en-section-publications');
+ env.route('#en');assert.deepEqual(visible(page),['en-section-profile']);
+});

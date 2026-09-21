@@ -38,7 +38,7 @@ test('all Heo demos embed both covers, the ESG table and a correctly classified 
   assert.doesNotMatch(html,/<img[^>]+src="https:\/\/(?:books.changbiedu|temep.snu)/);
  }
 });
-test('all three designs keep every populated section available by scrolling',()=>{
+test('all three designs retain every section in portable HTML and printable thumbnails',()=>{
  for(const id of ['classic','portrait','color']){
   const site=templateExample(id,'portrait.jpg'),html=exportSite(site);
   assert.doesNotMatch(html,/data-paginated|data-template-page/);

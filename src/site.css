@@ -481,21 +481,36 @@
 }
 
 /* Keep the one-page navigation available while reading long sections. */
-.faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false]>.site-nav{
+.faculty-site:is([data-template=classic],[data-template=portrait],[data-template=color])[data-editing=false]>.site-nav{
  position:sticky;top:0;z-index:20;
  margin-inline:calc(-1 * var(--site-gutter));padding-inline:var(--site-gutter);
  background:var(--site-paper);
 }
-.faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false] .site-section{
+.faculty-site:is([data-template=classic],[data-template=portrait],[data-template=color])[data-editing=false] .site-section{
  scroll-margin-top:calc(var(--site-nav-height,80px) + 16px);
 }
 @container site-viewport (max-width:600px){
- .faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false]>.site-nav{max-height:80dvh;overflow-y:auto;overscroll-behavior:contain}
+ .faculty-site:is([data-template=classic],[data-template=portrait],[data-template=color])[data-editing=false]>.site-nav{max-height:80dvh;overflow-y:auto;overscroll-behavior:contain}
 }
 @media print{
- .faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false]>.site-nav{position:static;max-height:none;overflow:visible}
- .faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false] .site-section{scroll-margin-top:0}
+ .faculty-site:is([data-template=classic],[data-template=portrait],[data-template=color])[data-editing=false]>.site-nav{position:static;max-height:none;overflow:visible}
+ .faculty-site:is([data-template=classic],[data-template=portrait],[data-template=color])[data-editing=false] .site-section{scroll-margin-top:0}
+ .faculty-site[data-template=portrait] :is(.site-section,.site-rule)[hidden]{display:block!important}
 }
+.faculty-site .site-navlinks a{position:relative;transition:color .2s}
+.faculty-site .site-navlinks a::after{content:'';position:absolute;bottom:-7px;left:0;right:0;height:2px;background:var(--site-accent);transform:scaleX(0);transform-origin:center;transition:transform .2s}
+.faculty-site .site-navlinks a[aria-current=location]{color:var(--site-accent);text-decoration:none}
+.faculty-site .site-navlinks a[aria-current=location]::after{transform:scaleX(1)}
+.faculty-site .site-rule[hidden]{display:none}
+.site-menu-current{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container site-viewport (max-width:600px){
+ .faculty-site .site-menu-toggle{min-width:0;max-width:calc(100% - 110px);justify-content:flex-start}
+ .faculty-site[data-template=color] .site-nav-identity{flex-basis:100%;max-width:none}
+ .faculty-site[data-template=color] .site-menu-toggle{margin-left:0;margin-right:auto}
+ .faculty-site .site-navlinks a[aria-current=location]{background:var(--site-wash)}
+ .faculty-site .site-navlinks a::after{bottom:4px;left:10px;right:10px}
+}
+@media(prefers-reduced-motion:reduce){.faculty-site .site-navlinks a,.faculty-site .site-navlinks a::after{transition:none}}
 
 /* Source figures keep their full bounds; the viewer carries the fine detail. */
 .site-media-publications,.site-media-allworks,.site-media-talks{width:min(var(--portrait-width,230px),42%)}
