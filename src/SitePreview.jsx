@@ -1,13 +1,13 @@
 import React,{useMemo,useRef,useState,useLayoutEffect,useEffect} from 'react';
-import {Monitor,Tablet,Smartphone,Maximize,RotateCcw,ClipboardCheck} from 'lucide-react';
+import {Monitor,Tablet,Smartphone,Maximize,RotateCcw,ClipboardCheck,Link} from 'lucide-react';
 import {exportSite} from './export';
 import './sitePreview.css';
 
-export function PreviewControls({width,onWidth,onRestart,onReview}){
+export function PreviewControls({width,onWidth,onRestart,onReview,onShare,shareDisabled}){
  const [input,setInput]=useState(width==='auto'?'':width);
  useEffect(()=>setInput(width==='auto'?'':width),[width]);
  const apply=()=>{const value=Number(input);if(Number.isFinite(value)&&input.trim())onWidth(String(Math.max(320,Math.min(1920,Math.round(value)))));else setInput(width==='auto'?'':width)};
- return <div className="preview-toolbar"><div className="viewport-control" role="group" aria-label="미리보기 화면 크기">{[['auto','화면에 맞춤',Maximize],['1440','데스크톱 1440px',Monitor],['768','태블릿 768px',Tablet],['390','모바일 390px',Smartphone]].map(([value,label,Icon])=><button key={value} type="button" aria-label={label} title={label} aria-pressed={width===value} onClick={()=>onWidth(value)}><Icon size={16}/><span>{value==='auto'?'맞춤':value+'px'}</span></button>)}</div><label className="preview-custom"><input aria-label="직접 지정할 화면 너비" type="number" min="320" max="1920" step="1" placeholder="너비" value={input} onChange={event=>setInput(event.target.value)} onBlur={apply} onKeyDown={event=>{if(event.key==='Enter'){apply();event.currentTarget.blur()}}}/>px</label><button className="preview-restart" type="button" aria-label="미리보기 처음부터" title="처음부터 보기" onClick={onRestart}><RotateCcw size={15}/></button><button type="button" className="studio-button preview-review" onClick={onReview}><ClipboardCheck size={15}/>게시 전 점검</button></div>;
+ return <div className="preview-toolbar"><div className="viewport-control" role="group" aria-label="미리보기 화면 크기">{[['auto','화면에 맞춤',Maximize],['1440','데스크톱 1440px',Monitor],['768','태블릿 768px',Tablet],['390','모바일 390px',Smartphone]].map(([value,label,Icon])=><button key={value} type="button" aria-label={label} title={label} aria-pressed={width===value} onClick={()=>onWidth(value)}><Icon size={16}/><span>{value==='auto'?'맞춤':value+'px'}</span></button>)}</div><label className="preview-custom"><input aria-label="직접 지정할 화면 너비" type="number" min="320" max="1920" step="1" placeholder="너비" value={input} onChange={event=>setInput(event.target.value)} onBlur={apply} onKeyDown={event=>{if(event.key==='Enter'){apply();event.currentTarget.blur()}}}/>px</label><button className="preview-restart" type="button" aria-label="미리보기 처음부터" title="처음부터 보기" onClick={onRestart}><RotateCcw size={15}/></button><button type="button" className="studio-button preview-review" onClick={onReview}><ClipboardCheck size={15}/>게시 전 점검</button>{onShare&&<button type="button" className="studio-button" disabled={shareDisabled} onClick={onShare}><Link size={15}/>초안 공유</button>}</div>;
 }
 
 export function SitePreview({site,width,language='en',restart=0}){

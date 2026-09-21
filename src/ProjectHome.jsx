@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {ArrowUpRight,Plus,Trash2,Undo2,Pencil,Upload,Globe,Copy,History,MoreHorizontal} from 'lucide-react';
+import {ArrowUpRight,Plus,Trash2,Undo2,Pencil,Upload,Globe,Copy,History,MoreHorizontal,Link} from 'lucide-react';
 import {themes,fonts,siteLanguages,siteTitle} from './model';
 import {historyDate} from './projectHistory';
 import {getBasicInfo} from './basics';
@@ -32,6 +32,7 @@ export function ProjectHome({sites,deleted=[],publications={},onOpen,onPublish,o
     {url&&<a href={url} target="_blank" rel="noopener noreferrer" aria-label={`${title} 바로가기`}><ArrowUpRight size={14}/>바로가기</a>}
     <button type="button" disabled={actionsDisabled||publication?.checking||info?.kind==='pending'} onClick={()=>checkable?onCheckLink(site.id):onPublish(site.id)} aria-label={`${title} ${checkable?'게시 주소 확인':changed?'변경사항 게시':url?'게시 설정':'게시하기'}`}><Upload size={13}/>{checkable?'주소 확인':changed?'업데이트':url?'게시':'게시하기'}</button>
     <details className="project-more"><summary aria-label={`${title} 더보기`}><MoreHorizontal size={18}/><span className="sr-only">더보기</span></summary><div className="project-more-menu" onClick={event=>{if(event.target.closest('button'))event.currentTarget.parentElement.open=false}}>
+     <button type="button" disabled={actionsDisabled} onClick={()=>onPublish(site.id,'review')} aria-label={`${title} 초안 공유`}><Link size={13}/>초안 공유</button>
      <button type="button" disabled={actionsDisabled} onClick={()=>onPublish(site.id,'domain')} aria-label={`${title} 도메인 연결`}><Globe size={13}/>도메인 연결</button>
      <button type="button" disabled={actionsDisabled} onClick={()=>onDuplicate(site.id)} aria-label={`${title} 프로젝트 복제`}><Copy size={13}/>복제</button>
      {onHistory&&<button type="button" disabled={actionsDisabled} onClick={()=>onHistory(site.id)} aria-label={`${title} 수정 이력`}><History size={13}/>수정 이력</button>}

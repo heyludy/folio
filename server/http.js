@@ -2,6 +2,7 @@ import {PublishError,fail,MAX_REQUEST_BYTES} from '../src/publishing.js';
 import {publicationSummary} from '../src/publicationLinks.js';
 import {authorized,login} from './auth.js';
 import {cloudEnabled,CloudStore} from './cloud.js';
+import {unavailableReview} from './review.js';
 export {authorized} from './auth.js';
 export async function readJson(request,limit=MAX_REQUEST_BYTES){
  if(!request.headers.get('Content-Type')?.startsWith('application/json'))fail('JSON 요청이 필요해요.',415);
@@ -17,10 +18,15 @@ export async function handleRequest(request,env){
  const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Vary':'Origin','X-Content-Type-Options':'nosniff'};
  if(allowed)Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'Authorization, Content-Type, If-Match','Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS'});
  try{
+  const path=new URL(request.url).pathname;
+  if(path.startsWith('/review/')){
+   const match=path.match(/^\/review\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})\/([a-f0-9]{64})\/(page|assets\/[a-f0-9]{64}\.(?:pdf|png|jpeg|webp|svg))?$/);
+   if(!match||!['GET','HEAD'].includes(request.method))return unavailableReview();
+   return await env.PUBLICATIONS.getByName(match[1]).review(match[2],match[3]||'',`/review/${match[1]}/${match[2]}/`,request.method==='HEAD');
+  }
   if(origin&&!allowed)fail('허용되지 않은 관리 페이지예요.',403);
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
   if(!env.ADMIN_KEY||!env.CLOUDFLARE_ACCOUNT_ID||!env.CLOUDFLARE_API_TOKEN)fail('게시 서버 연결을 마치지 않았어요. 관리자에게 연결을 요청해 주세요.',503);
-  const path=new URL(request.url).pathname;
   const cloud=cloudEnabled(env)?new CloudStore(env):null;
   if(path==='/v1/session'&&request.method==='POST'){
    if(cloud)fail('Google 계정으로 로그인해 주세요.',401);
@@ -68,16 +74,16 @@ export async function handleRequest(request,env){
    if(!await authorized(request,env.ADMIN_KEY,null))fail('관리자 복구 권한이 필요해요.',403);
    return Response.json(await env.RECOVERY.seed(await readJson(request,10000)),{headers});
   }
-  const match=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})(\/unpublish|\/domain)?$/);
+  const match=path.match(/^\/v1\/sites\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})(\/unpublish|\/domain|\/review)?$/);
   if(!match)fail('주소를 찾지 못했어요.',404);
   if(account)await cloud.owns(account,match[1]);
   const suffix=match[2]||'',method=request.method;
-  const action=!suffix&&method==='GET'?'get':!suffix&&method==='PUT'?'publish':suffix==='/unpublish'&&method==='POST'?'unpublish':suffix==='/domain'&&method==='POST'?'domain-add':suffix==='/domain'&&method==='DELETE'?'domain-remove':null;
+  const action=suffix==='/review'?({GET:'review-get',PUT:'review-create',DELETE:'review-delete'}[method]):!suffix&&method==='GET'?'get':!suffix&&method==='PUT'?'publish':suffix==='/unpublish'&&method==='POST'?'unpublish':suffix==='/domain'&&method==='POST'?'domain-add':suffix==='/domain'&&method==='DELETE'?'domain-remove':null;
   if(!action)fail('지원하지 않는 요청이에요.',405);
   // Stream large payloads to the per-site object; the edge handler only authenticates.
   const body=method==='GET'?null:{stream:request.body,contentType:request.headers.get('Content-Type'),length:request.headers.get('Content-Length')};
   const result=await env.PUBLICATIONS.getByName(match[1]).execute(action,body,request.headers.get('If-Match'));
-  return Response.json(result,{headers,status:result.pending?202:200});
+  return Response.json(result,{headers,status:result?.pending?202:200});
  }catch(error){
   // Provider bodies, authorization headers, and uploaded HTML are never logged.
   if(!(error instanceof PublishError))console.error(JSON.stringify({event:'publisher_error',name:error?.name||'Error'}));

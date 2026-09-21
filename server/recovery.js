@@ -19,6 +19,7 @@ export function recoveryService(env){
  const lookup=key=>env.PUBLICATION_LOOKUPS.getByName(key);
  const byObject=id=>env.PUBLICATIONS.get(env.PUBLICATIONS.idFromString(id));
  const execute=async(stub,...args)=>{const result=await stub.execute(...args);if(!result.ok)throw new PublishError(result.error,result.status);return result.data};
+ const resolve=async id=>{const alias=await lookup('id:'+id).read();return alias?byObject(alias.objectId):env.PUBLICATIONS.getByName(id)};
  const register=async(stub,state,preferred)=>{
   const hosts=publicationHosts(state);if(!hosts.length)return null;
   const id=await stub.recoveryIdentity(preferred),objectId=stub.id.toString();
@@ -29,12 +30,11 @@ export function recoveryService(env){
  };
  return {
   publications:{getByName(id){return {async execute(...args){
-   const alias=await lookup('id:'+id).read();
-   const stub=alias?byObject(alias.objectId):env.PUBLICATIONS.getByName(id);
+   const stub=await resolve(id);
    const state=await execute(stub,...args);
-   await register(stub,state,id);
+   if(!args[0].startsWith('review-'))await register(stub,state,id);
    return state;
-  }}}},
+  },async review(...args){return (await resolve(id)).review(...args)}}}},
   async recover(url){
    const host=recoveryHost(url),record=await lookup('host:'+host).read();
    if(!record)fail('기존 게시 연결을 찾지 못했어요. 처음 게시한 브라우저에서 게시 설정을 한 번 열거나 관리자에게 복구를 요청해 주세요.',404);

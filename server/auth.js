@@ -4,7 +4,7 @@ const encoder=new TextEncoder(),iterations=100000,sessionSeconds=8*60*60;
 const encode=bytes=>toBase64(new Uint8Array(bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
 const decode=value=>fromBase64(value.replaceAll('-','+').replaceAll('_','/')+'='.repeat((4-value.length%4)%4));
 const hmacKey=secret=>crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);
-async function equalSecret(value,expected){
+export async function equalSecret(value,expected){
  const key=await hmacKey(expected),signature=await crypto.subtle.sign('HMAC',key,encoder.encode(expected));
  return crypto.subtle.verify('HMAC',key,signature,encoder.encode(value));
 }
