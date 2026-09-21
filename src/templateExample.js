@@ -13,8 +13,8 @@ export function templateExample(template,photo=''){
   const order=['profile','research','publications','projects','career','cv','awards','service','teaching','books','press','contact'];
   site.sections.sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
   for(const section of site.sections){
-   section.nav=['profile','publications','career','teaching','books','contact'].includes(section.kind);
-   if(section.kind==='publications')section.menuLabel={en:'Research',ko:'연구'};
+   section.nav=['profile','research','career','teaching','books','contact'].includes(section.kind);
+   if(section.kind==='research')section.menuLabel={en:'Research',ko:'연구'};
    if(section.kind==='career')section.menuLabel={en:'Background',ko:'이력'};
    if(section.kind==='books')section.menuLabel={en:'Books & media',ko:'저서·미디어'};
   }

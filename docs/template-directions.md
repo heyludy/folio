@@ -11,7 +11,7 @@ bilingual detail data and local portrait. The real heoe.info publication is sepa
 - Introduction: white #ffffff, charcoal #333333, muted #585858, blue #057aad,
   pale gray #fbfbfb. Jost name/headings and Libre Franklin body, Pretendard Korean.
   Right-aligned navigation; a full-width name above equal photo and biography
-  columns. Readable separate Research, Background, Teaching, Books/media pages.
+  columns. Research, Background, Teaching and Books/media continue on the same page.
 - Color: white #ffffff, pale sage #eef1ea, forest #0c382e, warm title #ecb499,
   light text #f7f7f2, muted text #dbe6de. Source Serif 4 / Source Sans 3 with
   Korean Noto Serif KR / Pretendard. A large left portrait rises across the pale
@@ -23,7 +23,7 @@ bilingual detail data and local portrait. The real heoe.info publication is sepa
     [             nav] [               nav]  [name          nav]
     [name bio | photo] [Name              ]  [photo             ]
     [research        ] [photo | biography ]  [photo| Name       ] dark band
-    [publications    ] [detailed menu pages]  [photo| affiliation]
+    [publications    ] [scrolling details  ]  [photo| affiliation]
                                               [About | biography]
                                               [Research | topics]
 
@@ -35,23 +35,28 @@ profile or decorative archaeology images. Keep the real Heo portrait and all
 verified existing content. Long biography goes into a readable About section in
 Color, so the hero remains composed without cutting any information. On mobile,
 photo/title/biography stack; no overlapping text. All fields remain directly
-editable and resizable. In Introduction edit mode, all sections remain visible
-for sorting; only published and preview views paginate. Preserve legacy saved
-sidebar/research/editorial layouts, and retain Research as a planned option.
+editable and resizable. All sections remain visible in both the editor and public
+page; navigation scrolls to sections. Basic and Introduction headers stay at the
+top while reading. Preserve legacy saved sidebar/research/editorial layouts, and
+retain Research as a planned option.
 
 Examples are standalone HTML using the same export as Folio. Exclude the live
 publication URL and provide a comparison page plus template-picker previews.
 
 ## Verification — 2026-09-21
 
-- 204 application tests and 12 publisher tests pass; production build and
+- 202 application tests and 12 publisher tests pass; production build and
   publisher dry run pass.
 - In-app browser checked the three exported examples at 320, 768 and 1440px:
   no horizontal overflow, all portrait images loaded.
-- Introduction navigation shows Publications + Projects on Research; Korean
-  controls and sandboxed Folio preview navigate correctly.
+- Introduction content is continuous; Korean controls and sandboxed Folio
+  preview navigate correctly.
 - A disposable local Color project was created, its name and biography edited
   directly, and the public preview verified. Blank photo, department and role
   stay absent. The local test project was moved to the recoverable deleted list.
 - Template chooser shows real Heo thumbnails, full previews and a disabled
   planned Research option. Home links to the independent comparison page.
+- Basic and Introduction sticky headers verified on desktop and at 390px:
+  no horizontal overflow; clicked and direct section links land 16px below the
+  header, including after closing the mobile menu and switching to Korean.
+  Introduction exposes all 12 sections without requiring navigation clicks.

@@ -38,7 +38,8 @@ test('downloaded runtime initializes without imported bindings or a React runtim
 function routingEnvironment(hash='#ko-section-contact',initialLanguage='en'){
  const pages=['en','ko'].map(lang=>({dataset:{languagePage:lang},hidden:lang!=='en',querySelectorAll:()=>[]}));
  const events={},clicks={},scrolls=[],frames=new Map();let index=0;
- const target={closest:()=>pages[1],scrollIntoView:value=>scrolls.push({target:'contact',...value})};
+ const classes=new Set(['will-reveal']);
+ const target={classList:{add:value=>classes.add(value),remove:value=>classes.delete(value)},closest:()=>pages[1],scrollIntoView:value=>{assert.equal(classes.has('will-reveal'),false);assert.equal(classes.has('is-revealed'),true);scrolls.push({target:'contact',...value})}};
  const doc={documentElement:{lang:'en'},querySelectorAll:()=>pages,getElementById:id=>id==='ko-section-contact'?target:null,addEventListener:(name,fn)=>clicks[name]=fn};
  const win={location:{hash},history:{pushState:(_state,_title,value)=>win.location.hash=value},scrollTo:value=>scrolls.push({target:'top',...value}),matchMedia:()=>({matches:false}),addEventListener:(name,fn)=>events[name]=fn};
  const scope={window:win,document:doc,requestAnimationFrame:fn=>{frames.set(++index,fn);return index},cancelAnimationFrame:id=>frames.delete(id)};

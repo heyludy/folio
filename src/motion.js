@@ -16,9 +16,19 @@ export function revealSections(root=document,scrollRoot=null){
  return ()=>{cancelAnimationFrame(frame);showAll();root.removeEventListener('focusin',focus);reduce.removeEventListener('change',showAll)};
 }
 
-export function publicRuntime(reveal,initialLanguage='en',paginate=()=>false){
+export function publicRuntime(reveal,initialLanguage='en'){
  const pages=[...document.querySelectorAll('[data-language-page]')];
  let cleanup=()=>{},activeLanguage,frame;
+ const measureHeader=page=>{
+  const nav=page?.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"]) > .site-nav');
+  if(!nav)return;
+  const height=Math.ceil(nav.getBoundingClientRect().height);
+  if(height)nav.parentElement.style.setProperty('--site-nav-height',`${height}px`);
+ };
+ if('ResizeObserver' in window){
+  const observer=new ResizeObserver(()=>pages.forEach(measureHeader));
+  pages.forEach(page=>{const nav=page.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"]) > .site-nav');if(nav)observer.observe(nav)});
+ }
  const activate=lang=>{
   if(!pages.some(p=>p.dataset.languagePage===lang))return;
   cleanup();pages.forEach(p=>p.hidden=p.dataset.languagePage!==lang);
@@ -31,12 +41,16 @@ export function publicRuntime(reveal,initialLanguage='en',paginate=()=>false){
   const language=page?.dataset.languagePage||(pages.some(p=>p.dataset.languagePage===hash)?hash:initialLanguage);
   if(language!==activeLanguage)activate(language);
   const active=pages.find(p=>!p.hidden);
-  if(paginate(active,target)){cleanup();cleanup=reveal(active);}
   cancelAnimationFrame(frame);
   if(language)frame=requestAnimationFrame(()=>{
+   // Measure after a mobile menu closes or a language becomes visible.
+   measureHeader(active);
    const behavior=initial||window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
-   const startsPage=target?.dataset?.templatePage&&target.dataset.templatePage===target.dataset.section;
-   if(page&&!startsPage)target.scrollIntoView({block:'start',behavior});else window.scrollTo({top:0,behavior});
+   if(page){
+    // Anchor destinations must settle before measuring their scroll position.
+    target.classList.remove('will-reveal');target.classList.add('is-revealed');
+    target.scrollIntoView({block:'start',behavior});
+   }else window.scrollTo({top:0,behavior});
   });
  };
  const closeMenu=nav=>{
@@ -56,7 +70,7 @@ export function publicRuntime(reveal,initialLanguage='en',paginate=()=>false){
     catch{followAddress(false,href);}
    }
   }
-  // Profile shortcuts and deep links must also reveal their destination page.
+  // Profile shortcuts also use the sticky-header offset in sandboxed previews.
   const shortcut=!link&&e.target.closest('.faculty-site a[href^="#"]');
   if(shortcut){
    const href=shortcut.getAttribute('href'),target=document.getElementById(href.slice(1));
@@ -70,7 +84,7 @@ export function publicRuntime(reveal,initialLanguage='en',paginate=()=>false){
    try{window.history.pushState(null,'','#'+language);followAddress(true);}
    catch{
     // Sandboxed import previews can prohibit history updates.
-    cancelAnimationFrame(frame);activate(language);paginate(pages.find(p=>!p.hidden));window.scrollTo({top:0,behavior:'instant'});
+    cancelAnimationFrame(frame);activate(language);measureHeader(pages.find(p=>!p.hidden));window.scrollTo({top:0,behavior:'instant'});
    }
   }
  });

@@ -382,8 +382,6 @@
 .faculty-site[data-template=portrait] .site-section[data-kind=research] .site-subtitle{font:500 23px/1.35 var(--site-heading);color:var(--site-title)}
 .faculty-site[data-template=portrait] .site-heading{font-size:33px}
 .faculty-site[data-template=portrait]>.site-sections{min-height:65vh}
-.faculty-site[data-template=portrait] .site-navlinks a[aria-current=page]{color:var(--site-accent);font-weight:600;text-decoration:underline;text-underline-offset:6px}
-.faculty-site[data-template=portrait] .site-sections>.site-section:first-child{scroll-margin-top:25px}
 @container site-viewport (max-width:820px){
  .faculty-site[data-template=portrait]{--site-gutter:34px}
  .faculty-site[data-template=portrait] .site-profile{grid-template-columns:minmax(150px,.7fr) minmax(0,1.15fr);column-gap:30px}
@@ -401,9 +399,6 @@
  .faculty-site[data-template=portrait] .site-profile-links{order:4;margin-top:22px}
  .faculty-site[data-template=portrait] .site-heading{font-size:28px}
  .faculty-site[data-template=portrait] .site-section[data-kind=profile]{padding-block:20px 35px}
-}
-@media print{
- .faculty-site[data-paginated=true] [data-template-page][hidden]{display:block!important}
 }
 
 /* Color: an overlapping portrait and name on a full-width color band. */
@@ -470,4 +465,21 @@
  .faculty-site[data-template=color] .site-researchitem .site-subtitle{font-size:19px}
  .faculty-site[data-template=color] .site-section[data-kind=contact] .site-element+.site-element{margin-top:14px}
  .faculty-site[data-template=color] .site-section[data-kind=contact] .site-email{font-size:20px}
+}
+
+/* Keep the one-page navigation available while reading long sections. */
+.faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false]>.site-nav{
+ position:sticky;top:0;z-index:20;
+ margin-inline:calc(-1 * var(--site-gutter));padding-inline:var(--site-gutter);
+ background:var(--site-paper);
+}
+.faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false] .site-section{
+ scroll-margin-top:calc(var(--site-nav-height,80px) + 16px);
+}
+@container site-viewport (max-width:600px){
+ .faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false]>.site-nav{max-height:80dvh;overflow-y:auto;overscroll-behavior:contain}
+}
+@media print{
+ .faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false]>.site-nav{position:static;max-height:none;overflow:visible}
+ .faculty-site:is([data-template=classic],[data-template=portrait])[data-editing=false] .site-section{scroll-margin-top:0}
 }
