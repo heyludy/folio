@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {assetAt,pdfBlobUrl} from './assets';
 import {ElementFrame} from './ElementFrame';
+import {safeLink} from './links';
 
 export function Attachment({section,lang,name,type,editing,onAsset,label,cv=false}){
  const asset=assetAt(section,lang,name),[url,setUrl]=useState('');
@@ -13,9 +14,13 @@ export function Attachment({section,lang,name,type,editing,onAsset,label,cv=fals
   <label className="attachment-upload">{asset?`${label} 변경`:`${label} 추가`}<input type="file" data-asset-field={name} aria-label={`${section.name} ${label} 업로드`} accept={type==='pdf'?'.pdf,application/pdf':'image/jpeg,image/png,image/webp'} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)onAsset?.(section.id,lang,name,file,type)}}/></label>
   {asset&&<button type="button" onClick={()=>onAsset?.(section.id,lang,name,null,type)} aria-label={`${section.name} ${label} 삭제`}>삭제</button>}
  </div>;
- if(type==='image')return <ElementFrame sectionId={section.id} elementKey={name} kind="image" label={label} layout={section.elements?.[lang]?.[name]} className={`site-media site-media-${section.kind}`}>
-  {asset?<img data-image-surface src={asset.data} alt={section.text[lang]['topic'+name.slice(5)]||section.text[lang].title||label} loading="lazy"/>:<div data-image-surface className="site-media-empty">{label}</div>}{tools}
- </ElementFrame>;
+ if(type==='image'){
+  const title=section.text[lang]['topic'+name.slice(5)]||section.text[lang].title||label;
+  const picture=asset&&<img data-image-surface src={asset.data} alt={asset.alt?.[lang]||title} loading="lazy"/>;
+  return <ElementFrame sectionId={section.id} elementKey={name} kind="image" label={label} layout={section.elements?.[lang]?.[name]} className={`site-media site-media-${section.kind}`}>
+   {asset?(editing?picture:<button type="button" className="site-image-open" data-image-view data-image-title={title} data-image-source={safeLink(asset.source)} data-image-credit={asset.credit||''} aria-label={`${lang==='en'?'Enlarge image':'이미지 크게 보기'}: ${title}`}>{picture}<span className="site-image-hint">{lang==='en'?'Enlarge':'크게 보기'} ↗</span></button>):<div data-image-surface className="site-media-empty">{label}</div>}{tools}
+  </ElementFrame>;
+ }
  const download=()=>{const link=document.createElement('a');link.href=url||asset.data;link.download=asset.name;link.click()};
  return <div className={`site-document ${cv?'site-cv-document':''}`}>
   {asset&&<><div className="site-document-links" data-pdf-document>

@@ -1,7 +1,7 @@
 import {assetAt} from './assets.js';
 const extra=(key,en,ko,link=false)=>({key,en,ko,link});
 const url=extra('url','Website','관련 링크',true);
-const publication={label:'논문',text:['Authors / journal','저자·학술지'],pdf:true,extras:[extra('venue','Journal / conference','학술지·학회'),extra('status','Publication status','게재 상태'),extra('abstract','Abstract','초록'),extra('doi','DOI','DOI',true),url]};
+const publication={label:'논문',text:['Authors / journal','저자·학술지'],image:'연구 그림',pdf:true,extras:[extra('venue','Journal / conference','학술지·학회'),extra('status','Publication status','게재 상태'),extra('abstract','Abstract','초록'),extra('doi','DOI','DOI',true),url]};
 // Legacy text keys and element sizes stay intact as specialized fields are added.
 export const entryTypes={
  research:{label:'연구 분야',year:false,topic:['Research topic','연구 주제'],text:['Description','설명'],extras:[url]},
@@ -13,7 +13,7 @@ export const entryTypes={
  teaching:{label:'강의',topic:['Course title','과목명'],text:['Institution / description','기관·소개'],pdf:true,extras:[extra('level','Course level','학부·대학원'),extra('url','Course website','강의 사이트',true)]},
  books:{label:'저서',topic:['Book title','책 제목'],text:['Authors / publisher','저자·출판사'],image:'표지',extras:[extra('description','About this book','책 소개'),extra('url','Publisher / book link','출판사·구매 링크',true)]},
  projects:{label:'프로젝트',text:['Project description','프로젝트 소개'],image:'이미지',extras:[extra('status','Project status','진행 상태'),extra('role','Role','담당 역할'),extra('funding','Funding','지원기관'),extra('collaborators','Collaborators','공동연구자'),url]},
- talks:{label:'발표',text:['Event','행사명'],pdf:true,extras:[extra('location','Location','장소'),extra('type','Talk type','발표 유형'),extra('url','Video / event','영상·행사 링크',true)]},
+ talks:{label:'발표',text:['Event','행사명'],image:'발표 그림',pdf:true,extras:[extra('location','Location','장소'),extra('type','Talk type','발표 유형'),extra('url','Video / event','영상·행사 링크',true)]},
  news:{label:'소식',extras:[url]},
  people:{label:'구성원',year:false,topic:['Name','이름'],text:['Role / program','역할·과정'],image:'사진',extras:[extra('status','Current / alumni','재학·졸업'),extra('research','Research interests','연구 주제'),url]},
  openings:{label:'모집',yearLabel:['Deadline','마감일'],topic:['Opening','모집 제목'],text:['How to apply','지원 방법'],extras:[extra('status','Open / closed','모집 상태'),extra('requirements','Eligibility / research area','지원 대상·연구 분야'),extra('url','Apply / contact','지원·문의 링크',true)]},

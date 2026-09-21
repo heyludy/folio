@@ -1,16 +1,17 @@
 import {heoDetailSite} from './examples/heo.js';
 import {resolveTemplate} from './templates.js';
+import {addHeoVisuals} from './examples/heo-visuals.js';
 
 // Independent demo copies; never inherit the live professor site's publication link.
 export function templateExample(template,photo=''){
- const site=heoDetailSite(photo);
+ const site=addHeoVisuals(heoDetailSite(photo));
  site.id=`template-example-${template}`;
  site.template=template;
  site.projectLabel=`허은녕 · ${resolveTemplate(template).name} 예시`;
  delete site.linkedWebsite;
  Object.assign(site,resolveTemplate(template).defaults);
  if(template==='portrait'){
-  const order=['profile','research','publications','projects','career','cv','awards','service','teaching','books','press','contact'];
+  const order=['profile','research','publications','talks','projects','career','cv','awards','service','teaching','books','press','contact'];
   site.sections.sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
   for(const section of site.sections){
    section.nav=['profile','research','career','teaching','books','contact'].includes(section.kind);
