@@ -1,8 +1,8 @@
 // Review-only palettes. Selecting one here does not change saved projects or defaults.
 export const colorOptions=[
- {id:'navy',name:'네이비 · 소프트 골드',description:'차분하고 단정한 인상',recommend:true,colors:{paper:'#fafaf9',wash:'#f0f1f2',line:'#d8dce1',ink:'#222a34',muted:'#59616d',accent:'#182b49',title:'#182b49',detail:'#af8e4d',hero:'#182b49','hero-title':'#e4d4b4'}},
- {id:'teal',name:'딥틸 · 아이스블루',description:'푸른 기가 도는 청록과 시원한 밝은색',colors:{paper:'#fbfcfc',wash:'#edf4f4',line:'#d3e0e1',ink:'#263a3d',muted:'#53666a',accent:'#15616d',title:'#174650',detail:'#45818b',hero:'#15616d','hero-title':'#e4f0ef'}},
- {id:'wine',name:'와인 · 펄그레이',description:'깊은 와인색에 밝고 담백한 본문',colors:{paper:'#fafafa',wash:'#f0eded',line:'#dfd7d9',ink:'#30282b',muted:'#65585d',accent:'#651c32',title:'#651c32',detail:'#946776',hero:'#651c32','hero-title':'#f4f4f4'}}
+ {id:'navy',name:'네이비 · 소프트 골드',description:'옅은 블루그레이 바탕 · 차분한 네이비',recommend:true,colors:{paper:'#edf0f5',wash:'#e2e7ee',line:'#cdd5df',ink:'#222a34',muted:'#59616d',accent:'#182b49',title:'#182b49',detail:'#af8e4d',hero:'#182b49','hero-title':'#e4d4b4'}},
+ {id:'teal',name:'딥틸 · 아이스블루',description:'아이스블루 바탕 · 푸른 기가 도는 청록',colors:{paper:'#e7f1f2',wash:'#d7e8eb',line:'#c4d9dd',ink:'#263a3d',muted:'#53666a',accent:'#15616d',title:'#174650',detail:'#45818b',hero:'#15616d','hero-title':'#e4f0ef'}},
+ {id:'wine',name:'와인 · 펄그레이',description:'펄그레이 바탕 · 깊은 와인색',colors:{paper:'#f0ebed',wash:'#e7dfe3',line:'#d8cdd2',ink:'#30282b',muted:'#65585d',accent:'#651c32',title:'#651c32',detail:'#946776',hero:'#651c32','hero-title':'#f4f4f4'}}
 ];
 
 export function buildColorOptions(){
