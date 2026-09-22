@@ -30,11 +30,13 @@ document.querySelector('#check').onclick=async()=>{
    frame.style.width=w+'px';frame.contentDocument.querySelector('[data-language="'+lang+'"]')?.click();await delay(80);
    const doc=frame.contentDocument,root=doc.querySelector('[data-language-page="'+lang+'"]');
    const scan=()=>[...root.querySelectorAll('.site-element,.site-entry-text,.site-photo,.site-nav,.site-heading,.site-profile-links')].filter(el=>{const b=el.getBoundingClientRect();return b.width>0&&(b.left< -1||b.right>w+1||el.scrollWidth>el.clientWidth+2)}).map(el=>el.className);
-   const profileOverflow=scan();const pub=root.querySelector('.site-navlinks a[href$="-publications"]');pub?.click();await delay(80);
+   const profileOverflow=scan(),name=root.querySelector('.site-name')?.getBoundingClientRect(),page=root.querySelector('.faculty-site')?.getBoundingClientRect();
+   const profileInset=t==='research'&&name?name.left-page.left:null;
+   const pub=root.querySelector('.site-navlinks a[href$="-publications"]');pub?.click();await delay(80);
    const entries=root.querySelectorAll('[data-kind="publications"] .site-record');
-   rows.push({template:t,scenario:s,lang,width:w,overflow:doc.documentElement.scrollWidth>w+1,profileOverflow,contentOverflow:scan(),papers:entries.length,visiblePapers:[...entries].filter(el=>el.getClientRects().length).length,header: getComputedStyle(root.querySelector('.site-nav')).position});
+   rows.push({template:t,scenario:s,lang,width:w,overflow:doc.documentElement.scrollWidth>w+1,profileInset,profileOverflow,contentOverflow:scan(),papers:entries.length,visiblePapers:[...entries].filter(el=>el.getClientRects().length).length,header: getComputedStyle(root.querySelector('.site-nav')).position});
   }
  }
- result.textContent=JSON.stringify({checked:rows.length,failures:rows.filter(r=>r.overflow||r.profileOverflow.length||r.contentOverflow.length||(r.scenario!=='minimal'&&r.visiblePapers!==30)||r.header!=='sticky')},null,2);frame.style.width='390px';await load('color-long');
+ result.textContent=JSON.stringify({checked:rows.length,failures:rows.filter(r=>r.overflow||r.profileOverflow.length||r.contentOverflow.length||(r.profileInset!==null&&r.profileInset<20)||(r.scenario!=='minimal'&&r.visiblePapers!==30)||r.header!=='sticky')},null,2);frame.style.width='390px';await load('color-long');
 };</script></body></html>`);
 console.log('Built local content stress fixtures');

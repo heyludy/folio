@@ -12,13 +12,18 @@ const site=newSite();site.languages=['en'];site.id='qa-publish-flow';site.sectio
 const endpoint='https://publisher.example',id='64646464-6464-4464-8464-646464646464';
 rememberPublisher({endpoint,key:'local-qa-only'});localStorage.setItem(`folio-publication:${endpoint}:${site.id}`,id);
 const comparison=(await preparePublication(site)).bundle;
-let state,mode='new',reads=0;
-function reset(next){mode=next;reads=0;state={revision:0,status:'draft',pending:null};if(next!=='new')state={revision:1,status:'published',projectName:'qa',url:'https://professor.example/',liveHash:next==='active-domain'?comparison.hash:'previous-html',liveSourceHash:next==='active-domain'?comparison.sourceHash:'previous-source',publishedAt:'2026-09-22T04:00:00Z',...(next==='active-domain'?{domain:{name:'professor.example.org',status:'active'}}:{})};}
+let state,review=null,mode='new',reads=0;
+function reset(next){mode=next;reads=0;review=null;state={revision:0,status:'draft',pending:null};if(next!=='new')state={revision:1,status:'published',projectName:'qa',url:'https://professor.example/',liveHash:next==='active-domain'?comparison.hash:'previous-html',liveSourceHash:next==='active-domain'?comparison.sourceHash:'previous-source',publishedAt:'2026-09-22T04:00:00Z',...(next==='active-domain'?{domain:{name:'professor.example.org',status:'active'}}:{})};}
 reset('new');
 const realFetch=window.fetch;window.fetch=async(input,init={})=>{
  if(!String(input).startsWith(endpoint))return realFetch(input,init);
  const path=String(input).slice(endpoint.length);let data=state,status=200;
  if(path==='/v1/session')data={service:'folio-publisher'};
+ else if(path.endsWith('/review')){
+  if(init.method==='PUT')review={token:crypto.randomUUID(),createdAt:Date.now(),expiresAt:Date.now()+7*24*60*60*1000,hash:comparison.hash};
+  else if(init.method==='DELETE')review=null;
+  data=review;
+ }
  else if(init.method==='PUT'){
   if(mode==='failure'){data={error:'QA: 게시 요청에 실패했어요. 다시 시도해 주세요.'};status=500;}
   else state={...state,revision:state.revision+1,pending:{phase:'verifying'}},data=state;

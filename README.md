@@ -66,4 +66,4 @@ npm run dev
 
 `main`에 푸시하면 GitHub Actions가 검사·빌드 후 GitHub Pages에 배포합니다.
 
-[게시 서버 연결](docs/publishing.md) · [자료 준비 가이드](docs/content-preparation.md) · [색상 참고](docs/theme-references.md) · [QA 기록](docs/qa-2026-09-16.md)
+[게시 서버 연결](docs/publishing.md) · [자료 준비 가이드](docs/content-preparation.md) · [색상 참고](docs/theme-references.md) · [전체 QA 기록](docs/qa-full-2026-09-22.md)

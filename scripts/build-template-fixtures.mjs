@@ -3,6 +3,7 @@ import {newSite,newSection} from '../src/model.js';
 import {addEntry} from '../src/entries.js';
 import {setAsset} from '../src/assets.js';
 import {exportSite} from '../.test-build/export.js';
+import {templates as availableTemplates} from '../src/templates.js';
 import {deflateSync,crc32} from 'node:zlib';
 
 // Synthetic content for visual QA; does not read or alter customer projects.
@@ -37,8 +38,9 @@ for(const kind of ['books','projects','press','publications']){
  }
 }
 const directory=new URL('../../outputs/template-fixtures/',import.meta.url);mkdirSync(directory,{recursive:true});
-const templates=['classic','sidebar','research','editorial'];
-for(const template of templates)writeFileSync(new URL(template+'.html',directory),exportSite({...site,template}));
+const templates=availableTemplates.map(template=>template.id);
+const design=id=>availableTemplates.find(template=>template.id===id).defaults;
+for(const template of templates)writeFileSync(new URL(template+'.html',directory),exportSite({...site,template,...design(template)}));
 const widths=[320,390,600,768,820,821,1024,1440];
 writeFileSync(new URL('check.html',directory),`<!doctype html><html><head><meta charset="utf-8"><title>Folio template QA</title><style>body{font:14px system-ui;background:#eee;margin:12px}button{padding:8px;margin:3px}iframe{display:block;height:900px;border:1px solid #aaa;background:white}pre{white-space:pre-wrap}#results{background:white;padding:12px}</style></head><body><h1>Template QA</h1><div>${templates.map(t=>`<button data-template="${t}">${t}</button>`).join('')}${widths.map(w=>`<button data-width="${w}">${w}px</button>`).join('')}<button id="check">Check all layouts</button></div><pre id="results">Ready</pre><iframe id="preview" src="classic.html" style="width:1024px" title="Professor site"></iframe><script>
 const frame=document.querySelector('#preview'),result=document.querySelector('#results');
@@ -58,6 +60,6 @@ document.querySelector('#check').onclick=async()=>{
   }
  }
  result.textContent=JSON.stringify({checked:rows.length,failures:rows.filter(r=>r.overflow||r.elements.length||!r.images)},null,2);
- frame.style.width='1024px';await load('sidebar');
+ frame.style.width='1024px';await load('portrait');
 };</script></body></html>`);
 console.log('Created synthetic four-template browser QA fixtures.');

@@ -552,7 +552,7 @@
 
 /* Research: an open profile and research index, then a catalogue of work. */
 .faculty-site[data-template=research]{--site-gutter:48px}
-.faculty-site[data-template=research] .site-section[data-kind=profile]{margin-top:0;padding:48px 0;border:0;border-bottom:2px solid var(--site-accent);border-radius:0;background:transparent}
+.faculty-site[data-template=research] .site-section[data-kind=profile]{margin:0;padding:48px 0;border:0;border-bottom:2px solid var(--site-accent);border-radius:0;background:transparent}
 .faculty-site[data-template=research] .site-name{color:var(--site-title);font-size:clamp(38px,5.8cqw,58px)}
 .faculty-site[data-template=research] .site-profile{gap:38px}
 .faculty-site[data-template=research] .site-photo{width:min(var(--portrait-width,180px),30cqw);background:transparent}

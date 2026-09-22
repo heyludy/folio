@@ -4,6 +4,7 @@ import {newSite,newSection,catalog} from '../src/model.js';
 import {entryTypes,addEntry} from '../src/entries.js';
 import {setAsset} from '../src/assets.js';
 import {exportSite} from '../.test-build/export.js';
+import {templates as availableTemplates} from '../src/templates.js';
 
 // Synthetic examples only. This never reads or updates saved projects.
 const png=()=>{
@@ -44,13 +45,14 @@ for(const lang of site.languages){
  site=setAsset(site,'curriculum',lang,'pdf',pdf);
 }
 const directory=new URL('../../outputs/section-designs/',import.meta.url);mkdirSync(directory,{recursive:true});
-const templates=['classic','sidebar','research','editorial'];
-for(const template of templates)writeFileSync(new URL(template+'.html',directory),exportSite({...site,template}));
+const templates=availableTemplates.map(template=>template.id);
+const design=id=>availableTemplates.find(template=>template.id===id).defaults;
+for(const template of templates)writeFileSync(new URL(template+'.html',directory),exportSite({...site,template,...design(template)}));
 const resized=structuredClone(site);
 for(const s of resized.sections.filter(s=>['projects','books','press','resources','talks','teaching'].includes(s.kind)))for(const lang of resized.languages){
  s.elements={...s.elements,[lang]:{'record-first':{width:55},topicfirst:{width:80,fontSize:28},imagefirst:{width:600,height:420}}};
 }
-for(const template of templates)writeFileSync(new URL(template+'-resized.html',directory),exportSite({...resized,template}));
+for(const template of templates)writeFileSync(new URL(template+'-resized.html',directory),exportSite({...resized,template,...design(template)}));
 writeFileSync(new URL('sample-site.json',directory),JSON.stringify(site));
 writeFileSync(new URL('index.html',directory),`<!doctype html><html><head><meta charset="utf-8"><title>Section design preview</title><style>body{font:14px system-ui;margin:0;background:#edf0f2}header{padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}select,button{font:inherit;padding:7px}iframe{display:block;border:0;background:white;width:1040px;max-width:100%;height:calc(100vh - 110px);margin:auto}pre{margin:0 12px;font-size:12px;white-space:pre-wrap}</style></head><body><header><select aria-label="Section">${catalog.map(([kind,ko])=>`<option value="${kind}" ${kind==='projects'?'selected':''}>${ko}</option>`).join('')}</select><select aria-label="Template">${templates.map(t=>`<option>${t}</option>`).join('')}</select>${[320,390,768,1040].map(w=>`<button data-width="${w}">${w}px</button>`).join('')}<button id="check">Check all sections</button></header><pre id="result">Synthetic content · no saved projects are changed</pre><iframe title="Section preview" src="classic.html#en-section-projects"></iframe><script>
 const frame=document.querySelector('iframe'),result=document.querySelector('#result'),section=document.querySelector('[aria-label=Section]'),template=document.querySelector('[aria-label=Template]');
