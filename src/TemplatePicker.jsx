@@ -2,12 +2,11 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {ArrowLeft,Eye} from 'lucide-react';
 import {templates,resolveTemplate} from './templates';
 import {applyTemplateDesign} from './templateDesign';
-import {templateExample} from './templateExample';
+import {anonymousTemplateExample} from './examples/anonymous';
 import {SitePreview} from './SitePreview';
 import {SiteThumbnail} from './SiteThumbnail';
-import portrait from './sample-portrait-cutout.png';
 
-const templateSamples=Object.fromEntries(templates.filter(template=>template.status==='ready').map(template=>[template.id,templateExample(template.id,portrait)]));
+const templateSamples=Object.fromEntries(templates.filter(template=>template.status==='ready').map(template=>[template.id,anonymousTemplateExample(template.id)]));
 
 export function TemplatePicker({site,value,onChange,firstChoice,onPreviewChange}){
  const [preview,setPreview]=useState(null),[width,setWidth]=useState('1440');
@@ -15,7 +14,7 @@ export function TemplatePicker({site,value,onChange,firstChoice,onPreviewChange}
  useEffect(()=>{onPreviewChange?.(!!preview);if(preview)back.current?.focus();else firstChoice?.current?.focus()},[preview]);
  const samples=useMemo(()=>site?Object.fromEntries(templates.filter(t=>t.status==='ready').map(t=>[t.id,applyTemplateDesign(site,t.id)])):templateSamples,[site]);
  const sample=preview?samples[preview]:null;
- if(preview)return <div className="template-expanded"><header><button type="button" ref={back} className="studio-button" onClick={()=>setPreview(null)}><ArrowLeft size={14}/>목록으로</button><strong>{resolveTemplate(preview).name}</strong><div><button type="button" aria-pressed={width==='1440'} onClick={()=>setWidth('1440')}>PC</button><button type="button" aria-pressed={width==='390'} onClick={()=>setWidth('390')}>모바일</button></div></header><p>{site?'현재 프로젝트의 내용이에요. 메뉴와 언어를 바꿔 보며 확인하세요.':'허은녕 교수님 예시예요. 메뉴와 언어를 바꿔 보며 확인하세요.'}</p><div className="template-live-preview"><SitePreview site={sample} width={width}/></div><button type="button" className="studio-button primary" onClick={()=>{onChange(preview);setPreview(null)}}>이 템플릿 선택</button></div>;
+ if(preview)return <div className="template-expanded"><header><button type="button" ref={back} className="studio-button" onClick={()=>setPreview(null)}><ArrowLeft size={14}/>목록으로</button><strong>{resolveTemplate(preview).name}</strong><div><button type="button" aria-pressed={width==='1440'} onClick={()=>setWidth('1440')}>PC</button><button type="button" aria-pressed={width==='390'} onClick={()=>setWidth('390')}>모바일</button></div></header><p>{site?'현재 프로젝트의 내용이에요. 메뉴와 언어를 바꿔 보며 확인하세요.':'가상 프로필 예시예요. 메뉴와 언어를 바꿔 보며 확인하세요.'}</p><div className="template-live-preview"><SitePreview site={sample} width={width}/></div><button type="button" className="studio-button primary" onClick={()=>{onChange(preview);setPreview(null)}}>이 템플릿 선택</button></div>;
  return <div className="template-options" role="radiogroup" aria-label="프로젝트 템플릿">
   {templates.map(template=>{
    const ready=template.status==='ready';

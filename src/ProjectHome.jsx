@@ -15,7 +15,7 @@ export function ProjectHome({sites,deleted=[],publications={},onOpen,onPublish,o
   if(!url){setLinking({...linking,error:'https://로 시작하는 홈페이지 주소를 입력해 주세요.'});return}
   onLink(site.id,url);setLinking(null);
  };
- return <main className="project-home"><div className="project-heading"><div><h1>프로젝트<span>{sites.length}</span></h1><p>교수님의 연구와 이야기를 한 페이지에.</p></div><div className="project-heading-actions"><a className="studio-button" href="./examples/" target="_blank" rel="noopener noreferrer">템플릿 예시 4종<ArrowUpRight size={14}/></a><button className="studio-button primary" onClick={onCreate}><Plus size={16}/>새 프로젝트</button></div></div>
+ return <main className="project-home"><div className="project-heading"><div><h1>프로젝트<span>{sites.length}</span></h1><p>교수님의 연구와 이야기를 한 페이지에.</p></div><div className="project-heading-actions"><a className="studio-button" href="./templates/" target="_blank" rel="noopener noreferrer">템플릿 예시 4종<ArrowUpRight size={14}/></a><button className="studio-button primary" onClick={onCreate}><Plus size={16}/>새 프로젝트</button></div></div>
   <div className="project-grid">{sites.map(site=>{
    const basic=getBasicInfo(site),ko=siteLanguages(site).includes('ko')?{...basic.ko,title:basic.ko.name}:{},en={...basic.en,title:basic.en.name},title=siteTitle(site);
    const publication=publications[site.id],url=projectWebsite(site,publication);

@@ -5,6 +5,7 @@ import {build} from 'vite';
 import {templateExample} from '../src/templateExample.js';
 import {templates} from '../src/templates.js';
 import {buildColorOptions} from './color-options.mjs';
+import {buildDemoTemplates} from './build-demo-templates.mjs';
 
 await build({configFile:false,logLevel:'error',build:{ssr:'src/export.jsx',outDir:'.example-build'}});
 const {exportSite}=await import('../.example-build/export.js');
@@ -25,3 +26,4 @@ writeFileSync(resolve(target,'index.html'),`<!doctype html><html lang="ko"><head
 </style></head><body><main><header><a href="../">Folio로 돌아가기</a><h1>허은녕 교수님 홈페이지</h1><p>같은 자료를 네 가지 구성으로 준비했어요. 예시를 열어 메뉴와 한·영 화면을 확인해 보세요.</p></header><section aria-label="네 가지 홈페이지 시안">${entries}</section><footer>디자인 검토용 예시입니다. 현재 운영 중인 홈페이지는 변경되지 않습니다.</footer></main><script>document.querySelectorAll('.preview').forEach(el=>new ResizeObserver(([entry])=>el.style.setProperty('--scale',entry.contentRect.width/1100)).observe(el));</script></body></html>`);
 writeFileSync(resolve(target,'color-options.html'),buildColorOptions(exampleUrls.color));
 console.log(`Built four Heo template examples and color comparison in ${target}`);
+buildDemoTemplates(exportSite,resolve(target,'../templates'));

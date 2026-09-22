@@ -6,7 +6,7 @@
 
 자료 준비부터 디자인 선택, 편집과 게시까지 함께 관리합니다.
 
-[**Folio 시작하기 ↗**](https://heyludy.github.io/folio/) · [**템플릿 둘러보기 ↗**](https://heyludy.github.io/folio/examples/)
+[**Folio 시작하기 ↗**](https://heyludy.github.io/folio/) · [**템플릿 둘러보기 ↗**](https://heyludy.github.io/folio/templates/)
 
 </div>
 
@@ -23,12 +23,14 @@
 
 ## 네 가지 템플릿
 
+예시는 가상의 인물·소속·연구 자료로 구성했습니다.
+
 | 템플릿 | 구성 |
 | :--- | :--- |
-| [**기본형**](https://heyludy.github.io/folio/examples/classic.html) | 소개·연구·이력을 한 페이지에서 차례로 |
-| [**소개형**](https://heyludy.github.io/folio/examples/portrait.html) | 큰 이름과 사진, 메뉴별로 나눠 보는 내용 |
-| [**컬러형**](https://heyludy.github.io/folio/examples/color.html) | 넓은 컬러 배경과 강조한 이름, 큰 인물 사진 |
-| [**연구형**](https://heyludy.github.io/folio/examples/research.html) | 연구 분야·논문·프로젝트를 카드로 |
+| [**기본형**](https://heyludy.github.io/folio/templates/classic.html) | 소개·연구·이력을 한 페이지에서 차례로 |
+| [**소개형**](https://heyludy.github.io/folio/templates/portrait.html) | 큰 이름과 사진, 메뉴별로 나눠 보는 내용 |
+| [**컬러형**](https://heyludy.github.io/folio/templates/color.html) | 넓은 컬러 배경과 강조한 이름, 큰 인물 사진 |
+| [**연구형**](https://heyludy.github.io/folio/templates/research.html) | 연구 분야·논문·프로젝트를 카드로 |
 
 템플릿은 언제든 바꿀 수 있습니다. 내용과 첨부파일은 유지되고, 색상·폰트 선택은 템플릿별로 기억합니다.
 

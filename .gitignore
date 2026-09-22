@@ -9,3 +9,4 @@ dist/
 
 .example-build/
 public/examples/
+public/templates/
