@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPreparedProject,finishContentSetup,startManualSetup,finishTemplateSetup} from '../src/projectSetup.js';
+import {createPreparedProject,finishContentSetup,startManualSetup,finishMediaSetup,finishTemplateSetup} from '../src/projectSetup.js';
 import {applyTemplateDesign} from '../src/templateDesign.js';
 import {initialPreparation,buildPreparationPrompt,parsePreparation,buildImportPlan,applyImportPlan} from '../src/preparation.js';
 import {exportSite} from '../.test-build/export.js';
@@ -15,9 +15,9 @@ test('minimal identity creates an external AI prompt and imported bilingual cont
  const raw='# Folio\n\n## EN / profile\nname: Eunnyeong Heo\ncollege: Seoul National University\nbody: Research in energy economics.\nsource: https://example.edu/profile\n\n## KO / profile\nname: 허은녕\ncollege: 서울대학교\nbody: 에너지 경제학 연구.\nsource: https://example.edu/profile\n\n## EN / publications\n### Paper one\nyear: 2025\ntopic: Energy economics\ntext: A research journal\ndoi: 10.1234/example\nsource: https://example.edu/profile';
  const plan=buildImportPlan(source,parsePreparation(raw));
  const imported=finishContentSetup(applyImportPlan(source,plan,{},{}));
- assert.equal(imported.setup.stage,'template');assert.equal(imported.sections.at(-1).kind,'contact');assert.equal(getBasicInfo(imported).en.name,'Eunnyeong Heo');
+ assert.equal(imported.setup.stage,'media');assert.equal(imported.sections.at(-1).kind,'contact');assert.equal(getBasicInfo(imported).en.name,'Eunnyeong Heo');
  for(const {id} of templates){
-  const ready=finishTemplateSetup(applyTemplateDesign(imported,id));
+  const ready=finishTemplateSetup(applyTemplateDesign(finishMediaSetup(imported),id));
   assert.equal(ready.id,source.id);assert.equal(ready.setup.stage,'edit');assert.deepEqual(ready.sections,imported.sections);
   const html=exportSite(ready);assert.match(html,/Eunnyeong Heo/);assert.match(html,/허은녕/);assert.match(html,/Energy economics/);
  }
@@ -44,7 +44,7 @@ test('template switching preserves assets, resized elements, hidden sections, pr
 test('manual route seeds identity once and established projects do not restart onboarding after an import',()=>{
  const site=createPreparedProject({name:'First',affiliation:'University'});
  const manual=startManualSetup(site);
- assert.equal(getBasicInfo(manual).en.name,'First');assert.equal(manual.setup.stage,'template');
+ assert.equal(getBasicInfo(manual).en.name,'First');assert.equal(manual.setup.stage,'media');
  manual.sections[0].text.en.title='Edited';
  assert.equal(startManualSetup(manual),manual);
  const established={...manual};delete established.setup;
