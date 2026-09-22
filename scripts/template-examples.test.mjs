@@ -17,7 +17,7 @@ test('Heo design demos preserve every bilingual detail without inheriting the li
  }
 });
 test('all Heo demos embed both covers, the ESG table and a correctly classified conference figure',()=>{
- for(const id of ['classic','portrait','color']){
+ for(const id of ['classic','portrait','color','research']){
   const site=templateExample(id,'portrait.jpg'),html=exportSite(site);
   for(const lang of ['en','ko']){
    const attachments=site.sections.flatMap(section=>Object.values(section.attachments?.[lang]||{}));
@@ -38,8 +38,8 @@ test('all Heo demos embed both covers, the ESG table and a correctly classified 
   assert.doesNotMatch(html,/<img[^>]+src="https:\/\/(?:books.changbiedu|temep.snu)/);
  }
 });
-test('all three designs retain every section in portable HTML and printable thumbnails',()=>{
- for(const id of ['classic','portrait','color']){
+test('all four designs retain every section in portable HTML and printable thumbnails',()=>{
+ for(const id of ['classic','portrait','color','research']){
   const site=templateExample(id,'portrait.jpg'),html=exportSite(site);
   assert.doesNotMatch(html,/data-paginated|data-template-page/);
   assert.match(html,/Economic and environmental impacts/);

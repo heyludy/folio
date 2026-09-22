@@ -41,7 +41,7 @@ function ImportGroup({group:g,enabled,choices,onToggle,onChoose,onEdit}){
   {Object.keys(g.meta).length>0&&<div className="prepare-group-sources"><Sources meta={g.meta} showReview={false}/></div>}
  </section>;
 }
-export function PreparationDialog({site,onApply,onClose}){
+export function PreparationDialog({site,onApply,onClose,onManual}){
  const [draft,setDraft]=useState(()=>initialPreparation(site)),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[manualPrompt,setManualPrompt]=useState(false),[reading,setReading]=useState(false);
  const dialog=useRef(null),title=useRef(null),input=useRef(null),previousFocus=useRef(document.activeElement),saveQueue=useRef(Promise.resolve()),alive=useRef(true),request=useRef(0);
  const [storageError,setStorageError]=useState(''),[applying,setApplying]=useState(false),applyingRef=useRef(false);
@@ -107,23 +107,24 @@ export function PreparationDialog({site,onApply,onClose}){
   const nodes=[...dialog.current.querySelectorAll('button:not(:disabled),input:not(:disabled):not([hidden]),textarea,select,a[href],summary,iframe')].filter(el=>el.getClientRects().length),first=nodes[0],last=nodes.at(-1);
   if(e.shiftKey&&(document.activeElement===first||document.activeElement===title.current)){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
  }}>
-  <header className="prepare-header"><div><p className="prepare-eyebrow">CONTENT STUDIO</p><h2 ref={title} tabIndex={-1} id="prepare-title">{titleText}</h2></div><button type="button" className="prepare-close" disabled={applying} aria-label="내용 준비 닫기" onClick={onClose}><X size={20}/></button></header>
+  <header className="prepare-header"><div><p className="prepare-eyebrow">자료 준비</p><h2 ref={title} tabIndex={-1} id="prepare-title">{titleText}</h2></div><button type="button" className="prepare-close" disabled={applying} aria-label="내용 준비 닫기" onClick={onClose}><X size={20}/></button></header>
   {!loaded?<p className="prepare-loading" role="status">준비 중인 자료를 불러오는 중…</p>:<>
    {step>=0&&<ol className="prepare-steps" aria-label="내용 준비 단계">{['프롬프트','가져오기','확인'].map((label,i)=><li key={label} aria-current={step===i?'step':undefined}><span>{i<step?<Check size={12}/>:i+1}</span>{label}</li>)}</ol>}
    {storageError&&<p className="prepare-alert" role="alert">{storageError}</p>}{error&&<p className="prepare-alert" role="alert">{error}</p>}{message&&<p className="prepare-message" role="status">{message}</p>}
    <div className="prepare-body" inert={applying||undefined}>
     {draft.step==='welcome'&&<>
      <p className="prepare-lead">자료 준비부터 페이지에 담기까지, 한 번에.</p>
-     <div className="prepare-methods"><button type="button" onClick={()=>go('prompt')}><span className="prepare-method-icon"><Sparkles size={22}/></span><span><strong>AI로 자료 준비하기</strong><small>프롬프트를 복사해 사용하는 AI에서 작성하세요.</small></span><ArrowRight size={18}/></button><button type="button" onClick={()=>go('import')}><span className="prepare-method-icon"><FileUp size={22}/></span><span><strong>준비한 자료 가져오기</strong><small>MD 파일을 올리거나 AI 답변을 붙여넣으세요.</small></span><ArrowRight size={18}/></button><button type="button" onClick={onClose}><span className="prepare-method-icon"><PenLine size={22}/></span><span><strong>직접 입력하기</strong><small>페이지를 눌러 바로 편집하세요.</small></span><ArrowRight size={18}/></button></div>
+     <div className="prepare-methods"><button type="button" onClick={()=>go('prompt')}><span className="prepare-method-icon"><Sparkles size={22}/></span><span><strong>AI로 자료 준비하기</strong><small>프롬프트를 복사해 사용하는 AI에서 작성하세요.</small></span><ArrowRight size={18}/></button><button type="button" onClick={()=>go('import')}><span className="prepare-method-icon"><FileUp size={22}/></span><span><strong>준비한 자료 가져오기</strong><small>MD 파일을 올리거나 AI 답변을 붙여넣으세요.</small></span><ArrowRight size={18}/></button><button type="button" onClick={onManual||onClose}><span className="prepare-method-icon"><PenLine size={22}/></span><span><strong>직접 입력하기</strong><small>페이지를 눌러 바로 편집하세요.</small></span><ArrowRight size={18}/></button></div>
      {!!draft.raw&&<button type="button" className="prepare-text-button" onClick={()=>go('import')}><FileText size={14}/>{draft.deferred?`미반영 자료 ${draft.deferred}개 다시 확인`:'이전에 입력한 자료 이어서 확인'}</button>}
      {!!savedSources.length&&<details className="prepare-source-history"><summary>가져온 자료의 출처</summary>{savedSources.map((record,i)=><div key={i}><strong>{record.lang.toUpperCase()} · {record.name}</strong><Sources meta={record.meta}/></div>)}</details>}
     </>}
     {draft.step==='prompt'&&<>
-     <p className="prepare-lead">공식 자료 조사와 작성 양식을 담은 프롬프트를 만들어요.</p>
+     <p className="prepare-lead">프롬프트를 복사해 ChatGPT 등 사용하는 AI에 붙여넣고, 완성된 답변을 가져오세요.</p>
      <div className="prepare-identity"><label>교수님 이름<input value={draft.name} onChange={e=>update({name:e.target.value})}/></label><label>소속<input value={draft.affiliation} onChange={e=>update({affiliation:e.target.value})}/></label></div>
      <label className="prepare-field">공식 프로필 · 연구실 주소 <small>선택</small><textarea rows={2} placeholder="https://…" value={draft.urls} onChange={e=>update({urls:e.target.value})}/></label>
      <fieldset className="prepare-kinds"><legend>준비할 영역 <small>{siteLanguages(site).includes('ko')?'영어 + 한글':'영어'}</small></legend><div>{preparationKinds.filter(([kind])=>initialPreparation(site).kinds.includes(kind)).map(kindChoice)}</div><details className="prepare-more-kinds"><summary>추가 영역{extraCount?` · ${extraCount}개 선택`:''}</summary><div>{preparationKinds.filter(([kind])=>!initialPreparation(site).kinds.includes(kind)).map(kindChoice)}</div></details></fieldset>
      <p className="prepare-note">확인되지 않은 정보는 비우고, 출처는 공개 페이지와 별도로 기록하도록 안내해요.</p>
+     <button type="button" className="prepare-text-button" onClick={()=>go('import')}>이미 준비한 자료가 있어요 · 바로 가져오기<ArrowRight size={14}/></button>
      <details className="prepare-prompt-preview"><summary>프롬프트 미리보기</summary><textarea aria-label="생성된 프롬프트" readOnly value={prompt}/></details>
     </>}
     {draft.step==='import'&&<>
@@ -144,7 +145,7 @@ export function PreparationDialog({site,onApply,onClose}){
     </>}
     {manualPrompt&&<label className="prepare-field">직접 복사하기<textarea aria-label="직접 복사할 프롬프트" readOnly value={prompt} onFocus={e=>e.currentTarget.select()} rows={8}/></label>}
    </div>
-   <footer className="prepare-footer"><button type="button" className="prepare-back" disabled={applying} onClick={()=>draft.step==='welcome'?onClose():go(draft.step==='review'?'import':'welcome')}><ArrowLeft size={14}/>{draft.step==='review'?'자료 수정':draft.step==='welcome'?'편집기로':'이전'}</button>{draft.step==='prompt'?<div className="prepare-footer-actions">{manualPrompt&&<button type="button" className="studio-button" onClick={()=>go('import')}>복사했어요 · 다음</button>}<button type="button" className="studio-button primary" disabled={!draft.name.trim()||!draft.kinds.length} onClick={()=>copy(prompt,'import')}><Copy size={15}/>프롬프트 복사</button></div>:draft.step==='import'?<button type="button" className="studio-button primary" disabled={!draft.raw.trim()||reading} onClick={review}>페이지로 확인<ArrowRight size={15}/></button>:draft.step==='review'?<button type="button" className="studio-button primary" disabled={!count||applying} onClick={apply}>{applying?'반영 중…':`선택한 ${count}개 항목 반영`}<Check size={15}/></button>:<span>준비 중인 자료는 이 브라우저에 보관돼요.</span>}</footer>
+   <footer className="prepare-footer"><button type="button" className="prepare-back" disabled={applying} onClick={()=>draft.step==='welcome'?onClose():go(draft.step==='review'?'import':'welcome')}><ArrowLeft size={14}/>{draft.step==='review'?'자료 수정':draft.step==='welcome'?'편집기로':'이전'}</button>{draft.step==='prompt'?<div className="prepare-footer-actions">{onManual&&<button type="button" className="prepare-text-button" onClick={onManual}>직접 입력할게요</button>}{manualPrompt&&<button type="button" className="studio-button" onClick={()=>go('import')}>복사했어요 · 다음</button>}<button type="button" className="studio-button primary" disabled={!draft.name.trim()||!draft.kinds.length} onClick={()=>copy(prompt,'import')}><Copy size={15}/>프롬프트 복사</button></div>:draft.step==='import'?<button type="button" className="studio-button primary" disabled={!draft.raw.trim()||reading} onClick={review}>페이지로 확인<ArrowRight size={15}/></button>:draft.step==='review'?<button type="button" className="studio-button primary" disabled={!count||applying} onClick={apply}>{applying?'반영 중…':site.setup?.stage==='content'?`선택한 ${count}개 반영 · 디자인 고르기`:`선택한 ${count}개 항목 반영`}<Check size={15}/></button>:<span>준비 중인 자료는 이 브라우저에 보관돼요.</span>}</footer>
   </>}
  </div></div>;
 }

@@ -40,7 +40,7 @@ function matchingEntries(kind,fields,entries){
 
 export function initialPreparation(site){
  const basic=getBasicInfo(site);
- return {step:'welcome',name:basic.en.name||basic.ko.name||'',affiliation:basic.en.college||basic.ko.college||'',urls:'',kinds:['profile','research','publications','cv','awards','contact'],raw:'',choices:{},groups:{}};
+ return {step:site.setup?.stage==='content'?'prompt':'welcome',name:site.setup?.name||basic.en.name||basic.ko.name||'',affiliation:site.setup?.affiliation||basic.en.college||basic.ko.college||'',urls:site.setup?.urls||'',kinds:['profile','research','publications','cv','awards','contact'],raw:'',choices:{},groups:{}};
 }
 export function markdownTemplate(site,kinds=initialPreparation(site).kinds){
  const basic=getBasicInfo(site),lines=['# Folio',''];

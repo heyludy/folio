@@ -1,4 +1,4 @@
-# Three professor presentation templates
+# Four professor presentation templates
 
 Confirmed references: Dasom Lee (classic), Hyunjin Kim (portrait), and Wix's
 Katherine H. Gilbert Researcher example (color). All demos use Heo's existing
@@ -43,7 +43,9 @@ switches and browser history restore the correct group. All three headers remain
 at the top, with the current menu highlighted by color and an underline. Mobile
 menu buttons also show the current group's name. Printing and JavaScript-free
 viewing retain every section. Preserve legacy saved sidebar/research/editorial
-layouts, and retain Research as a planned option.
+layouts. Research is now a ready option: navy-on-white, an open research index, two-column paper/project cards and wide featured entries for work with images.
+
+The main app now starts with information and external AI preparation, then compares four templates with the user’s imported content. A direct template button changes presentation only and remembers each design’s last theme/font. See [the current workflow](template-workflow-2026-09-22.md).
 
 Examples are standalone HTML using the same export as Folio. Exclude the live
 publication URL and provide a comparison page plus template-picker previews.

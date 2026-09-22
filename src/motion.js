@@ -66,14 +66,14 @@ export function publicRuntime(reveal,initialLanguage='en'){
  window.addEventListener('resize',scheduleNavigation);
  window.addEventListener('load',scheduleNavigation);
  const measureHeader=page=>{
-  const nav=page?.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"],[data-template="color"]) > .site-nav');
+  const nav=page?.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"],[data-template="color"],[data-template="research"]) > .site-nav');
   if(!nav)return;
   const height=Math.ceil(nav.getBoundingClientRect().height);
   if(height)nav.parentElement.style.setProperty('--site-nav-height',`${height}px`);
  };
  if('ResizeObserver' in window){
   const observer=new ResizeObserver(()=>{pages.forEach(measureHeader);scheduleNavigation()});
-  pages.forEach(page=>{const nav=page.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"],[data-template="color"]) > .site-nav');if(nav)observer.observe(nav)});
+  pages.forEach(page=>{const nav=page.querySelector?.('.faculty-site:is([data-template="classic"],[data-template="portrait"],[data-template="color"],[data-template="research"]) > .site-nav');if(nav)observer.observe(nav)});
  }
  const activate=lang=>{
   if(!pages.some(p=>p.dataset.languagePage===lang))return;

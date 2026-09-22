@@ -42,8 +42,8 @@ test('unknown or missing template settings keep the existing classic layout',()=
  assert.equal(prepareTemplate(site,'missing').template,'classic');
 });
 
-test('the catalogue presents the three approved designs and keeps a planned option unavailable',()=>{
- assert.deepEqual(templates.filter(t=>t.status==='ready').map(t=>t.id),['classic','portrait','color']);
- assert.equal(templates.find(t=>t.id==='research').status,'planned');
+test('the catalogue makes all four designs available',()=>{
+ assert.deepEqual(templates.filter(t=>t.status==='ready').map(t=>t.id),['classic','portrait','color','research']);
+ assert.ok(templates.every(t=>t.defaults?.theme&&t.defaults?.font));
  for(const id of ['sidebar','editorial'])assert.equal(resolveTemplate(id).id,id);
 });

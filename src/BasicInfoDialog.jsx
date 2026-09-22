@@ -1,59 +1,44 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {X,ArrowLeft,ArrowRight} from 'lucide-react';
+import {X} from 'lucide-react';
 import {getBasicInfo,applyBasicInfo} from './basics';
 import {readAsset} from './assets';
 import {siteIconSource} from './siteIcon';
 import {siteLanguages} from './model';
-import {TemplatePicker} from './TemplatePicker';
-import {resolveTemplate} from './templates';
 import './siteIcon.css';
 
-export function BasicInfoDialog({site,creating=false,initialLanguage='en',onSave,onClose}){
+export function BasicInfoDialog({site,initialLanguage='en',onSave,onClose}){
  const [draft,setDraft]=useState(()=>getBasicInfo(site)),[selectedLanguage,setLanguage]=useState(initialLanguage);
- const [mode,setMode]=useState(()=>creating?null:siteLanguages(site).length>1?'bilingual':'english');
- const [templatePreview,setTemplatePreview]=useState(false);
- const [step,setStep]=useState(creating?'templates':'details');
- const [templateId,setTemplateId]=useState(()=>resolveTemplate(site.template).id);
+ const [mode,setMode]=useState(()=>siteLanguages(site).length>1?'bilingual':'english');
  const [icon,setIcon]=useState(()=>site.icon||{}),[iconError,setIconError]=useState(''),[iconLoading,setIconLoading]=useState(false);
  const iconInput=useRef(null);
  const iconSite={...applyBasicInfo(site,draft),icon};
  const languages=mode==='bilingual'?['en','ko']:['en'],language=languages.includes(selectedLanguage)?selectedLanguage:'en';
- const dialog=useRef(null),nameInput=useRef(null),firstChoice=useRef(null),templateChoice=useRef(null),previousFocus=useRef(document.activeElement);
+ const dialog=useRef(null),nameInput=useRef(null),previousFocus=useRef(document.activeElement);
  useEffect(()=>{
   const target=previousFocus.current;
   const escape=e=>{if(e.key==='Escape'){e.stopImmediatePropagation();onClose()}};
   document.addEventListener('keydown',escape,true);
   return()=>{document.removeEventListener('keydown',escape,true);if(target?.isConnected)target.focus({preventScroll:true})};
  },[]);
- useEffect(()=>{(step==='templates'?templateChoice:step==='languages'?firstChoice:nameInput).current?.focus()},[step]);
+ useEffect(()=>{nameInput.current?.focus()},[]);
  const change=(key,value)=>setDraft(current=>({...current,[language]:{...current[language],[key]:value}}));
  const fields=[['name','이름','Name','교수님 이름'],['college','소속 대학','University','소속 대학'],['department','학과 · 전공','Department','학과 또는 전공'],['position','직함','Professor','교수'],['office','연구실 위치','Building, room and address','건물·호수·주소']];
- const next=()=>{if(mode){setLanguage('en');setStep('details')}};
  const uploadIcon=async e=>{
   const file=e.target.files?.[0];e.target.value='';if(!file)return;setIconLoading(true);setIconError('');
   try{const asset=await readAsset(file,'image');const image=new Image();image.src=asset.data;await image.decode();setIcon(current=>({...current,image:asset.data}));}
   catch(error){setIconError(error.name==='EncodingError'?'이미지를 읽지 못했어요. 다른 로고를 선택해 주세요.':error.message)}finally{setIconLoading(false)}
  };
- return <div className="studio-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose()}}><form ref={dialog} className={`basic-dialog ${step==='templates'?`template-dialog ${templatePreview?'template-preview-open':''}`:step==='languages'?'language-dialog':''}`} role="dialog" aria-modal="true" aria-labelledby="basic-title" aria-describedby="basic-description" onSubmit={e=>{e.preventDefault();if(step==='templates')setStep(creating?'languages':'details');else if(step==='languages')next();else if(!iconLoading)onSave(draft,languages,resolveTemplate(templateId).id,icon)}} onKeyDown={e=>{
+ return <div className="studio-overlay"><form ref={dialog} className="basic-dialog" role="dialog" aria-modal="true" aria-labelledby="basic-title" onSubmit={e=>{e.preventDefault();if(!iconLoading)onSave(draft,languages,icon)}} onKeyDown={e=>{
   if(e.key!=='Tab')return;
-  const nodes=[...dialog.current.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled)')],first=nodes[0],last=nodes.at(-1);
+  const nodes=[...dialog.current.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled)')].filter(el=>el.getClientRects().length),first=nodes[0],last=nodes.at(-1);
   if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
  }}>
-  <header><div>{creating&&<div className="basic-step">{step==='templates'?'01 템플릿':step==='languages'?'02 언어':'03 기본 정보'}</div>}<h2 id="basic-title">{step==='templates'?'템플릿을 선택하세요':step==='languages'?'어떤 언어로 만들까요?':creating?'새 프로젝트':'기본 정보'}</h2><p id="basic-description">{step==='templates'?'원하는 페이지 구성을 골라 시작하세요.':step==='languages'?'홈페이지에 사용할 언어를 선택해 주세요.':creating?'이름과 소속을 입력하고 시작하세요. 나중에도 수정할 수 있어요.':'소개·연락처·푸터에 함께 반영돼요.'}</p></div><button type="button" className="basic-close" aria-label={creating?'프로젝트 만들기 닫기':'기본 정보 닫기'} onClick={onClose}><X size={19}/></button></header>
-  {step==='templates'?<>
-   <TemplatePicker value={templateId} onChange={setTemplateId} firstChoice={templateChoice} onPreviewChange={setTemplatePreview}/>
-   {!templatePreview&&<footer><button type="button" className="studio-button" onClick={onClose}>취소</button><button type="submit" className="studio-button primary" disabled={templatePreview}>{creating?'다음':'선택 완료'}<ArrowRight size={14}/></button></footer>}
-  </>:step==='languages'?<>
-   <div className="language-options" role="radiogroup" aria-label="홈페이지 언어 선택">{[['english','EN','영어만','영문 홈페이지 하나를 만들어요.'],['bilingual','EN / KO','영어 + 한글','두 언어를 전환해서 볼 수 있어요.']].map(([value,tag,title,description],index)=><label key={value} className="language-option" data-selected={mode===value}><input ref={index===0?firstChoice:undefined} type="radio" name="site-languages" value={value} checked={mode===value} onChange={()=>setMode(value)} aria-label={title}/><span className="language-option-tag">{tag}</span><strong>{title}</strong><span className="language-option-description">{description}</span></label>)}</div>
-   {!creating&&<p className="language-preserve">한글을 끄더라도 입력한 내용은 보관돼요.</p>}
-   <footer>{creating&&<button type="button" className="basic-back" onClick={()=>setStep('templates')}><ArrowLeft size={14}/>이전</button>}<button type="button" className="studio-button" onClick={creating?onClose:()=>setStep('details')}>{creating?'취소':'돌아가기'}</button><button type="submit" className="studio-button primary" disabled={!mode}>다음<ArrowRight size={14}/></button></footer>
-  </>:<>
-   <div className="basic-site-template"><span>템플릿 <strong>{resolveTemplate(templateId).name}</strong></span><button type="button" aria-label="템플릿 변경" onClick={()=>setStep('templates')}>변경</button></div>
-   <div className="basic-site-language"><span>홈페이지 언어 <strong>{mode==='bilingual'?'영어 + 한글':'영어만'}</strong></span><button type="button" onClick={()=>setStep('languages')}>변경</button></div>
+  <header><div><h2 id="basic-title">기본 정보</h2><p>소개·연락처·푸터에 함께 반영돼요.</p></div><button type="button" className="basic-close" aria-label="기본 정보 닫기" onClick={onClose}><X size={19}/></button></header>
+  <fieldset className="setup-languages"><legend>홈페이지 언어</legend><div>{[['english','영어만'],['bilingual','영어 + 한글']].map(([value,label])=><label key={value}><input type="radio" name="site-languages" checked={mode===value} onChange={()=>setMode(value)}/><span>{label}</span></label>)}</div><small>한글을 끄더라도 입력한 내용은 보관돼요.</small></fieldset>
    {mode==='bilingual'&&<div className="basic-language" role="group" aria-label="입력할 언어">{[['en','English 정보'],['ko','한글 정보']].map(([code,label])=><button type="button" key={code} aria-pressed={language===code} onClick={()=>setLanguage(code)}>{label}</button>)}</div>}
-   <div className="basic-grid">{fields.filter(([key])=>!creating||['name','college'].includes(key)).map(([key,label,enHint,koHint])=><label className={key==='office'?'basic-wide':''} key={key}><span>{label}</span>{key==='office'?<textarea aria-label={`${language==='en'?'영문':'한글'} ${label}`} value={draft[language][key]} placeholder={language==='en'?enHint:koHint} onChange={e=>change(key,e.target.value)} rows={2}/>:<input ref={key==='name'?nameInput:undefined} aria-label={`${language==='en'?'영문':'한글'} ${label}`} value={draft[language][key]} placeholder={language==='en'?enHint:koHint} onChange={e=>change(key,e.target.value)}/>}</label>)}</div>
-   {!creating&&<label className="basic-email"><span>이메일 {mode==='bilingual'&&<small>한글·영문 공통</small>}</span><input type="email" aria-label="공통 이메일" placeholder="name@university.edu" value={draft.email} onChange={e=>setDraft(current=>({...current,email:e.target.value}))}/></label>}
-   {!creating&&<section className="basic-icon" aria-labelledby="site-icon-title">
+   <div className="basic-grid">{fields.map(([key,label,enHint,koHint])=><label className={key==='office'?'basic-wide':''} key={key}><span>{label}</span>{key==='office'?<textarea aria-label={`${language==='en'?'영문':'한글'} ${label}`} value={draft[language][key]} placeholder={language==='en'?enHint:koHint} onChange={e=>change(key,e.target.value)} rows={2}/>:<input ref={key==='name'?nameInput:undefined} aria-label={`${language==='en'?'영문':'한글'} ${label}`} value={draft[language][key]} placeholder={language==='en'?enHint:koHint} onChange={e=>change(key,e.target.value)}/>}</label>)}</div>
+   <label className="basic-email"><span>이메일 {mode==='bilingual'&&<small>한글·영문 공통</small>}</span><input type="email" aria-label="공통 이메일" placeholder="name@university.edu" value={draft.email} onChange={e=>setDraft(current=>({...current,email:e.target.value}))}/></label>
+   <section className="basic-icon" aria-labelledby="site-icon-title">
     <div><h3 id="site-icon-title">탭 아이콘</h3><p>공통 페이지 아이콘에 사이트의 테마색이 적용돼요.</p></div>
     <div className="basic-icon-preview" aria-label="브라우저 탭 미리보기"><img src={siteIconSource(iconSite)} alt="사이트 아이콘" width="20" height="20"/><span>{draft.en.name||draft.ko.name||'교수님 홈페이지'}</span><X size={12}/></div>
     <div className="basic-icon-controls">
@@ -63,8 +48,7 @@ export function BasicInfoDialog({site,creating=false,initialLanguage='en',onSave
     <input ref={iconInput} hidden type="file" tabIndex={-1} accept="image/png,image/jpeg,image/webp" aria-label="탭 아이콘 로고 파일" onChange={uploadIcon}/>
     <p className="basic-icon-hint">정사각형 PNG · JPG · WebP, 최대 25MB · 용량 자동 최적화</p>
     {iconError&&<p className="basic-icon-error" role="alert">{iconError}</p>}
-   </section>}
-   <footer>{creating&&<button type="button" className="basic-back" onClick={()=>setStep('languages')}><ArrowLeft size={14}/>이전</button>}<button type="button" className="studio-button" onClick={onClose}>취소</button><button type="submit" className="studio-button primary" disabled={iconLoading}>{creating?'사이트 만들기':'전체에 적용'}</button></footer>
-  </>}
+   </section>
+   <footer><button type="button" className="studio-button" onClick={onClose}>취소</button><button type="submit" className="studio-button primary" disabled={iconLoading}>전체에 적용</button></footer>
  </form></div>;
 }
