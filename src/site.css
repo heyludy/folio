@@ -592,3 +592,11 @@
  .faculty-site[data-template=research] .site-section:is([data-kind=publications],[data-kind=allworks],[data-kind=projects]) .site-record:has(.site-media img){grid-column:1/-1}
  .faculty-site[data-template=research] .site-section:is([data-kind=publications],[data-kind=allworks],[data-kind=projects]) .site-record:has(.site-media img) .site-entry-body{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px;align-items:start}
 }
+
+/* Affiliation text gets the full reading width below the name and portrait. */
+@container site-viewport (max-width:600px){
+ .faculty-site:is([data-template=classic],[data-template=research]) .site-profile .site-affiliation{grid-column:1/-1}
+ .faculty-site:is([data-template=classic],[data-template=research]) .site-profile .site-photo{grid-row:1;align-self:start}
+}
+.faculty-site .site-profile.no-photo .site-intro{max-width:68ch}
+.site-color-profile.no-photo .site-color-affiliation{max-width:70ch}
